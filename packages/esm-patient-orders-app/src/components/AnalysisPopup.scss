@@ -1,0 +1,229 @@
+.container {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+  }
+  
+  .screen1 {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  .separater {
+    height: 70vh;
+    width: 3px;
+    margin-left: 50px;
+    margin-right: 50px;
+    background-color: black;
+  }
+  
+  .screen2 {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+  }
+  
+  .logo {
+    height: 80px;
+    width: 300px;
+    align-self: center;
+    margin-bottom: 30px;
+  
+    border: solid;
+    border-width: 2px;
+  }
+  
+  .scan {
+    height: 400px;
+    width: 470px;
+  
+    border: solid;
+    border-width: 2px;
+  }
+  
+  .button {
+    border-radius: 45px;
+    margin: 30px;
+  
+    text-align: center;
+    font-size: 1.3rem;
+    font-weight: 700;
+    padding-left: 1.4rem;
+  }
+  
+  .section1 {
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .section2 {
+    display: flex;
+    flex-direction: column;
+    margin-left: 50px;
+    margin-right: 20px;
+  }
+  
+  .scroll {
+    height: 500px;
+    overflow: scroll;
+  }
+  
+  .list {
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-start;
+    gap: 20px;
+    margin-top: 20px;
+    margin-bottom: 50px;
+    padding: 0;
+  }
+  
+  .list-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    list-style: none;
+    float: left;
+  }
+  
+  th {
+    font-size: 24;
+    font-weight: 600;
+    text-align: center;
+    padding: 10px;
+  }
+  
+  td {
+    margin: auto;
+    padding-left: 5px;
+    padding-right: 5px;
+  }
+  
+  #predictions {
+    margin: auto;
+  }
+  
+  #pourcent {
+    margin: auto;
+  }
+  
+  #verified {
+    width: 100px;
+  }
+  
+  .bar1 {
+    display: flex;
+    justify-content: flex-end;
+  
+    position: relative;
+    height: 8px;
+    width: 100%;
+    background-color: rgb(234, 230, 230);
+    z-index: 40;
+  }
+  
+  .bar2 {
+    left: 0px;
+    position: absolute;
+    height: 8px;
+    opacity: 1;
+    z-index: 50;
+  }
+  
+  .bar3 {
+    position: absolute;
+    height: 8px;
+    opacity: 0.5;
+    z-index: 50;
+  }
+  
+  .toggle {
+    width: 200px;
+    margin: auto;
+  }
+  
+  .checkbox {
+    width: max-content;
+    margin: auto;
+  }
+  
+  .pulse {
+    align-self: center;
+    background-color: transparent;
+    animation: pulse-animation 2s infinite;
+  }
+  
+  @keyframes pulse-animation {
+    0% {
+      box-shadow: 0 0 0 0px rgba(0, 0, 0, 0.2);
+    }
+  
+    100% {
+      box-shadow: 0 0 0 10px rgba(0, 0, 0, 0);
+    }
+  }
+  
+  .bounce2 {
+    align-self: center;
+    position: relative;
+    background-color: transparent;
+    animation: bounce2 2s ease infinite;
+  }
+  
+  @keyframes bounce2 {
+  
+    0%,
+    20%,
+    50%,
+    80%,
+    100% {
+      transform: translateY(0);
+    }
+  
+    40% {
+      transform: translateY(-13px);
+    }
+  
+    60% {
+      transform: translateY(-10px);
+    }
+  }
+  
+  .hidden {
+    display: none;
+  }
+  
+  .largeModal {
+    :global(.cds--modal-container) {
+      width: 90vw;
+      max-width: 90vw;
+      height: 90vh;
+      max-height: 90vh;
+    }
+
+    :global(.cds--modal-content) {
+      margin-bottom: 0;
+      height: calc(90vh - 120px); // Adjust for header and footer
+      max-height: calc(90vh - 120px);
+    }
+  }
+
+  .modalContent {
+    height: 100%;
+    width: 100%;
+    overflow: auto;
+    padding: 1rem;
+  }
+
+  .analysisSection {
+    justify-content: flex-start;
+    align-items: flex-start;
+
+    @media (min-width: 1024px) and (min-height: 800px) {
+      justify-content: center;
+      align-items: center;
+    }
+  }
