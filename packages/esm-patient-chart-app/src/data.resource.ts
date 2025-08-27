@@ -24,6 +24,47 @@ interface CauseOfDeathPayload {
   deathDate?: Date;
 }
 
+interface ProviderAttribute {
+  attributeType: {
+    display: string;
+  };
+  value: string;
+  voided: boolean;
+}
+
+interface Person {
+  uuid: string;
+  display: string;
+  gender: string;
+  age: number | null;
+  birthdate: string | null;
+  birthdateEstimated: boolean;
+  dead: boolean;
+  deathDate: string | null;
+  causeOfDeath: string | null;
+  preferredName: {
+    uuid: string;
+    display: string;
+  };
+  preferredAddress: unknown;
+  attributes: ProviderAttribute[];
+  voided: boolean;
+  birthtime: string | null;
+  deathdateEstimated: boolean;
+}
+
+interface Provider {
+  uuid: string;
+  display: string;
+  person: Person;
+  retired: boolean;
+  attributes: ProviderAttribute[];
+}
+
+interface ProviderFetchResponse {
+  results: Provider[];
+}
+
 export function useCausesOfDeath() {
   const { isCauseOfDeathLoading, isCauseOfDeathValidating, value: causeOfDeathConcept } = useCauseOfDeathConcept();
   const { isConceptLoading, isConceptAnswerValidating, conceptAnswers } = useConceptAnswers(causeOfDeathConcept);
@@ -113,5 +154,33 @@ export function useCauseOfDeathConcept() {
       error,
     };
   }, [data?.data?.value, error, isLoading, isValidating]);
+  return result;
+}
+
+export function useProviders() {
+  const fetchProviders = async (url: string): Promise<ProviderFetchResponse> => {
+    const response = await openmrsFetch<ProviderFetchResponse>(url);
+    return response.data;
+  };
+
+  const { data, error, isLoading, isValidating } = useSWR<ProviderFetchResponse, Error>(
+    `${restBaseUrl}/provider?v=custom:(display,person,uuid,retired,attributes:(attributeType:(display),value,voided))`,
+    fetchProviders,
+    {
+      shouldRetryOnError(err) {
+        return err instanceof Response && err.status !== 404;
+      },
+    },
+  );
+
+  const result = useMemo(() => {
+    return {
+      value: data?.results ?? [],
+      isProvidersLoading: isLoading,
+      isProvidersValidating: isValidating,
+      error,
+    };
+  }, [data?.results, isLoading, isValidating, error]);
+
   return result;
 }
