@@ -32,6 +32,16 @@ const VisitSummary: React.FC<VisitSummaryProps> = ({ visit, patientUuid }) => {
   const config = useConfig();
   const { t } = useTranslation();
   const extensions = useAssignedExtensions(visitSummaryPanelSlot);
+  const assignedDoctor = useMemo(() => {
+    const doctorAttr = visit?.attributes?.find((attr) => attr.attributeType?.display === 'Assigned Doctor');
+    const value = doctorAttr?.value;
+    if (!value) return '';
+
+    if (typeof value === 'object') {
+      return value.person?.display ?? value.display ?? '';
+    }
+    return String(value);
+  }, [visit?.attributes]);
 
   const [diagnoses, notes, medications]: [Array<Diagnosis>, Array<Note>, Array<OrderItem>] = useMemo(() => {
     // Medication Tab
@@ -109,6 +119,21 @@ const VisitSummary: React.FC<VisitSummaryProps> = ({ visit, patientUuid }) => {
           </p>
         )}
       </div>
+      {assignedDoctor && (
+        <>
+          <p className={styles.diagnosisLabel} style={{ marginTop: '0.5rem' }}>
+            {t('assignedDoctor', 'Assigned Doctor')}
+          </p>
+          <div className={styles.diagnosesList}>
+            <p
+              className={classNames(styles.bodyLong01, styles.text02)}
+              style={{ marginBottom: '0.5rem', marginTop: '0.5rem' }}
+            >
+              {assignedDoctor}
+            </p>
+          </div>
+        </>
+      )}
       <Tabs>
         <TabList aria-label="Visit summary tabs" className={styles.tablist}>
           <Tab
