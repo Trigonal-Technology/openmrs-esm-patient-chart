@@ -1,0 +1,72 @@
+.container {
+  max-width: 56rem;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.basket {
+  border: 1px solid var(--cds-border-subtle);
+  background: var(--cds-layer-01);
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid var(--cds-border-subtle);
+}
+
+.title {
+  font-size: 0.875rem;
+  font-weight: 600;
+  margin: 0;
+}
+
+.badge {
+  padding: 0.125rem 0.5rem;
+  font-size: 0.75rem;
+  background: var(--cds-layer-accent);
+  color: var(--cds-text-on-color);
+  border-radius: 2px;
+}
+
+.rows {
+  min-height: 6rem;
+}
+
+.empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem 1rem;
+  color: var(--cds-text-secondary);
+  border-bottom: 1px solid var(--cds-border-subtle);
+
+  p {
+    margin: 0;
+    font-size: 0.875rem;
+  }
+}
+
+.emptyHint {
+  font-size: 0.75rem !important;
+  margin-top: 0.25rem !important;
+}
+
+.footer {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.75rem 1rem;
+  background: var(--cds-layer-02);
+}
+
+.validCount {
+  flex: 1;
+  font-size: 0.75rem;
+  color: var(--cds-text-secondary);
+}

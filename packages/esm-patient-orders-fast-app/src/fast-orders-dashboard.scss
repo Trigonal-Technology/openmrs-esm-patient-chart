@@ -1,0 +1,17 @@
+.wrapper {
+  display: flex;
+  min-height: 0;
+  flex: 1;
+}
+
+.main {
+  flex: 1;
+  min-width: 0;
+  padding: 1rem 0 1rem 1rem;
+}
+
+.loading {
+  padding: 2rem;
+  text-align: center;
+  color: var(--cds-text-secondary);
+}

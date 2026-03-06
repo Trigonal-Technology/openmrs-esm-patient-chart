@@ -1,0 +1,44 @@
+@use '@carbon/colors';
+@use '@carbon/layout';
+@use '@carbon/type';
+
+.desktopContainer,
+.tabletContainer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  text-align: left;
+}
+
+.desktopTile {
+  position: relative;
+  border-left: layout.$spacing-02 solid colors.$blue-60;
+  background-color: colors.$white-0;
+  padding: 0;
+}
+
+.tabletTile {
+  @extend .desktopTile;
+  border-top: 1px solid colors.$gray-20;
+}
+
+.iconAndLabel {
+  display: flex;
+  align-items: center;
+  margin: layout.$spacing-03;
+  gap: layout.$spacing-02;
+}
+
+.icon {
+  flex-shrink: 0;
+}
+
+.heading {
+  @include type.type-style('heading-compact-02');
+  color: colors.$gray-70;
+  margin: 0;
+}
+
+.addButton {
+  margin-right: layout.$spacing-03;
+}

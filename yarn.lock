@@ -5400,6 +5400,26 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@openmrs/esm-patient-orders-fast-app@workspace:packages/esm-patient-orders-fast-app":
+  version: 0.0.0-use.local
+  resolution: "@openmrs/esm-patient-orders-fast-app@workspace:packages/esm-patient-orders-fast-app"
+  dependencies:
+    "@carbon/react": "npm:^1.83.0"
+    "@openmrs/esm-patient-common-lib": "workspace:*"
+    lodash-es: "npm:^4.17.23"
+    webpack: "npm:^5.99.9"
+  peerDependencies:
+    "@openmrs/esm-framework": 9.x
+    "@openmrs/esm-patient-common-lib": 12.x
+    dayjs: 1.x
+    react: 18.x
+    react-i18next: 16.x
+    react-router-dom: 6.x
+    rxjs: 6.x
+    swr: 2.x
+  languageName: unknown
+  linkType: soft
+
 "@openmrs/esm-patient-programs-app@workspace:packages/esm-patient-programs-app":
   version: 0.0.0-use.local
   resolution: "@openmrs/esm-patient-programs-app@workspace:packages/esm-patient-programs-app"
