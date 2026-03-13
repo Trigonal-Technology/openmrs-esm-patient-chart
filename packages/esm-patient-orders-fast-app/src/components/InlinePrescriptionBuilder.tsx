@@ -7,8 +7,8 @@ import type { OrderConfigObject } from '../resources/order-config.resource';
 import { InlineOrderRow, type OrderRow } from './InlineOrderRow';
 import { NlpInput } from './NlpInput';
 import { QuickTemplates } from './QuickTemplates';
-import { OrdersTable } from './OrdersTable';
 import { useDrugSearch } from '../resources/drug-search.resource';
+import { calculateAutoQuantity } from '../lib/quantityCalculator';
 import styles from './inline-prescription-builder.scss';
 
 interface InlinePrescriptionBuilderProps {
@@ -55,22 +55,29 @@ export function InlinePrescriptionBuilder({
   const addFromParsed = useCallback(
     (parsed: ParsedPrescription) => {
       const defaultDose = orderConfig.drugDosingUnits[0]?.valueCoded ?? '';
-      const defaultRoute = orderConfig.drugRoutes[0]?.valueCoded ?? '';
+      const defaultRoute = orderConfig.drugRoutes.find((r) => (r as { value?: string }).value?.toLowerCase() === 'oral')?.valueCoded ?? orderConfig.drugRoutes[0]?.valueCoded ?? '';
       const defaultFreq =
         orderConfig.orderFrequencies[1]?.valueCoded ?? orderConfig.orderFrequencies[0]?.valueCoded ?? '';
       const defaultDur = orderConfig.durationUnits[0]?.valueCoded ?? '';
 
+      const dose = parsed.dose;
+      const freq = parsed.frequency ?? defaultFreq;
+      const dur = parsed.duration;
+      const durUnits = parsed.durationUnits ?? defaultDur;
+      const autoQty = calculateAutoQuantity(dose, freq, dur, durUnits, orderConfig);
+
       const newRow: OrderRow = {
         id: nextId(),
         drug: parsed.drug,
-        dose: parsed.dose,
+        dose: dose,
         doseUnits: parsed.doseUnits ?? parsed.drug?.defaultDoseUnit ?? defaultDose,
         route: parsed.route ?? parsed.drug?.defaultRoute ?? defaultRoute,
-        frequency: parsed.frequency ?? defaultFreq,
-        duration: parsed.duration,
-        durationUnits: parsed.durationUnits ?? defaultDur,
+        frequency: freq,
+        duration: dur,
+        durationUnits: durUnits,
         asNeeded: parsed.asNeeded,
-        quantity: null,
+        numRefills: 0,
+        quantity: autoQty,
       };
       addToCart(newRow);
     },
@@ -79,80 +86,64 @@ export function InlinePrescriptionBuilder({
 
   useEffect(() => {
     if (templateToParse && templateDrugs.length > 0) {
-      const fastDrugs = templateDrugs.map((d) =>
-        drugSearchResultToFastDrug(
-          d,
-          orderConfig.drugDosingUnits[0]?.valueCoded ?? '',
-          orderConfig.drugRoutes[0]?.valueCoded ?? '',
-        ),
-      );
-      const parsed = parsePrescription(templateToParse, fastDrugs, orderConfig);
-      addFromParsed(parsed);
-      setTemplateToParse(null);
+      const defaultDose = orderConfig.drugDosingUnits[0]?.valueCoded ?? '';
+      const defaultRoute = orderConfig.drugRoutes.find((r) => (r as { value?: string }).value?.toLowerCase() === 'oral')?.valueCoded ?? orderConfig.drugRoutes[0]?.valueCoded ?? '';
+
+      const drug = drugSearchResultToFastDrug(templateDrugs[0], defaultDose, defaultRoute);
+      if (drug) {
+        const parsed = parsePrescription(templateToParse, [drug], orderConfig);
+        parsed.drug = drug;
+        addFromParsed(parsed);
+        setTemplateToParse(null);
+      }
     }
   }, [templateToParse, templateDrugs, orderConfig, addFromParsed]);
 
-  const validRows = cart.filter((r) => r.drug && r.dose && r.dose > 0 && r.duration && r.duration > 0);
-
   return (
     <div className={styles.container}>
-      <div className={styles.basket}>
-        <div className={styles.header}>
-          <h2 className={styles.title}>Order Basket</h2>
-          <span className={styles.badge}>
-            {cart.length} item{cart.length !== 1 ? 's' : ''}
-          </span>
-          {cart.length > 0 && (
-            <Button kind="ghost" size="sm" onClick={clearCart} renderIcon={Reset}>
-              Clear all
+      <div className={styles.inputSection}>
+        <div className={styles.nlpRow}>
+          <NlpInput onParsed={addFromParsed} orderConfig={orderConfig} />
+          <div className={styles.actions}>
+            <Button
+              kind="ghost"
+              size="md"
+              onClick={clearCart}
+              disabled={cart.length === 0}
+              renderIcon={Reset}
+              className={styles.resetBtn}
+            >
+              Clear cart
             </Button>
-          )}
-        </div>
-
-        <QuickTemplates onSelect={(rx) => setTemplateToParse(rx)} />
-
-        <NlpInput onParsed={addFromParsed} orderConfig={orderConfig} />
-
-        <div className={styles.rows}>
-          {cart.map((row) => (
-            <InlineOrderRow
-              key={row.id}
-              row={row}
-              onChange={updateRow}
-              onRemove={removeRow}
-              index={cart.indexOf(row)}
-              orderConfig={orderConfig}
-            />
-          ))}
-          {cart.length === 0 && (
-            <div className={styles.empty}>
-              <p>No orders in basket</p>
-              <p className={styles.emptyHint}>
-                Use the search bar or templates above to add prescriptions. Items appear in the cart on the right.
-              </p>
-            </div>
-          )}
-        </div>
-
-        {cart.length > 0 && (
-          <div className={styles.footer}>
-            <span className={styles.validCount}>
-              <strong>{validRows.length}</strong> of {cart.length} orders valid
-            </span>
             <Button
               kind="primary"
               size="md"
               onClick={onSubmitAll}
-              disabled={validRows.length === 0 || isSubmittingCart}
+              disabled={cart.length === 0 || isSubmittingCart}
               renderIcon={Send}
+              className={styles.submitBtn}
             >
-              {isSubmittingCart ? 'Submitting…' : `Sign and place ${validRows.length} order(s)`}
+              {isSubmittingCart ? 'Submitting...' : 'Submit all'}
             </Button>
           </div>
-        )}
+        </div>
+        <QuickTemplates onSelect={setTemplateToParse} />
       </div>
 
-      <OrdersTable patientUuid={patientUuid} orderConfig={orderConfig} drugOrderTypeUuid={drugOrderTypeUuid} />
+      <div className={styles.basketSection}>
+        <div className={styles.basketList}>
+          {cart.map((row, index) => (
+            <InlineOrderRow
+              key={row.id}
+              row={row}
+              index={index}
+              orderConfig={orderConfig}
+              onChange={updateRow}
+              onRemove={removeRow}
+            />
+          ))}
+        </div>
+      </div>
     </div>
   );
 }

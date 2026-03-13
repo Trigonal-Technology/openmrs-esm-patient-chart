@@ -1,4 +1,4 @@
-import React, { useState, useRef, useCallback, useEffect } from 'react';
+import React, { useState, useRef, useCallback, useEffect, useMemo } from 'react';
 import { Add } from '@carbon/react/icons';
 import { TextInput, Button } from '@carbon/react';
 import { useDebounce } from '@openmrs/esm-framework';
@@ -22,7 +22,18 @@ export function NlpInput({ onParsed, orderConfig }: NlpInputProps) {
   const [preview, setPreview] = useState<ParsedPrescription | null>(null);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const debouncedValue = useDebounce(value, 300);
-  const { drugs } = useDrugSearch(debouncedValue.length >= 2 ? debouncedValue : '');
+
+  const searchTerm = useMemo(() => {
+    const tokens = debouncedValue.trim().split(/\s+/);
+    const searchTokens: string[] = [];
+    for (const token of tokens) {
+      if (/\d/.test(token) && searchTokens.length > 0) break;
+      searchTokens.push(token);
+    }
+    return searchTokens.join(' ');
+  }, [debouncedValue]);
+
+  const { drugs } = useDrugSearch(searchTerm.length >= 2 ? searchTerm : '');
   const inputRef = useRef<HTMLInputElement>(null);
 
   const fastDrugs: FastDrug[] = drugs.map((d) =>
@@ -110,7 +121,9 @@ export function NlpInput({ onParsed, orderConfig }: NlpInputProps) {
         <div className={styles.preview}>
           <span className={styles.previewText}>
             {preview.drug?.name ?? '?'}
-            {preview.dose != null ? ` ${preview.dose}` : ''}
+            {preview.dose != null && !(preview.drug?.name || '').includes(String(preview.dose))
+              ? ` ${preview.dose}`
+              : ''}
             {preview.frequency ? ' → parsed' : ''}
           </span>
           <span className={`${styles.confidence} ${confidenceColor}`}>{Math.round(preview.confidence * 100)}%</span>

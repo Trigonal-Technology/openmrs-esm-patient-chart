@@ -1,17 +1,54 @@
+@use '@carbon/colors';
+@use '@openmrs/esm-styleguide/src/vars' as *;
+
 .wrapper {
-  display: flex;
-  min-height: 0;
-  flex: 1;
+    // background-color: colors.$white-0;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    padding: 1rem;
+
+    @media (min-width: 1056px) {
+        flex-direction: row;
+        align-items: flex-start;
+    }
 }
 
 .main {
-  flex: 1;
-  min-width: 0;
-  padding: 1rem 0 1rem 1rem;
+    flex: 1;
+    min-width: 0;
+    border-radius: 4px;
+
+    :global(.cds--tabs) {
+        background-color: transparent;
+    }
+
+    :global(.cds--tab-content) {
+        padding: 1.5rem 0;
+    }
 }
 
-.loading {
-  padding: 2rem;
-  text-align: center;
-  color: var(--cds-text-secondary);
+.tabList {
+    position: sticky;
+    top: 3rem;
+    z-index: 10;
+    background-color: $ui-01;
+    border-bottom: 2px solid $ui-03;
+
+    & :global(.cds--tabs__nav-link) {
+        border-bottom: none !important;
+    }
+}
+
+.tab {
+    height: 2.5rem;
+
+    &:active,
+    &:focus {
+        outline: none !important;
+    }
+
+    &[aria-selected='true'] {
+        border-bottom: 3px solid var(--brand-03) !important;
+    }
 }

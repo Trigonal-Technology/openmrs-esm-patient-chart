@@ -11,11 +11,14 @@ function rowSummary(row: OrderRow, orderConfig: OrderConfigObject): string {
   const route = orderConfig.drugRoutes.find((r) => r.valueCoded === row.route);
   const freq = orderConfig.orderFrequencies.find((f) => f.valueCoded === row.frequency);
   const dur = orderConfig.durationUnits.find((u) => u.valueCoded === row.durationUnits);
+  const doseUnit = orderConfig.drugDosingUnits.find((u) => u.valueCoded === row.doseUnits);
+
   let s = row.drug.name;
-  if (row.dose) s += ` ${row.dose}`;
-  if (route) s += ` ${route.value}`;
-  if (freq) s += ` ${(freq as { value?: string }).value ?? ''}`;
-  if (row.duration && dur) s += ` × ${row.duration} ${dur.value}`;
+  if (row.dose) s += ` ${row.dose} ${doseUnit?.value ?? ''}`;
+  if (route) s += ` — ${route.value}`;
+  if (freq) s += ` — ${(freq as { value?: string }).value ?? ''}`;
+  if (row.duration && dur) s += ` — ${row.duration} ${dur.value}`;
+  if (row.quantity) s += ` — QUANTITY ${row.quantity} ${doseUnit?.value ?? ''}`;
   return s;
 }
 

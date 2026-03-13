@@ -56,6 +56,10 @@ const FREQ_ABBREV_MAP: Record<string, string> = {
   bid: 'twice daily',
   tid: 'three times daily',
   qid: 'four times daily',
+  q1h: 'every hour',
+  qh: 'every hour',
+  q2h: 'every 2 hours',
+  q3h: 'every 3 hours',
   q4h: 'every 4 hours',
   q6h: 'every 6 hours',
   q8h: 'every 8 hours',
@@ -64,6 +68,18 @@ const FREQ_ABBREV_MAP: Record<string, string> = {
 };
 
 const DURATION_ABBREV_MAP: Record<string, string> = {
+  s: 'second',
+  sec: 'second',
+  second: 'second',
+  seconds: 'second',
+  m: 'minute',
+  min: 'minute',
+  minute: 'minute',
+  minutes: 'minute',
+  h: 'hour',
+  hr: 'hour',
+  hour: 'hour',
+  hours: 'hour',
   d: 'day',
   day: 'day',
   days: 'day',
@@ -74,6 +90,10 @@ const DURATION_ABBREV_MAP: Record<string, string> = {
   mo: 'month',
   month: 'month',
   months: 'month',
+  y: 'year',
+  yr: 'year',
+  year: 'year',
+  years: 'year',
 };
 
 function parseStrengthToDoses(strength: string): number[] {
@@ -127,23 +147,29 @@ export function parsePrescription(
   let matched = 0;
   const total = 5;
 
+  // Sort drugs by length descending to match more specific names first (e.g. "Paracetamol 500mg" before "Paracetamol")
+  const sortedDrugs = [...drugs].sort((a, b) => b.name.length - a.name.length);
+
   let drug: FastDrug | null = null;
-  for (const d of drugs) {
-    const names = [
-      d.name.toLowerCase(),
-      d.display.toLowerCase(),
-      ...d.name
-        .toLowerCase()
-        .split(/[\s()]+/)
-        .filter(Boolean),
-    ];
-    for (const n of names) {
-      if (n.length > 2 && lower.includes(n)) {
-        drug = d;
-        break;
-      }
+  for (const d of sortedDrugs) {
+    const drugNameLower = d.name.toLowerCase();
+    const drugDisplayLower = d.display.toLowerCase();
+
+    // Check if the full drug name or display name is present as a word/phrase
+    const nameRegex = new RegExp(`\\b${drugNameLower.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i');
+    const displayRegex = new RegExp(`\\b${drugDisplayLower.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i');
+
+    if (nameRegex.test(text) || displayRegex.test(text)) {
+      drug = d;
+      break;
     }
-    if (drug) break;
+
+    // fallback to component matches if no full match
+    const components = drugNameLower.split(/[\s()]+/).filter((c) => c.length > 2);
+    if (components.length > 0 && components.every((c) => new RegExp(`\\b${c}\\b`, 'i').test(text))) {
+      drug = d;
+      break;
+    }
   }
   if (drug) matched++;
 
@@ -203,8 +229,22 @@ export function parsePrescription(
       'twice daily': 'bid',
       'three times daily': 'tid',
       'four times daily': 'qid',
+      'thrice daily': 'tid',
       'once a day': 'od',
       'twice a day': 'bid',
+      'every hour': 'q1h',
+      'every two hours': 'q2h',
+      'every 2 hours': 'q2h',
+      'every three hours': 'q3h',
+      'every 3 hours': 'q3h',
+      'every four hours': 'q4h',
+      'every 4 hours': 'q4h',
+      'every six hours': 'q6h',
+      'every 6 hours': 'q6h',
+      'every eight hours': 'q8h',
+      'every 8 hours': 'q8h',
+      'every twelve hours': 'q12h',
+      'every 12 hours': 'q12h',
     };
     for (const [phrase, abbr] of Object.entries(longFormMap)) {
       if (lower.includes(phrase)) {

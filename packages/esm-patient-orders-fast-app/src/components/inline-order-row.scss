@@ -1,32 +1,25 @@
 .row {
-  border-bottom: 1px solid var(--cds-border-subtle);
-  background: var(--cds-layer-01);
+  border: 1px solid var(--cds-border-subtle);
+  background: var(--cds-ui-background, #ffffff);
   transition: background 0.11s;
-
-  &:hover {
-    background: var(--cds-layer-hover);
-  }
+  overflow: hidden;
+  margin: 0.5rem 0;
 
   &.invalid {
     border-left: 2px solid var(--cds-support-warning);
   }
 }
 
-.content {
+.header {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: space-between;
-  gap: 0.5rem;
-  padding: 0.75rem 1rem;
-}
-
-.main {
-  flex: 1;
-  min-width: 0;
+  padding: 0.75rem 1.5rem;
+  background: var(--cds-layer-01, #f4f4f4);
 }
 
 .drugName {
-  font-size: 0.875rem;
+  font-size: 1rem;
   font-weight: 600;
   color: var(--cds-text-primary);
   margin: 0;
@@ -39,30 +32,6 @@
   background: var(--cds-support-info);
   color: white;
   border-radius: 2px;
-}
-
-.details {
-  font-size: 0.875rem;
-  color: var(--cds-text-primary);
-  margin: 0.25rem 0 0 0;
-}
-
-.label {
-  font-size: 0.625rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: var(--cds-text-secondary);
-}
-
-.sep {
-  color: var(--cds-text-secondary);
-}
-
-.qty {
-  font-size: 0.75rem;
-  color: var(--cds-text-secondary);
-  margin: 0.25rem 0 0 0;
 }
 
 .removeBtn {
@@ -82,22 +51,40 @@
   }
 }
 
-.editable {
+.grid {
+  display: grid;
+  grid-template-columns: minmax(auto, 1fr) minmax(auto, 1fr) minmax(auto, 1fr);
+  row-gap: 1.5rem;
+  column-gap: 2rem;
+  padding: 1.25rem 1.5rem 1.5rem;
+}
+
+.field {
   display: flex;
-  flex-wrap: wrap;
-  align-items: center;
+  flex-direction: column;
+  justify-content: flex-end;
+  gap: 0.25rem;
+}
+
+.label {
+  font-size: 0.75rem;
+  color: var(--cds-text-secondary);
+}
+
+.inputGroup {
+  display: flex;
+  align-items: flex-end;
   gap: 0.5rem;
-  padding: 0.5rem 1rem 0.75rem;
-  border-top: 1px solid var(--cds-border-subtle);
 }
 
 .input {
-  width: 3.5rem;
-  padding: 0.25rem 0.5rem;
-  font-size: 0.75rem;
+  width: 4rem;
+  padding: 0.25rem 0.5rem 0.25rem 0;
+  font-size: 0.875rem;
   border: 0;
-  border-bottom: 2px solid var(--cds-border-subtle);
-  background: var(--cds-layer-02);
+  border-bottom: 1px solid var(--cds-border-strong);
+  background: transparent;
+  height: 2rem;
 
   &:focus {
     outline: none;
@@ -106,6 +93,7 @@
 
   &[type='number'] {
     -moz-appearance: textfield;
+    appearance: textfield;
   }
 
   &::-webkit-outer-spin-button,
@@ -117,5 +105,31 @@
 
 .select {
   width: auto;
-  min-width: 3.5rem;
+  min-width: 5rem;
+
+  :global(.cds--label) {
+    display: none !important;
+  }
+
+  :global(.cds--select-input) {
+    background: transparent;
+    border: none;
+    border-bottom: 1px solid var(--cds-border-strong);
+    padding: 0 2rem 0 0;
+    height: 2rem;
+
+    &:focus {
+      outline: none;
+      border-bottom: 1px solid var(--cds-focus);
+    }
+  }
+}
+
+.qtyValue {
+  font-size: 0.875rem;
+  font-weight: 500;
+  padding: 0.25rem 0.5rem;
+  height: 2rem;
+  display: flex;
+  align-items: center;
 }

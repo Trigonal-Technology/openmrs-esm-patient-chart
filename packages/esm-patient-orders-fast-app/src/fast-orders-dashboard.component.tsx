@@ -9,6 +9,7 @@ import {
   invalidateVisitAndEncounterData,
 } from '@openmrs/esm-patient-common-lib';
 import { useOrderConfig } from './resources/order-config.resource';
+import { useFastOrdersCart } from './resources/fast-orders-cart.resource';
 import { InlinePrescriptionBuilder } from './components/InlinePrescriptionBuilder';
 import { PrescriptionBuilder } from './components/PrescriptionBuilder';
 import { CartSidebar } from './components/CartSidebar';
@@ -19,8 +20,7 @@ import type { OrderRow } from './components/InlineOrderRow';
 import type { OrderConfigObject } from './resources/order-config.resource';
 import styles from './fast-orders-dashboard.scss';
 
-let cartIdCounter = 0;
-const nextCartId = () => `cart-${++cartIdCounter}`;
+// Removed local cartIdCounter and nextCartId - now in fast-orders-cart.resource.ts
 
 function getTimesPerDay(freqValue: string, orderConfig: OrderConfigObject): number {
   const f = orderConfig.orderFrequencies.find((x) => x.valueCoded === freqValue);
@@ -59,33 +59,23 @@ export default function FastOrdersDashboard({ patientUuid, patient }: FastOrders
   const orderLocationUuid = sessionLocation?.uuid ?? '';
   const visitUuid = visitContext?.uuid;
 
-  const [cart, setCart] = useState<OrderRow[]>([]);
+  const { cart, addToCart, updateCartItem, removeFromCart, clearCart, nextId } = useFastOrdersCart();
   const [activeTabIndex, setActiveTabIndex] = useState(0);
   const [editingCartId, setEditingCartId] = useState<string | null>(null);
   const [isSubmittingCart, setIsSubmittingCart] = useState(false);
-  const nextIdRef = useRef(() => nextCartId());
 
-  const addToCart = useCallback((row: OrderRow) => {
-    const id = row.id || nextIdRef.current();
-    setCart((prev) => [...prev, { ...row, id }]);
-  }, []);
-
-  const updateCartItem = useCallback((id: string, updates: Partial<OrderRow>) => {
-    setCart((prev) => prev.map((r) => (r.id === id ? { ...r, ...updates } : r)));
-  }, []);
-
-  const removeFromCart = useCallback(
+  const handleRemoveFromCart = useCallback(
     (id: string) => {
-      setCart((prev) => prev.filter((r) => r.id !== id));
+      removeFromCart(id);
       if (editingCartId === id) setEditingCartId(null);
     },
-    [editingCartId],
+    [editingCartId, removeFromCart],
   );
 
-  const clearCart = useCallback(() => {
-    setCart([]);
+  const handleClearCart = useCallback(() => {
+    clearCart();
     setEditingCartId(null);
-  }, []);
+  }, [clearCart]);
 
   const validCartItems = cart.filter((r) => r.drug && r.dose && r.dose > 0 && r.duration && r.duration > 0);
 
@@ -119,8 +109,7 @@ export default function FastOrdersDashboard({ patientUuid, patient }: FastOrders
         orderLocationUuid,
         visitUuid,
       );
-      setCart([]);
-      setEditingCartId(null);
+      handleClearCart();
       mutateOrders();
       invalidateVisitAndEncounterData(mutate, patientUuid);
       showSnackbar({
@@ -189,9 +178,9 @@ export default function FastOrdersDashboard({ patientUuid, patient }: FastOrders
     <div className={styles.wrapper}>
       <div className={styles.main}>
         <Tabs selectedIndex={activeTabIndex} onChange={(e) => setActiveTabIndex(e.selectedIndex)}>
-          <TabList aria-label={t('orderEntryTabs', 'Order entry tabs')}>
-            <Tab>{t('orderBasket', 'Order Basket')}</Tab>
-            <Tab>{t('singleOrderForm', 'Single Order Form')}</Tab>
+          <TabList aria-label={t('orderEntryTabs', 'Order entry tabs')} className={styles.tabList}>
+            <Tab className={styles.tab}>{t('orderBasket', 'Order Basket')}</Tab>
+            <Tab className={styles.tab}>{t('singleOrderForm', 'Single Order Form')}</Tab>
           </TabList>
           <TabPanels>
             <TabPanel>
@@ -200,9 +189,9 @@ export default function FastOrdersDashboard({ patientUuid, patient }: FastOrders
                 cart={cart}
                 addToCart={addToCart}
                 updateRow={updateCartItem}
-                removeRow={removeFromCart}
-                clearCart={clearCart}
-                nextId={nextIdRef.current}
+                removeRow={handleRemoveFromCart}
+                clearCart={handleClearCart}
+                nextId={nextId}
                 onSubmitAll={handleSubmitAll}
                 isSubmittingCart={isSubmittingCart}
               />
@@ -225,7 +214,7 @@ export default function FastOrdersDashboard({ patientUuid, patient }: FastOrders
         cart={cart}
         orderConfig={orderConfigObject}
         onEditItem={handleEditCartItem}
-        onRemoveItem={removeFromCart}
+        onRemoveItem={handleRemoveFromCart}
         onSubmitAll={handleSubmitAll}
         isSubmitting={isSubmittingCart}
         validCount={validCartItems.length}

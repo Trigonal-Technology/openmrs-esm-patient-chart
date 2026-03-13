@@ -76,6 +76,7 @@ export function PrescriptionBuilder({
       duration: state.duration,
       durationUnits: state.durationUnits,
       asNeeded: state.asNeeded,
+      numRefills: state.numRefills,
       quantity: state.quantity ?? autoQuantity ?? null,
     };
   }, [state, autoQuantity]);
@@ -92,6 +93,7 @@ export function PrescriptionBuilder({
       duration: state.duration!,
       durationUnits: state.durationUnits,
       asNeeded: state.asNeeded,
+      numRefills: state.numRefills,
       quantity: state.quantity ?? autoQuantity ?? null,
     });
     reset();

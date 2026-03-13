@@ -1,5 +1,4 @@
 .container {
-  max-width: 42rem;
   margin: 0 auto;
 }
 
@@ -20,6 +19,7 @@
 }
 
 .content {
+  background: var(--cds-ui-background, #ffffff);
   padding: 1rem;
   display: flex;
   flex-direction: column;

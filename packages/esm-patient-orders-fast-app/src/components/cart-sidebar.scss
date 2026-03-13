@@ -1,11 +1,21 @@
 .sidebar {
-  width: 280px;
-  min-width: 280px;
+  width: 100%;
   background: var(--cds-layer-01);
-  border-left: 1px solid var(--cds-border-subtle-01);
-  padding: 1rem;
+  border: 1px solid var(--cds-border-subtle);
+  background: var(--cds-ui-background, #ffffff);
+  border-radius: 4px;
+  padding: 1.5rem;
   display: flex;
   flex-direction: column;
+
+  @media (min-width: 1056px) {
+    width: 320px;
+    min-width: 320px;
+    margin-top: calc(4rem + 2px); // 2.5rem tab height + 1.5rem padding + 2px border
+    position: sticky;
+    top: 7rem; // Matches dashboard tab stickiness
+    max-height: calc(100vh - 8rem);
+  }
 }
 
 .title {

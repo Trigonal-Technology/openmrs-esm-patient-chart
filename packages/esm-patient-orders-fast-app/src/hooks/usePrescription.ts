@@ -2,6 +2,7 @@ import { useState, useMemo, useCallback } from 'react';
 import type { FastDrug } from '../lib/prescriptionParser';
 import type { OrderConfigObject } from '../resources/order-config.resource';
 import type { OrderRow } from '../components/InlineOrderRow';
+import { calculateAutoQuantity } from '../lib/quantityCalculator';
 
 export interface PrescriptionState {
   drug: FastDrug | null;
@@ -57,36 +58,9 @@ export function usePrescription(orderConfig: OrderConfigObject) {
     }));
   }, []);
 
-  const getTimesPerDay = useCallback(
-    (freqValue: string) => {
-      const f = orderConfig.orderFrequencies.find((x) => x.valueCoded === freqValue);
-      const v = (f as { value?: string })?.value?.toLowerCase() ?? '';
-      if (v.includes('once') || v.includes('od')) return 1;
-      if (v.includes('twice') || v.includes('bid')) return 2;
-      if (v.includes('three') || v.includes('tid')) return 3;
-      if (v.includes('four') || v.includes('qid')) return 4;
-      return 1;
-    },
-    [orderConfig],
-  );
-
-  const getDurationDays = useCallback(
-    (duration: number, durationUnits: string) => {
-      const u = orderConfig.durationUnits.find((x) => x.valueCoded === durationUnits);
-      const v = (u as { value?: string })?.value?.toLowerCase() ?? '';
-      if (v.includes('week')) return duration * 7;
-      if (v.includes('month')) return duration * 30;
-      return duration;
-    },
-    [orderConfig],
-  );
-
   const autoQuantity = useMemo(() => {
-    if (!state.dose || !state.duration) return null;
-    const timesPerDay = getTimesPerDay(state.frequency);
-    const days = getDurationDays(state.duration, state.durationUnits);
-    return Math.ceil(timesPerDay * days);
-  }, [state.dose, state.duration, state.frequency, state.durationUnits, getTimesPerDay, getDurationDays]);
+    return calculateAutoQuantity(state.dose, state.frequency, state.duration, state.durationUnits, orderConfig);
+  }, [state.dose, state.duration, state.frequency, state.durationUnits, orderConfig]);
 
   const prescriptionSummary = useMemo(() => {
     if (!state.drug) return '';
@@ -97,13 +71,14 @@ export function usePrescription(orderConfig: OrderConfigObject) {
 
     let summary = state.drug.name;
     if (state.dose) summary += ` ${state.dose} ${doseUnit?.value ?? ''}`;
-    if (route) summary += ` ${route.value}`;
-    if (freq) summary += ` ${(freq as { value?: string }).value ?? ''}`;
-    if (state.duration && durUnit) summary += ` × ${state.duration} ${durUnit.value}`;
-    if (state.asNeeded) summary += ' PRN';
-    if (state.asNeededCondition) summary += ` (${state.asNeededCondition})`;
+    if (route) summary += ` — ${route.value}`;
+    if (freq) summary += ` — ${(freq as { value?: string }).value ?? ''}`;
+    if (state.duration && durUnit) summary += ` — ${state.duration} ${durUnit.value}`;
+    if (state.quantity || autoQuantity) {
+      summary += ` — QUANTITY ${state.quantity ?? autoQuantity} ${doseUnit?.value ?? ''}`;
+    }
     return summary;
-  }, [state, orderConfig]);
+  }, [state, autoQuantity, orderConfig]);
 
   const isValid = useMemo(
     () => !!(state.drug && state.dose && state.dose > 0 && state.duration && state.duration > 0),
@@ -162,7 +137,7 @@ export function usePrescription(orderConfig: OrderConfigObject) {
       durationUnits: row.durationUnits,
       asNeeded: row.asNeeded,
       asNeededCondition: '',
-      numRefills: 0,
+      numRefills: row.numRefills,
       quantity: row.quantity,
       quantityUnits: row.doseUnits,
       dosingInstructions: '',

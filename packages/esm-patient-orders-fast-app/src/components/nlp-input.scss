@@ -1,4 +1,7 @@
 .container {
+  margin-top: 0.75rem;
+  border: 1px solid var(--cds-border-subtle);
+  background: var(--cds-ui-background, #ffffff);
   padding: 0 1rem 1rem;
   position: relative;
 }
@@ -11,6 +14,7 @@
 
 .input {
   flex: 1;
+  margin: 0.75rem 0;
 }
 
 .suggestions {
