@@ -8,6 +8,7 @@
   "scripts": {
     "start": "openmrs develop --sources packages/esm-patient-chart-app/",
     "start:fast-orders": "openmrs develop --sources packages/esm-patient-chart-app/ --sources packages/esm-patient-orders-fast-app/",
+    "start:orderset": "openmrs develop --sources packages/esm-patient-chart-app/ --sources packages/esm-patient-orders-fast-app/ --sources packages/esm-orderset-app/",
     "ci:publish": "yarn workspaces foreach --all --topological --exclude @openmrs/esm-patient-chart npm publish --access public --tag latest",
     "ci:prepublish": "yarn workspaces foreach --all --topological --exclude @openmrs/esm-patient-chart npm publish --access public --tag next",
     "ci:prepublish-patch": "yarn workspaces foreach --all --topological --exclude @openmrs/esm-patient-chart npm publish --access public --tag patch",

@@ -1,0 +1,53 @@
+@use '@carbon/colors';
+@use '@carbon/layout';
+@use '@openmrs/esm-styleguide/src/vars' as *;
+
+.clickableTileDesktop {
+  padding: layout.$spacing-03 layout.$spacing-04;
+  border-bottom: 1px solid $ui-03;
+}
+
+.clickableTileTablet {
+  padding: layout.$spacing-04 layout.$spacing-05;
+  background-color: $ui-02;
+  border-bottom: 1px solid $ui-03;
+}
+
+.tileContent {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+}
+
+.clipText {
+  font-size: layout.$spacing-05;
+  line-height: 1.5;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  min-width: 0;
+}
+
+.newLabel {
+  display: inline-block;
+  background-color: colors.$green-10-hover;
+  padding: 0 layout.$spacing-02;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  margin-right: 0.25rem;
+}
+
+.drugName {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #000000;
+}
+
+.dosageInfo {
+  font-size: 0.75rem;
+  color: $text-02;
+  margin-top: 0.125rem;
+}
+
+.removeButton {
+  fill: var(--cds-support-error, #0f62fe);
+}

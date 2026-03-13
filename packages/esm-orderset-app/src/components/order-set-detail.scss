@@ -1,0 +1,238 @@
+@use '@carbon/colors';
+@use '@openmrs/esm-styleguide/src/vars' as *;
+
+.container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow-y: auto;
+  background-color: colors.$gray-10;
+  padding-bottom: 2rem;
+}
+
+.backNav {
+  padding: 0.5rem 1rem;
+  background-color: colors.$white-0;
+}
+
+.backButton {
+  padding-left: 0;
+  color: colors.$blue-60;
+  display: flex;
+  align-items: center;
+
+  &:hover {
+    color: colors.$blue-70;
+  }
+}
+
+.backArrow {
+  margin-right: 0.5rem;
+}
+
+.headerArea {
+  padding: 1rem 1.5rem;
+  background-color: colors.$white-0;
+  border-top: 1px solid colors.$gray-20;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+}
+
+.titleContent {
+  flex: 1;
+}
+
+.title {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 400;
+  color: colors.$gray-100;
+}
+
+.description {
+  margin: 0.5rem 0 0 0;
+  font-size: 0.875rem;
+  color: colors.$gray-70;
+}
+
+.metadata {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+  font-size: 0.75rem;
+  color: colors.$gray-70;
+
+  strong {
+    color: colors.$gray-90;
+    font-weight: 600;
+  }
+}
+
+.metaSeparator {
+  width: 1px;
+  height: 12px;
+  background-color: colors.$gray-30;
+  margin: 0 0.5rem;
+}
+
+.metaIcon {
+  vertical-align: middle;
+  margin-right: 0.25rem;
+  fill: colors.$teal-50;
+}
+
+.actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.editButton {
+  border: 1px solid colors.$gray-30;
+  color: colors.$gray-80;
+  background-color: var(--cds-layer-01, colors.$gray-10);
+
+  &:hover {
+    background-color: colors.$gray-20;
+    color: colors.$gray-90;
+  }
+}
+
+.deleteButton {
+  border: 1px solid colors.$gray-30;
+  color: colors.$red-60;
+  background-color: var(--cds-layer-01, colors.$gray-10);
+
+  &:hover {
+    background-color: #fee2e2;
+    color: colors.$red-70;
+  }
+}
+
+.contentGrid {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 2rem;
+  padding: 0 0 0 1.5rem;
+  width: 100%;
+}
+
+.sectionTitle {
+  font-size: 1.25rem;
+  font-weight: 400;
+  color: colors.$gray-90;
+  margin: 1.25rem 0;
+}
+
+.mainColumn {
+  display: flex;
+  flex-direction: column;
+}
+
+.drugList {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.drugCard {
+  background-color: colors.$white-0;
+  border: 1px solid colors.$gray-20;
+  padding: 1.25rem;
+  border-left: 4px solid colors.$teal-60;
+}
+
+.drugHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 0.75rem;
+}
+
+.drugNameRow {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.drugIcon {
+  fill: colors.$teal-60;
+}
+
+.drugName {
+  font-size: 1.125rem;
+  font-weight: 400;
+  color: colors.$gray-100;
+}
+
+.drugTags {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.drugDetails {
+  font-size: 0.875rem;
+  color: colors.$gray-70;
+  padding-top: 0.75rem;
+  border-top: 1px solid colors.$gray-10;
+
+  p {
+    margin: 0;
+  }
+
+  strong {
+    color: colors.$gray-90;
+    font-weight: 500;
+  }
+}
+
+.detailDivider {
+  margin: 0 0.75rem;
+  color: colors.$gray-30;
+}
+
+.sideColumn {
+  display: flex;
+  flex-direction: column;
+}
+
+.infoPanel {
+  display: flex;
+  flex-direction: column;
+}
+
+.infoTitle {
+  background-color: colors.$white-0;
+  border-top: 1px solid colors.$gray-20;
+  font-size: 1.125rem;
+  font-weight: 400;
+  color: colors.$gray-90;
+  margin: 0;
+  padding: 1.25rem 1rem 1.25rem 1rem;
+}
+
+.infoRow {
+  display: flex;
+  justify-content: flex-start;
+  gap: 0.5rem;
+  padding: 1rem 1rem;
+  background-color: colors.$white-0;
+  border-top: 1px solid colors.$gray-20;
+
+  &:last-child {
+    border-bottom: 1px solid colors.$gray-20;
+  }
+}
+
+.infoLabel {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: colors.$gray-90;
+}
+
+.infoValue {
+  font-size: 0.875rem;
+  color: colors.$gray-70;
+}
