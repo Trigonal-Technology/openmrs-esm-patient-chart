@@ -65,6 +65,70 @@ export const configSchema = {
       'The name of the ordering location tag. If specified, the order baskets shows the order locations dropdown listing locations with the specified tag. The dropdown is hidden if this config value is not specified, and the order location defaults to the login location of the user.',
     _default: '',
   },
+  // labConceptSetUuid: {
+  //   _type: Type.UUID,
+  //   _description: 'Concept set UUID for Lab orders.',
+  //   _default: '1748a953-d12e-4be1-914c-f6b096c6cdef',
+  // },
+  // radiologyConceptSetUuid: {
+  //   _type: Type.UUID,
+  //   _description: 'Concept set UUID for Radiology orders.',
+  //   _default: 'cd9f116c-517d-439e-847d-d8d257434083',
+  // },
+  // procedureConceptSetUuid: {
+  //   _type: Type.UUID,
+  //   _description: 'Concept set UUID for Procedure orders.',
+  //   _default: '0c3019b0-9bd3-4bc7-8e2c-e6230c31ed18',
+  // },
+  // medicalSupplyConceptSetUuid: {
+  //   _type: Type.UUID,
+  //   _description: 'Concept set UUID for Medical Supply orders.',
+  //   _default: '095befe9-ff7c-4eba-bbd8-37b055f52e7d',
+  // },
+  labConceptSetUuid: {
+    _type: Type.UUID,
+    _description: 'Concept set UUID for Lab orders.',
+    _default: '300e7e12-f268-4349-81dc-d40cc7a202a0',
+    // _default: '1748a953-d12e-4be1-914c-f6b096c6cdef',
+  },
+  radiologyConceptSetUuid: {
+    _type: Type.UUID,
+    _description: 'Concept set UUID for Radiology orders.',
+    _default: 'd894a942-5d10-431f-b008-28436a977b4e',
+    // _default: 'cd9f116c-517d-439e-847d-d8d257434083',
+  },
+  procedureConceptSetUuid: {
+    _type: Type.UUID,
+    _description: 'Concept set UUID for Procedure orders.',
+    _default: '0c3019b0-9bd3-4bc7-8e2c-e6230c31ed18',
+    // _default: '0c3019b0-9bd3-4bc7-8e2c-e6230c31ed18',
+  },
+  medicalSupplyConceptSetUuid: {
+    _type: Type.UUID,
+    _description: 'Concept set UUID for Medical Supply orders.',
+    _default: '095befe9-ff7c-4eba-bbd8-37b055f52e7d',
+  },
+  labOrderTypeUuid: {
+    _type: Type.UUID,
+    _description: 'The UUID of the Lab order type.',
+    _default: '52a447d3-a64a-11e3-9aeb-50e549534c5e',
+  },
+  radiologyOrderTypeUuid: {
+    _type: Type.UUID,
+    _description: 'The UUID of the Radiology order type.',
+    _default: 'c19c8e82-8b8d-4b4e-b1ff-3f09890b2db3',
+  },
+  procedureOrderTypeUuid: {
+    _type: Type.UUID,
+    _description: 'The UUID of the Procedure order type.',
+    _default: '4237a01f-29c5-4167-9d8e-96d6e590aa33',
+  },
+  medicalSupplyOrderTypeUuid: {
+    _type: Type.UUID,
+    _description: 'The UUID of the Medical Supply order type.',
+    _default: 'dab3ab30-2feb-48ec-b4af-8332a0831b49',
+  },
+
 };
 
 export interface OrderTypeDefinition {
@@ -82,4 +146,12 @@ export interface ConfigObject {
   showReferenceNumberField: boolean;
   ordererProviderRoles: Array<string>;
   orderLocationTagName: string;
+  labConceptSetUuid: string;
+  radiologyConceptSetUuid: string;
+  procedureConceptSetUuid: string;
+  medicalSupplyConceptSetUuid: string;
+  labOrderTypeUuid: string;
+  radiologyOrderTypeUuid: string;
+  procedureOrderTypeUuid: string;
+  medicalSupplyOrderTypeUuid: string;
 }

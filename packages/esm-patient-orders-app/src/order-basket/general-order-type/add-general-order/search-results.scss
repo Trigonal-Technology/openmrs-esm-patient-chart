@@ -37,6 +37,7 @@
     margin-right: -50%;
   }
 }
+
 .separatorContainer {
   display: flex;
   flex-direction: column;
@@ -64,15 +65,6 @@
   flex-direction: column;
   justify-content: space-between;
   border: 1px solid $grey-2;
-  &:not(:last-of-type) {
-    margin-bottom: layout.$spacing-03;
-  }
-}
-
-.tabletSearchResultTile {
-  &:not(:last-of-type) {
-    margin-bottom: layout.$spacing-04;
-  }
 }
 
 .searchResultTileContent {
@@ -101,6 +93,12 @@
     display: flex;
     align-items: center;
   }
+
+  .skeletonGrid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: layout.$spacing-03;
+  }
 }
 
 .emptyState {
@@ -122,6 +120,12 @@
   color: $interactive-01;
   text-decoration: underline;
   cursor: pointer;
+}
+
+.resultsContainer {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: layout.$spacing-03;
 }
 
 .resultsContainer::-webkit-scrollbar {

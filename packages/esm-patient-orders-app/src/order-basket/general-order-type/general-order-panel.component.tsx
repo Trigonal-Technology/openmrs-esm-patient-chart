@@ -13,6 +13,7 @@ interface GeneralOrderTypeProps extends OrderTypeDefinition {
   patient: fhir.Patient;
   orderTypeUuid: string;
   launchGeneralOrderForm(orderTypeUuid: string, order?: OrderBasketItem): void;
+  prepFunction?: any;
 }
 
 /**
@@ -27,12 +28,17 @@ const GeneralOrderPanel: React.FC<GeneralOrderTypeProps> = ({
   label,
   icon,
   launchGeneralOrderForm,
+  prepFunction,
 }) => {
   const { t } = useTranslation();
   const isTablet = useLayoutType() === 'tablet';
   const { orderType, isLoadingOrderType } = useOrderType(orderTypeUuid);
 
-  const { orders, setOrders } = useOrderBasket<OrderBasketItem>(patient, orderTypeUuid, prepOrderPostData);
+  const { orders, setOrders } = useOrderBasket<OrderBasketItem>(
+    patient,
+    orderTypeUuid,
+    prepFunction || prepOrderPostData,
+  );
   const [isExpanded, setIsExpanded] = useState(orders.length > 0);
   const {
     incompleteOrderBasketItems,

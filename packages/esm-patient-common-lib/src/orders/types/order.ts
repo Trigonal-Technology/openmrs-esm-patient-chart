@@ -225,6 +225,9 @@ export interface OrderBasketExtensionProps {
   launchDrugOrderForm(order?: DrugOrderBasketItem): void;
   launchLabOrderForm(orderTypeUuid: string, order?: TestOrderBasketItem): void;
   launchGeneralOrderForm(orderTypeUuid: string, order?: OrderBasketItem): void;
+  launchImagingOrderForm(orderTypeUuid: string, order?: any): void;
+  launchProcedureOrderForm(orderTypeUuid: string, order?: any): void;
+  launchMedicalSupplyForm(orderTypeUuid: string, order?: any): void;
 }
 
 export interface DrugOrderBasketItem extends OrderBasketItem {
