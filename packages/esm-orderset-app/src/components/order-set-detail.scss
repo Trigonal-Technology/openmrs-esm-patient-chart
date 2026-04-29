@@ -236,3 +236,8 @@
   font-size: 0.875rem;
   color: colors.$gray-70;
 }
+
+.requiredIndicator {
+  color: var(--cds-support-error, #da1e28);
+  margin-left: 0.25rem;
+}

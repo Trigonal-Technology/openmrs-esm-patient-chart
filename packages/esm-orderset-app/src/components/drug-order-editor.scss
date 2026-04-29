@@ -81,6 +81,9 @@
 }
 
 .drugChip {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
   padding: 0.25rem 0.5rem;
   font-size: 0.75rem;
   border: 1px solid $ui-03;
@@ -95,6 +98,20 @@
     border-color: var(--cds-border-interactive, #0f62fe);
   }
 }
+
+.chipIcon {
+  display: flex;
+  align-items: center;
+  svg {
+    fill: colors.$gray-60;
+  }
+}
+
+.chipClass {
+  color: $text-02;
+  font-style: italic;
+}
+
 
 .cardsWrapper {
   flex: 1;
@@ -146,6 +163,22 @@
   flex-shrink: 0;
 }
 
+.memberIcon {
+  display: flex;
+  align-items: center;
+  svg {
+    fill: colors.$gray-60;
+  }
+}
+
+.typeTag {
+  margin: 0 !important;
+  font-size: 0.625rem !important;
+  font-weight: 600 !important;
+  min-height: 1rem !important;
+  line-height: 1rem !important;
+}
+
 .drugName {
   font-size: 0.875rem;
   font-weight: 600;
@@ -188,9 +221,19 @@
   flex-direction: column;
 }
 
-.deleteButton {
-  fill: var(--cds-support-error, #da1e28);
+.formGroupFullWidth {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-direction: column;
 }
+
+.deleteButton {
+  fill: colors.$gray-50;
+  &:hover {
+    fill: var(--cds-support-error, #da1e28);
+  }
+}
+
 
 .emptyState {
   display: flex;

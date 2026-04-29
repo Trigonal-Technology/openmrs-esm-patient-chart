@@ -1,0 +1,13 @@
+{d.quantity && ` (Qty: ${d.quantity} ${d.quantityUnits || ''})`}
+                                  </span>
+                                )}
+                                {d.memberType === 'MEDICAL_SUPPLY' && d.quantity && (
+                                  <span className={styles.previewMeta}>
+                                    {' '}
+                                    Qty: {d.quantity} {d.quantityUnits || ''}
+                                  </span>
+                                )}
+                                {d.memberType === 'PROCEDURE' && d.numberOfRepeats && d.numberOfRepeats > 1 && (
+                                  <span className={styles.previewMeta}>
+                                    {' '}
+                                    x{d.numberOfRepeats}

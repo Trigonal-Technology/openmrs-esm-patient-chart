@@ -19,3 +19,11 @@ export function getDisplayForConfig<T extends { valueCoded: string; value: strin
   const match = items.find((i) => i.valueCoded === valueCoded);
   return match?.value ?? valueCoded;
 }
+export function findValueCodedById<T extends { valueCoded: string; conceptId?: number }>(
+  items: T[],
+  id?: number,
+): string | undefined {
+  if (id === undefined) return undefined;
+  const match = items.find((i) => i.conceptId === id);
+  return match?.valueCoded;
+}

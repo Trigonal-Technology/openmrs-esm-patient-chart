@@ -135,7 +135,7 @@ export default function OrderSetSelector({
                     </div>
                     <div className={styles.setMeta}>
                       <Tag size="sm" type="gray">
-                        {set.drugs.length} drugs
+                        {set.members.length} {set.members.length === 1 ? t('item', 'item') : t('items', 'items')}
                       </Tag>
                       <span className={styles.setDescription}>{set.description}</span>
                     </div>

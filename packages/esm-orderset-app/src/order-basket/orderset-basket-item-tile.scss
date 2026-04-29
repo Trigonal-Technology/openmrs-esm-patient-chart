@@ -27,27 +27,46 @@
   min-width: 0;
 }
 
+.tileHeader {
+  display: flex;
+  align-items: center;
+  gap: layout.$spacing-02;
+  margin-bottom: 0.125rem;
+
+  svg {
+    fill: colors.$gray-60;
+  }
+}
+
 .newLabel {
   display: inline-block;
   background-color: colors.$green-10-hover;
-  padding: 0 layout.$spacing-02;
-  font-size: 0.6875rem;
+  padding: 0 layout.$spacing-01;
+  font-size: 0.625rem;
   font-weight: 600;
-  margin-right: 0.25rem;
+  color: colors.$green-80;
+  text-transform: uppercase;
 }
 
 .drugName {
   font-size: 0.875rem;
   font-weight: 600;
   color: #000000;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .dosageInfo {
   font-size: 0.75rem;
   color: $text-02;
-  margin-top: 0.125rem;
+  padding-left: layout.$spacing-06; // Align with drugName after icon
 }
 
 .removeButton {
-  fill: var(--cds-support-error, #0f62fe);
+  fill: colors.$gray-50;
+  &:hover {
+    fill: var(--cds-support-error, #da1e28);
+  }
 }
+

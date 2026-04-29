@@ -1,8 +1,8 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button, Tag, Tile, Link } from '@carbon/react';
-import { ArrowLeft, ArrowRight, Edit, TrashCan, Medication } from '@carbon/react/icons';
-import type { OrderSet } from '../resources/orderset-config';
+import { ArrowLeft, ArrowRight, Edit, TrashCan, Medication, Scalpel, ImageMedical, Microscope, ToolBox } from '@carbon/react/icons';
+import type { OrderSet, OrderMemberType } from '../resources/orderset-config';
 import type { OrderConfigObject } from '../resources/order-config.resource';
 import { getDisplayForConfig } from '../lib/order-config-utils';
 import styles from './order-set-detail.scss';
@@ -15,6 +15,17 @@ interface OrderSetDetailProps {
   onEdit: (set: OrderSet) => void;
   onDelete: (setId: string) => void;
 }
+
+const getMemberIcon = (type: OrderMemberType) => {
+  switch (type) {
+    case 'DRUG': return <Medication size={20} className={styles.drugIcon} />;
+    case 'LAB': return <Microscope size={20} className={styles.drugIcon} />;
+    case 'RADIOLOGY': return <ImageMedical size={20} className={styles.drugIcon} />;
+    case 'PROCEDURE': return <Scalpel size={20} className={styles.drugIcon} />;
+    case 'MEDICAL_SUPPLY': return <ToolBox size={20} className={styles.drugIcon} />;
+    default: return <Medication size={20} className={styles.drugIcon} />;
+  }
+};
 
 export default function OrderSetDetail({
   set,
@@ -42,8 +53,7 @@ export default function OrderSetDetail({
           <div className={styles.metadata}>
             <span className={styles.metaLabel}><strong>Category:</strong> {set.category}</span>
             <span className={styles.metaLabel}>
-              <Medication size={16} className={styles.metaIcon} />
-              <strong>Drugs:</strong> {set.drugs.length}
+              <strong>{t('totalItems', 'Total Items')}:</strong> {set.members.length}
             </span>
           </div>
         </div>
@@ -62,27 +72,89 @@ export default function OrderSetDetail({
 
       <div className={styles.contentGrid}>
         <div className={styles.mainColumn}>
-          <h2 className={styles.sectionTitle}>{t('drugOrders', 'Drug Orders')}</h2>
+          <h2 className={styles.sectionTitle}>{t('orderItems', 'Order Items')}</h2>
 
           <div className={styles.drugList}>
-            {set.drugs.map((drug) => (
-              <Tile key={drug.id} className={styles.drugCard}>
+            {set.members.map((item) => (
+              <Tile key={item.id} className={styles.drugCard}>
                 <div className={styles.drugHeader}>
                   <div className={styles.drugNameRow}>
-                    <Medication size={20} className={styles.drugIcon} />
-                    <span className={styles.drugName}>{drug.drugName}</span>
+                    {getMemberIcon(item.memberType)}
+                    <span className={styles.drugName}>{item.drugName}</span>
+                    <Tag type={item.memberType === 'DRUG' ? 'teal' : 'purple'} size="sm" className={styles.typeTag}>
+                      {item.memberType}
+                    </Tag>
                   </div>
-                  <div className={styles.drugTags}>
-                    <Tag type="teal" size="sm">{drug.dose} {getDisplayForConfig(orderConfig?.drugDosingUnits ?? [], drug.doseUnit)}</Tag>
-                  </div>
+                  {item.memberType === 'DRUG' && item.dose && (
+                    <div className={styles.drugTags}>
+                      <Tag type="teal" size="sm">{item.dose} {getDisplayForConfig(orderConfig?.drugDosingUnits ?? [], item.doseUnit || '')}</Tag>
+                    </div>
+                  )}
                 </div>
 
                 <div className={styles.drugDetails}>
-                  <p>
-                    <strong>{t('dose', 'Dose')}:</strong> {drug.dose} {getDisplayForConfig(orderConfig?.drugDosingUnits ?? [], drug.doseUnit)}
-                    <span className={styles.detailDivider}>|</span>
-                    <strong>{getDisplayForConfig(orderConfig?.orderFrequencies ?? [], drug.frequency)}</strong> - {drug.duration} {getDisplayForConfig(orderConfig?.durationUnits ?? [], drug.durationUnit)}
-                  </p>
+                  {item.memberType === 'DRUG' ? (
+                    <p>
+                      <strong>{t('dose', 'Dose')}:</strong> {item.dose} {getDisplayForConfig(orderConfig?.drugDosingUnits ?? [], item.doseUnit || '')}
+                      <span className={styles.detailDivider}>|</span>
+                      <strong>{getDisplayForConfig(orderConfig?.orderFrequencies ?? [], item.frequency || '')}</strong> - {item.duration} {getDisplayForConfig(orderConfig?.durationUnits ?? [], item.durationUnit || '')}
+                      {item.quantity && (
+                        <>
+                          <span className={styles.detailDivider}>|</span>
+                          <strong>{t('qty', 'Qty')}:</strong> {item.quantity} {item.quantityUnits}
+                        </>
+                      )}
+                      {item.numRefills !== undefined && item.numRefills > 0 && (
+                        <>
+                          <span className={styles.detailDivider}>|</span>
+                          <strong>{t('refills', 'Refills')}:</strong> {item.numRefills}
+                        </>
+                      )}
+                      {item.asNeeded && (
+                        <>
+                          <span className={styles.detailDivider}>|</span>
+                          <strong>{t('prn', 'PRN')}</strong> {item.asNeededCondition && `(${item.asNeededCondition})`}
+                        </>
+                      )}
+                    </p>
+                  ) : item.memberType === 'PROCEDURE' ? (
+                    <p>
+                      {item.numberOfRepeats && (
+                        <>
+                          <strong>{t('repeats', 'Repeats')}:</strong> {item.numberOfRepeats}
+                          {item.instructions && <span className={styles.detailDivider}>|</span>}
+                        </>
+                      )}
+                      {item.instructions && (
+                        <>
+                          <strong>{t('instructions', 'Instructions')}:</strong> {item.instructions}
+                        </>
+                      )}
+                    </p>
+                  ) : item.memberType === 'MEDICAL_SUPPLY' ? (
+                    <p>
+                      <strong>{t('qty', 'Qty')}:</strong> {item.quantity} {item.quantityUnits}
+                      {item.instructions && (
+                        <>
+                          <span className={styles.detailDivider}>|</span>
+                          <strong>{t('instructions', 'Instructions')}:</strong> {item.instructions}
+                        </>
+                      )}
+                    </p>
+                  ) : (
+                    <p>
+                      {item.instructions && (
+                        <>
+                          <strong>{t('instructions', 'Instructions')}:</strong> {item.instructions}
+                        </>
+                      )}
+                    </p>
+                  )}
+                  {item.memberType === 'DRUG' && item.instructions && (
+                    <p className={styles.itemInstructions}>
+                      <strong>{t('instructions', 'Instructions')}:</strong> {item.instructions}
+                    </p>
+                  )}
                 </div>
               </Tile>
             ))}
@@ -102,11 +174,7 @@ export default function OrderSetDetail({
             </div>
             <div className={styles.infoRow}>
               <span className={styles.infoLabel}>{t('createdBy', 'Created By')}:</span>
-              <span className={styles.infoValue}>{isCustom ? t('currentUser', 'Current User') : t('system', 'Super Man')}</span>
-            </div>
-            <div className={styles.infoRow}>
-              <span className={styles.infoLabel}>{t('createdOn', 'Created On')}:</span>
-              <span className={styles.infoValue}>12 March 2026</span>
+              <span className={styles.infoValue}>{isCustom ? t('currentUser', 'Current User') : t('system', 'System')}</span>
             </div>
           </div>
         </div>
@@ -114,3 +182,4 @@ export default function OrderSetDetail({
     </div>
   );
 }
+

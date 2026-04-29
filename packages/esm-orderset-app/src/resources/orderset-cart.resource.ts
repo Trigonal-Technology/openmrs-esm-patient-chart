@@ -1,13 +1,13 @@
 import { BehaviorSubject } from 'rxjs';
 import { useCallback, useEffect, useState } from 'react';
-import type { DrugOrderItem, OrderSet } from './orderset-config';
+import type { OrderItem, OrderSet } from './orderset-config';
 
-let drugIdCounter = 0;
-const nextDrugId = () => `drug-${++drugIdCounter}`;
+let itemIdCounter = 0;
+const nextItemId = () => `item-${++itemIdCounter}`;
 
 interface OrdersetCartState {
   selectedSet: OrderSet | null;
-  drugs: DrugOrderItem[];
+  drugs: OrderItem[]; // Keeping the state name 'drugs' for now to match dashboard usage
   customSets: OrderSet[];
 }
 
@@ -30,22 +30,22 @@ export function useOrdersetCart() {
   }, []);
 
   const selectSet = useCallback((set: OrderSet | null) => {
-    const drugs = set ? set.drugs.map((d) => ({ ...d, id: `${d.id}-${Date.now()}` })) : [];
+    const members = set ? set.members.map((m) => ({ ...m })) : [];
     cartSubject.next({
       ...cartSubject.value,
       selectedSet: set,
-      drugs,
+      drugs: members,
     });
   }, []);
 
-  const setDrugs = useCallback((drugs: DrugOrderItem[]) => {
+  const setDrugs = useCallback((drugs: OrderItem[]) => {
     cartSubject.next({
       ...cartSubject.value,
       drugs,
     });
   }, []);
 
-  const updateDrug = useCallback((id: string, updates: Partial<DrugOrderItem>) => {
+  const updateDrug = useCallback((id: string, updates: Partial<OrderItem>) => {
     cartSubject.next({
       ...cartSubject.value,
       drugs: cartSubject.value.drugs.map((d) =>
@@ -61,14 +61,14 @@ export function useOrdersetCart() {
     });
   }, []);
 
-  const addDrug = useCallback((drug: Omit<DrugOrderItem, 'id'>) => {
-    const newDrug: DrugOrderItem = {
-      ...drug,
-      id: nextDrugId(),
+  const addDrug = useCallback((item: Omit<OrderItem, 'id'>) => {
+    const newItem: OrderItem = {
+      ...item,
+      id: nextItemId(),
     };
     cartSubject.next({
       ...cartSubject.value,
-      drugs: [...cartSubject.value.drugs, newDrug],
+      drugs: [...cartSubject.value.drugs, newItem],
     });
   }, []);
 
@@ -109,6 +109,7 @@ export function useOrdersetCart() {
     addCustomSet,
     removeCustomSet,
     clearSelection,
-    nextDrugId,
+    nextItemId,
   };
 }
+

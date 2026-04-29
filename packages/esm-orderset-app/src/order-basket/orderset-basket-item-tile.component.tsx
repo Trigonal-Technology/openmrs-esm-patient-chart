@@ -2,20 +2,30 @@ import React, { useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import classNames from 'classnames';
 import { ClickableTile, IconButton } from '@carbon/react';
-import { TrashCan } from '@carbon/react/icons';
+import { TrashCan, Medication, Scalpel, ImageMedical, Microscope } from '@carbon/react/icons';
 import { useLayoutType } from '@openmrs/esm-framework';
-import type { DrugOrderItem } from '../resources/orderset-config';
+import type { OrderItem, OrderMemberType } from '../resources/orderset-config';
 import type { OrderConfigObject } from '../resources/order-config.resource';
 import styles from './orderset-basket-item-tile.scss';
 
 import { getDisplayForConfig } from '../lib/order-config-utils';
 
 interface OrdersetBasketItemTileProps {
-  drug: DrugOrderItem;
+  drug: OrderItem;
   orderConfig: OrderConfigObject;
   onItemClick: () => void;
   onRemoveClick: () => void;
 }
+
+const getMemberIcon = (type: OrderMemberType) => {
+  switch (type) {
+    case 'DRUG': return <Medication size={16} />;
+    case 'LAB': return <Microscope size={16} />;
+    case 'RADIOLOGY': return <ImageMedical size={16} />;
+    case 'PROCEDURE': return <Scalpel size={16} />;
+    default: return <Medication size={16} />;
+  }
+};
 
 export default function OrdersetBasketItemTile({
   drug,
@@ -27,9 +37,11 @@ export default function OrdersetBasketItemTile({
   const isTablet = useLayoutType() === 'tablet';
   const shouldOnClickBeCalled = useRef(true);
 
-  const doseUnit = getDisplayForConfig(orderConfig?.drugDosingUnits ?? [], drug.doseUnit);
-  const route = getDisplayForConfig(orderConfig?.drugRoutes ?? [], drug.route);
-  const freq = getDisplayForConfig(orderConfig?.orderFrequencies ?? [], drug.frequency);
+  const doseUnit = getDisplayForConfig(orderConfig?.drugDosingUnits ?? [], drug.doseUnit || '');
+  const route = getDisplayForConfig(orderConfig?.drugRoutes ?? [], drug.route || '');
+  const freq = getDisplayForConfig(orderConfig?.orderFrequencies ?? [], drug.frequency || '');
+
+  const isDrug = drug.memberType === 'DRUG';
 
   return (
     <ClickableTile
@@ -42,10 +54,17 @@ export default function OrdersetBasketItemTile({
     >
       <div className={styles.tileContent}>
         <div className={styles.clipText}>
-          <span className={styles.newLabel}>{t('orderActionNew', 'New')}</span>
-          <span className={styles.drugName}>{drug.drugName}</span>
+          <div className={styles.tileHeader}>
+            {getMemberIcon(drug.memberType)}
+            <span className={styles.newLabel}>{t('orderActionNew', 'New')}</span>
+            <span className={styles.drugName}>{drug.drugName}</span>
+          </div>
           <div className={styles.dosageInfo}>
-            {t('dose', 'DOSE')} {drug.dose ?? '--'} {doseUnit} — {route} — {freq}
+            {isDrug ? (
+              `${t('dose', 'DOSE')} \${drug.dose ?? '--'} \${doseUnit} — \${route} — \${freq}`
+            ) : (
+              drug.memberType
+            )}
           </div>
         </div>
         <IconButton
@@ -65,3 +84,4 @@ export default function OrdersetBasketItemTile({
     </ClickableTile>
   );
 }
+

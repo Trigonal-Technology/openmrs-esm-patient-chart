@@ -1,8 +1,8 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button, OverflowMenu, OverflowMenuItem, Tile, Search } from '@carbon/react';
-import { OverflowMenuHorizontal, Add, Checkmark } from '@carbon/react/icons';
-import type { OrderSet } from '../resources/orderset-config';
+import { OverflowMenuHorizontal, Add, Checkmark, Medication, Scalpel, ImageMedical, Microscope, ToolBox } from '@carbon/react/icons';
+import type { OrderSet, OrderMemberType } from '../resources/orderset-config';
 import type { OrderConfigObject } from '../resources/order-config.resource';
 import { getDisplayForConfig } from '../lib/order-config-utils';
 import styles from './order-set-list.scss';
@@ -16,6 +16,17 @@ interface OrderSetListProps {
   onCreateNew: () => void;
   orderConfig?: OrderConfigObject;
 }
+
+const getMemberIcon = (type: OrderMemberType) => {
+  switch (type) {
+    case 'DRUG': return <Medication size={16} />;
+    case 'LAB': return <Microscope size={16} />;
+    case 'RADIOLOGY': return <ImageMedical size={16} />;
+    case 'PROCEDURE': return <Scalpel size={16} />;
+    case 'MEDICAL_SUPPLY': return <ToolBox size={16} />;
+    default: return <Checkmark size={12} />;
+  }
+};
 
 export default function OrderSetList({
   orderSets,
@@ -87,53 +98,51 @@ export default function OrderSetList({
                           <div className={styles.cardTitleRow}>
                             <p className={styles.cardTitle}>{set.name}</p>
                             <div className={styles.drugCountBadge}>
-                              {set.drugs.length} {set.drugs.length === 1 ? t('drug', 'Drug') : t('drugs', 'Drugs')}
+                              {set.members.length} {set.members.length === 1 ? t('item', 'Item') : t('items', 'Items')}
                             </div>
                           </div>
                           <p className={styles.cardDescription}>{set.description}</p>
                         </div>
-                        {isCustom && (
-                          <div onClick={(e) => e.stopPropagation()}>
-                            <OverflowMenu
-                              size="sm"
-                              ariaLabel="Actions"
-                              iconDescription="Actions"
-                              renderIcon={OverflowMenuHorizontal}
-                            >
-                              <OverflowMenuItem itemText={t('edit', 'Edit')} onClick={() => onEdit(set)} />
-                              <OverflowMenuItem
-                                itemText={t('delete', 'Delete')}
-                                isDelete
-                                hasDivider
-                                onClick={() => onDelete(set.id)}
-                              />
-                            </OverflowMenu>
-                          </div>
-                        )}
+                        <div onClick={(e) => e.stopPropagation()}>
+                          <OverflowMenu
+                            size="sm"
+                            ariaLabel="Actions"
+                            iconDescription="Actions"
+                            renderIcon={OverflowMenuHorizontal}
+                            flipped
+                          >
+                            <OverflowMenuItem itemText={t('edit', 'Edit')} onClick={() => onEdit(set)} />
+                            <OverflowMenuItem
+                              itemText={t('delete', 'Delete')}
+                              isDelete
+                              hasDivider
+                              onClick={() => onDelete(set.id)}
+                            />
+                          </OverflowMenu>
+                        </div>
                       </div>
 
                       <div className={styles.cardDrugPreview}>
-                        {set.drugs.length === 0 ? (
-                          <p className={styles.previewEmpty}>{t('noDrugsConfigured', 'No drugs configured')}</p>
+                        {set.members.length === 0 ? (
+                          <p className={styles.previewEmpty}>{t('noItemsConfigured', 'No items configured')}</p>
                         ) : (
                           <ul className={styles.previewList}>
-                            {set.drugs.slice(0, 3).map((d) => (
-                              <li key={d.id}>
+                            {set.members.slice(0, 3).map((d) => (
+                              <li key={d.id} className={styles.previewListItem}>
                                 <div className={styles.checkIconContainer}>
-                                  <Checkmark size={12} className={styles.checkIcon} />
+                                  {getMemberIcon(d.memberType)}
                                 </div>
                                 <span className={styles.previewName}>{d.drugName}</span>
-                                {d.dose > 0 && orderConfig && (
+                                {d.memberType === 'DRUG' && d.dose && d.dose > 0 && orderConfig && (
                                   <span className={styles.previewMeta}>
                                     {' '}
-                                    {d.dose} {getDisplayForConfig(orderConfig.drugDosingUnits, d.doseUnit)}
-                                  </span>
+                                    {d.dose} {getDisplayForConfig(orderConfig.drugDosingUnits, d.doseUnit)}                                  </span>
                                 )}
                               </li>
                             ))}
-                            {set.drugs.length > 3 && (
+                            {set.members.length > 3 && (
                               <li className={styles.previewMore}>
-                                + {set.drugs.length - 3} {t('more', 'more')}
+                                + {set.members.length - 3} {t('more', 'more')}
                               </li>
                             )}
                           </ul>

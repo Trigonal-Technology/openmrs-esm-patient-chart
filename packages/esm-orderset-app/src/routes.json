@@ -16,16 +16,6 @@
       }
     },
     {
-      "name": "patient-orderset-summary-dashboard",
-      "component": "ordersetDashboardLink",
-      "slot": "patient-chart-dashboard-slot",
-      "meta": {
-        "slot": "patient-chart-orderset-dashboard-slot",
-        "path": "Order Sets"
-      },
-      "order": 6
-    },
-    {
       "name": "orderset-dashboard",
       "component": "ordersetDashboard",
       "slot": "orderset-dashboard-slot",

@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Save, Close } from '@carbon/react/icons';
 import { Button, TextInput, Form, FormGroup, Select, SelectItem } from '@carbon/react';
-import type { OrderSet, DrugOrderItem } from '../resources/orderset-config';
+import type { OrderSet, OrderItem } from '../resources/orderset-config';
 import type { OrderConfigObject } from '../resources/order-config.resource';
 import styles from './create-order-set-form.scss';
 
@@ -21,7 +21,8 @@ const CATEGORIES = [
 ];
 
 interface CreateOrderSetFormProps {
-  drugs: DrugOrderItem[];
+  initialSet?: OrderSet;
+  drugs: OrderItem[];
   orderConfig?: OrderConfigObject;
   onSave: (set: OrderSet) => void;
   onCancel: () => void;
@@ -29,20 +30,20 @@ interface CreateOrderSetFormProps {
 
 import { getDisplayForConfig } from '../lib/order-config-utils';
 
-export default function CreateOrderSetForm({ drugs, orderConfig, onSave, onCancel }: CreateOrderSetFormProps) {
+export default function CreateOrderSetForm({ initialSet, drugs, orderConfig, onSave, onCancel }: CreateOrderSetFormProps) {
   const { t } = useTranslation();
-  const [name, setName] = useState('');
-  const [category, setCategory] = useState('');
-  const [description, setDescription] = useState('');
+  const [name, setName] = useState(initialSet?.name ?? '');
+  const [category, setCategory] = useState(initialSet?.category ?? '');
+  const [description, setDescription] = useState(initialSet?.description ?? '');
 
   const handleSave = () => {
     if (!name.trim() || !category) return;
     const newSet: OrderSet = {
-      id: `custom-${Date.now()}`,
+      id: initialSet?.id ?? `custom-${Date.now()}`,
       name: name.trim(),
       category,
-      description: description.trim() || `Custom order set with ${drugs.length} drugs`,
-      drugs: drugs.map((d, i) => ({ ...d, id: `cd-${Date.now()}-${i}` })),
+      description: description.trim() || t('customOrderSetDescription', 'Custom order set with {{count}} items', { count: drugs.length }),
+      members: drugs.map((d, i) => ({ ...d, id: d.id.startsWith('new-') || d.id.startsWith('cd-') ? `cd-${Date.now()}-${i}` : d.id })),
     };
     onSave(newSet);
   };
@@ -103,10 +104,10 @@ export default function CreateOrderSetForm({ drugs, orderConfig, onSave, onCance
 
         <div className={styles.drugsPreview}>
           <p className={styles.drugsLabel}>
-            {t('includedDrugs', 'Included Drugs')} ({drugs.length})
+            {t('includedItems', 'Included Items')} ({drugs.length})
           </p>
           {drugs.length === 0 ? (
-            <p className={styles.drugsEmpty}>{t('addDrugsFirst', 'Add drugs in the editor first, then save.')}</p>
+            <p className={styles.drugsEmpty}>{t('addItemsFirst', 'Add items in the editor first, then save.')}</p>
           ) : (
             <div className={styles.drugsList}>
               {drugs.map((d, i) => (
@@ -114,12 +115,18 @@ export default function CreateOrderSetForm({ drugs, orderConfig, onSave, onCance
                   <span className={styles.drugIndex}>{i + 1}.</span>{' '}
                   <span className={styles.drugName}>{d.drugName}</span>{' '}
                   <span className={styles.drugMeta}>
-                    {d.dose}{' '}
-                    {orderConfig ? getDisplayForConfig(orderConfig.drugDosingUnits, d.doseUnit) : d.doseUnit}{' '}
-                    ·{' '}
-                    {orderConfig ? getDisplayForConfig(orderConfig.drugRoutes, d.route) : d.route}{' '}
-                    ·{' '}
-                    {orderConfig ? getDisplayForConfig(orderConfig.orderFrequencies, d.frequency) : d.frequency}
+                    {d.memberType === 'DRUG' ? (
+                      <>
+                        {d.dose}{' '}
+                        {orderConfig ? getDisplayForConfig(orderConfig.drugDosingUnits, d.doseUnit || '') : d.doseUnit}{' '}
+                        ·{' '}
+                        {orderConfig ? getDisplayForConfig(orderConfig.drugRoutes, d.route || '') : d.route}{' '}
+                        ·{' '}
+                        {orderConfig ? getDisplayForConfig(orderConfig.orderFrequencies, d.frequency || '') : d.frequency}
+                      </>
+                    ) : (
+                      d.memberType
+                    )}
                   </span>
                 </p>
               ))}
@@ -144,3 +151,4 @@ export default function CreateOrderSetForm({ drugs, orderConfig, onSave, onCance
     </div>
   );
 }
+
