@@ -11,7 +11,7 @@ const config: PlaywrightTestConfig = {
   expect: {
     timeout: 40 * 1000,
   },
-  fullyParallel: true,
+  fullyParallel: !process.env.CI,
   forbidOnly: !!process.env.CI,
   retries: 0,
   reporter: process.env.CI ? [['junit', { outputFile: 'results.xml' }], ['html']] : [['html']],
@@ -27,6 +27,7 @@ const config: PlaywrightTestConfig = {
       name: 'chromium',
       use: {
         ...devices['Desktop Chrome'],
+        channel: 'chromium',
       },
     },
   ],

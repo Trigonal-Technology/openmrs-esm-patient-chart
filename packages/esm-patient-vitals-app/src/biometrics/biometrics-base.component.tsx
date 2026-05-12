@@ -1,25 +1,26 @@
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button, ContentSwitcher, DataTableSkeleton, IconSwitch, InlineLoading } from '@carbon/react';
 import { Add, Analytics, Table } from '@carbon/react/icons';
 import { formatDatetime, parseDate, useConfig, useLayoutType } from '@openmrs/esm-framework';
-import { CardHeader, EmptyState, ErrorState, useVisitOrOfflineVisit } from '@openmrs/esm-patient-common-lib';
-import { launchVitalsAndBiometricsForm } from '../utils';
-import { useVitalsConceptMetadata, useVitalsAndBiometrics, withUnit } from '../common';
+import { CardHeader, EmptyState, ErrorState } from '@openmrs/esm-patient-common-lib';
+import { useLaunchVitalsAndBiometricsForm } from '../utils';
+import { useConceptUnits, useVitalsAndBiometrics, withUnit } from '../common';
 import { type ConfigObject } from '../config-schema';
+import type { BiometricsTableHeader, BiometricsTableRow } from './types';
 import BiometricsChart from './biometrics-chart.component';
 import PaginatedBiometrics from './paginated-biometrics.component';
-import type { BiometricsTableHeader, BiometricsTableRow } from './types';
 import styles from './biometrics-base.scss';
 
 interface BiometricsBaseProps {
   pageSize: number;
   pageUrl: string;
   patientUuid: string;
+  patient: fhir.Patient;
   urlLabel: string;
 }
 
-const BiometricsBase: React.FC<BiometricsBaseProps> = ({ patientUuid, pageSize, urlLabel, pageUrl }) => {
+const BiometricsBase: React.FC<BiometricsBaseProps> = ({ patientUuid, patient, pageSize, urlLabel, pageUrl }) => {
   const { t } = useTranslation();
   const displayText = t('biometrics_lower', 'biometrics');
   const headerTitle = t('biometrics', 'Biometrics');
@@ -29,13 +30,8 @@ const BiometricsBase: React.FC<BiometricsBaseProps> = ({ patientUuid, pageSize, 
   const config = useConfig<ConfigObject>();
   const { bmiUnit } = config.biometrics;
   const { data: biometrics, isLoading, error, isValidating } = useVitalsAndBiometrics(patientUuid, 'biometrics');
-  const { data: conceptUnits } = useVitalsConceptMetadata();
-  const { currentVisit } = useVisitOrOfflineVisit(patientUuid);
-
-  const launchBiometricsForm = useCallback(
-    () => launchVitalsAndBiometricsForm(currentVisit, config),
-    [config, currentVisit],
-  );
+  const { conceptUnits } = useConceptUnits();
+  const launchBiometricsForm = useLaunchVitalsAndBiometricsForm(patientUuid);
 
   const tableHeaders: Array<BiometricsTableHeader> = [
     {
@@ -75,7 +71,6 @@ const BiometricsBase: React.FC<BiometricsBaseProps> = ({ patientUuid, pageSize, 
       biometrics?.map((biometricsData, index) => {
         return {
           ...biometricsData,
-          id: `${index}`,
           dateRender: formatDatetime(parseDate(biometricsData.date.toString()), { mode: 'wide' }),
           weightRender: biometricsData.weight ?? '--',
           heightRender: biometricsData.height ?? '--',
@@ -86,8 +81,14 @@ const BiometricsBase: React.FC<BiometricsBaseProps> = ({ patientUuid, pageSize, 
     [biometrics],
   );
 
-  if (isLoading) return <DataTableSkeleton role="progressbar" />;
-  if (error) return <ErrorState error={error} headerTitle={headerTitle} />;
+  if (isLoading) {
+    return <DataTableSkeleton role="progressbar" />;
+  }
+
+  if (error) {
+    return <ErrorState error={error} headerTitle={headerTitle} />;
+  }
+
   if (biometrics?.length) {
     return (
       <div className={styles.widgetCard}>
@@ -96,7 +97,11 @@ const BiometricsBase: React.FC<BiometricsBaseProps> = ({ patientUuid, pageSize, 
             <span>{isValidating ? <InlineLoading /> : null}</span>
           </div>
           <div className={styles.biometricsHeaderActionItems}>
-            <ContentSwitcher onChange={(evt) => setChartView(evt.name === 'chartView')} size={isTablet ? 'md' : 'sm'}>
+            <ContentSwitcher
+              onChange={(evt) => setChartView(evt.name === 'chartView')}
+              size={isTablet ? 'md' : 'sm'}
+              selectedIndex={chartView ? 1 : 0}
+            >
               <IconSwitch name="tableView" text="Table view">
                 <Table size={16} />
               </IconSwitch>
@@ -126,6 +131,7 @@ const BiometricsBase: React.FC<BiometricsBaseProps> = ({ patientUuid, pageSize, 
             urlLabel={urlLabel}
             pageUrl={pageUrl}
             tableHeaders={tableHeaders}
+            patient={patient}
           />
         )}
       </div>

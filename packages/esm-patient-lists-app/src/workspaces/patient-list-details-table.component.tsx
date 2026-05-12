@@ -1,10 +1,8 @@
-import React, { useId, useMemo, useState } from 'react';
+import React, { type ChangeEvent, useId, useMemo, useState } from 'react';
 import fuzzy from 'fuzzy';
 import { useTranslation } from 'react-i18next';
 import {
   DataTable,
-  type DataTableHeader,
-  type DataTableRow,
   DataTableSkeleton,
   Layer,
   Search,
@@ -17,7 +15,7 @@ import {
   TableRow,
   Tile,
 } from '@carbon/react';
-import { useLayoutType, isDesktop, useDebounce, ConfigurableLink } from '@openmrs/esm-framework';
+import { useLayoutType, isDesktop, ConfigurableLink } from '@openmrs/esm-framework';
 import { EmptyDataIllustration } from '@openmrs/esm-patient-common-lib';
 import { type MappedListMembers } from '../patient-lists.resource';
 import styles from './patient-list-details-table.scss';
@@ -33,9 +31,8 @@ const PatientListDetailsTable: React.FC<PatientListDetailsTableProps> = ({ listM
   const layout = useLayoutType();
   const responsiveSize = isDesktop(layout) ? 'sm' : 'lg';
   const [searchTerm, setSearchTerm] = useState('');
-  const debouncedSearchTerm = useDebounce(searchTerm);
 
-  const tableHeaders: Array<typeof DataTableHeader> = useMemo(
+  const tableHeaders = useMemo(
     () => [
       {
         key: 'name',
@@ -58,21 +55,19 @@ const PatientListDetailsTable: React.FC<PatientListDetailsTableProps> = ({ listM
   );
 
   const filteredListMembers = useMemo(() => {
-    if (!debouncedSearchTerm) {
+    if (!searchTerm) {
       return listMembers;
     }
 
-    return debouncedSearchTerm
-      ? fuzzy
-          .filter(debouncedSearchTerm, listMembers, {
-            extract: (member) => `${member.name} ${member.identifier} ${member.sex}`,
-          })
-          .sort((r1, r2) => r1.score - r2.score)
-          .map((result) => result.original)
-      : listMembers;
-  }, [debouncedSearchTerm, listMembers]);
+    return fuzzy
+      .filter(searchTerm, listMembers, {
+        extract: (member) => `${member.name} ${member.identifier} ${member.sex}`,
+      })
+      .sort((r1, r2) => r1.score - r2.score)
+      .map((result) => result.original);
+  }, [searchTerm, listMembers]);
 
-  const tableRows: Array<typeof DataTableRow> = useMemo(
+  const tableRows = useMemo(
     () =>
       filteredListMembers?.map((member) => ({
         id: member.patientUuid,
@@ -81,7 +76,7 @@ const PatientListDetailsTable: React.FC<PatientListDetailsTableProps> = ({ listM
     [filteredListMembers],
   );
 
-  const handleSearchTermChange = (e: React.ChangeEvent<HTMLInputElement>) => setSearchTerm(e.target.value);
+  const handleSearchTermChange = (e: ChangeEvent<HTMLInputElement>) => setSearchTerm(e.target.value);
 
   if (isLoading) {
     return (
@@ -98,7 +93,7 @@ const PatientListDetailsTable: React.FC<PatientListDetailsTableProps> = ({ listM
           <Layer>
             <Search
               id={`${id}-search`}
-              labelText=""
+              labelText={t('searchThisList', 'Search this list')}
               onChange={handleSearchTermChange}
               placeholder={t('searchThisList', 'Search this list')}
               size={responsiveSize}
@@ -118,12 +113,12 @@ const PatientListDetailsTable: React.FC<PatientListDetailsTableProps> = ({ listM
                     <TableRow>
                       {headers.map((header) => (
                         <TableHeader
+                          key={header.key}
                           {...getHeaderProps({
                             header,
-                            isSortable: header.isSortable,
                           })}
                         >
-                          {header.header?.content ?? header.header}
+                          {header.header}
                         </TableHeader>
                       ))}
                     </TableRow>

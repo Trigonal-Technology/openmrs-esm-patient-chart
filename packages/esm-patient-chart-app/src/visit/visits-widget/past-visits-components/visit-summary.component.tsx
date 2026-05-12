@@ -1,39 +1,27 @@
 import React, { useMemo } from 'react';
 import classNames from 'classnames';
 import { useTranslation } from 'react-i18next';
-import { Tab, TabList, TabPanel, TabPanels, Tabs, Tag } from '@carbon/react';
+import { Tab, TabList, TabPanel, TabPanels, Tabs } from '@carbon/react';
 import {
+  type Diagnosis,
+  DiagnosisTags,
   Extension,
   ExtensionSlot,
   formatTime,
   parseDate,
   useAssignedExtensions,
   useConfig,
-  useLayoutType,
   type Visit,
 } from '@openmrs/esm-framework';
 import type { ExternalOverviewProps } from '@openmrs/esm-patient-common-lib';
-import {
-  mapEncounters,
-  type Diagnosis,
-  type Encounter,
-  type Note,
-  type Observation,
-  type Order,
-  type OrderItem,
-} from '../visit.resource';
+import { type Note, type Order, type OrderItem } from '../visit.resource';
 import MedicationSummary from './medications-summary.component';
 import NotesSummary from './notes-summary.component';
 import TestsSummary from './tests-summary.component';
-import VisitsTable from './visits-table/visits-table.component';
+import VisitEncountersTable from './encounters-table/visit-encounters-table.component';
+import VisitTimeline from '../single-visit-details/visit-timeline/visit-timeline.component';
+import { type ChartConfig } from '../../../config-schema';
 import styles from './visit-summary.scss';
-
-interface DiagnosisItem {
-  diagnosis: string;
-  rank: number;
-  type: string;
-  voided?: boolean;
-}
 
 interface VisitSummaryProps {
   visit: Visit;
@@ -43,20 +31,19 @@ interface VisitSummaryProps {
 const visitSummaryPanelSlot = 'visit-summary-panels';
 
 const VisitSummary: React.FC<VisitSummaryProps> = ({ visit, patientUuid }) => {
-  const config = useConfig();
+  const config = useConfig<ChartConfig>();
   const { t } = useTranslation();
   const extensions = useAssignedExtensions(visitSummaryPanelSlot);
-  const layout = useLayoutType();
 
-  const [diagnoses, notes, medications]: [Array<DiagnosisItem>, Array<Note>, Array<OrderItem>] = useMemo(() => {
+  const [diagnoses, notes, medications]: [Array<Diagnosis>, Array<Note>, Array<OrderItem>] = useMemo(() => {
     // Medication Tab
     const medications: Array<OrderItem> = [];
     // Diagnoses in a Visit
-    const diagnoses: Array<DiagnosisItem> = [];
+    const diagnoses: Array<Diagnosis> = [];
     // Notes Tab
     const notes: Array<Note> = [];
 
-    visit?.encounters?.forEach((enc: Encounter) => {
+    visit?.encounters?.forEach((enc) => {
       if (enc.hasOwnProperty('orders')) {
         medications.push(
           ...enc.orders.map((order: Order) => ({
@@ -72,25 +59,18 @@ const VisitSummary: React.FC<VisitSummaryProps> = ({ visit, patientUuid }) => {
       // Check if there is a diagnosis associated with this encounter
       if (enc.hasOwnProperty('diagnoses')) {
         if (enc.diagnoses.length > 0) {
-          const validDiagnoses = enc.diagnoses
-            .filter((diagnosis: Diagnosis) => !diagnosis.voided)
-            .map((diagnosis: Diagnosis) => ({
-              diagnosis: diagnosis.display,
-              type: diagnosis.rank === 1 ? 'red' : 'blue',
-              rank: diagnosis.rank,
-              voided: diagnosis.voided,
-            }));
+          const validDiagnoses = enc.diagnoses.filter((diagnosis) => !diagnosis.voided);
           diagnoses.push(...validDiagnoses);
         }
       }
 
       // Check for Visit Diagnoses and Notes
       if (enc.hasOwnProperty('obs')) {
-        enc.obs.forEach((obs: Observation) => {
+        enc.obs.forEach((obs) => {
           if (config.notesConceptUuids?.includes(obs.concept.uuid)) {
             // Putting all notes in a single array.
             notes.push({
-              note: obs.value,
+              note: obs.value as string, // TODO: add better typing check
               provider: {
                 name: enc.encounterProviders.length ? enc.encounterProviders[0].provider.person.display : '',
                 role: enc.encounterProviders.length ? enc.encounterProviders[0].encounterRole.display : '',
@@ -105,6 +85,9 @@ const VisitSummary: React.FC<VisitSummaryProps> = ({ visit, patientUuid }) => {
 
     // Sort the diagnoses by rank, so that primary diagnoses come first
     diagnoses.sort((a, b) => a.rank - b.rank);
+
+    // Sort medications by dateActivated DESC (newest first) to align with backend ordering
+    medications.sort((a, b) => new Date(b.order.dateActivated).getTime() - new Date(a.order.dateActivated).getTime());
 
     return [diagnoses, notes, medications];
   }, [config.notesConceptUuids, visit?.encounters]);
@@ -121,19 +104,18 @@ const VisitSummary: React.FC<VisitSummaryProps> = ({ visit, patientUuid }) => {
       <p className={styles.diagnosisLabel}>{t('diagnoses', 'Diagnoses')}</p>
       <div className={styles.diagnosesList}>
         {diagnoses.length > 0 ? (
-          diagnoses.map((diagnosis, i) => (
-            <Tag key={`${diagnosis.diagnosis}-${i}`} type={diagnosis.type}>
-              {diagnosis.diagnosis}
-            </Tag>
-          ))
+          <DiagnosisTags diagnoses={diagnoses} />
         ) : (
           <p className={classNames(styles.bodyLong01, styles.text02)} style={{ marginBottom: '0.5rem' }}>
             {t('noDiagnosesFound', 'No diagnoses found')}
           </p>
         )}
       </div>
-      <Tabs className={classNames(styles.verticalTabs, layout === 'tablet' ? styles.tabletTabs : styles.desktopTabs)}>
+      <Tabs>
         <TabList aria-label="Visit summary tabs" className={styles.tablist}>
+          <Tab className={classNames(styles.tab, styles.bodyLong01)} id="timeline-tab">
+            {t('timeline', 'Timeline')}
+          </Tab>
           <Tab
             className={classNames(styles.tab, styles.bodyLong01)}
             id="notes-tab"
@@ -169,16 +151,19 @@ const VisitSummary: React.FC<VisitSummaryProps> = ({ visit, patientUuid }) => {
         </TabList>
         <TabPanels>
           <TabPanel>
+            <VisitTimeline visitUuid={visit.uuid} patientUuid={patientUuid} />
+          </TabPanel>
+          <TabPanel>
             <NotesSummary notes={notes} />
           </TabPanel>
           <TabPanel>
-            <TestsSummary patientUuid={patientUuid} encounters={visit?.encounters as Array<Encounter>} />
+            <TestsSummary patientUuid={patientUuid} encounters={visit?.encounters} />
           </TabPanel>
           <TabPanel>
             <MedicationSummary medications={medications} />
           </TabPanel>
           <TabPanel>
-            <VisitsTable visits={mapEncounters(visit)} showAllEncounters={false} patientUuid={patientUuid} />
+            <VisitEncountersTable visit={visit} patientUuid={patientUuid} />
           </TabPanel>
           <ExtensionSlot name={visitSummaryPanelSlot}>
             <TabPanel>

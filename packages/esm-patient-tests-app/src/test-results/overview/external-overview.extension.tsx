@@ -37,7 +37,6 @@ function getFilteredOverviewData(sortedObs: PatientData, filter) {
 
 function useFilteredOverviewData(patientUuid: string, filter: (filterProps: PanelFilterProps) => boolean = () => true) {
   const { sortedObs, loaded, error } = usePatientResultsData(patientUuid);
-
   const overviewData = useMemo(() => getFilteredOverviewData(sortedObs, filter), [filter, sortedObs]);
 
   return { overviewData, loaded, error };
@@ -46,8 +45,8 @@ function useFilteredOverviewData(patientUuid: string, filter: (filterProps: Pane
 const ExternalOverview: React.FC<ExternalOverviewProps> = ({ patientUuid, filter }) => {
   const { t } = useTranslation();
   const { overviewData, loaded } = useFilteredOverviewData(patientUuid, filter);
-
   const cardTitle = t('recentResults', 'Recent Results');
+
   const handleSeeAll = useCallback(() => {
     navigate({ to: `\${openmrsSpaBase}/patient/${patientUuid}/chart/Results` });
   }, [patientUuid]);
@@ -73,16 +72,7 @@ const ExternalOverview: React.FC<ExternalOverviewProps> = ({ patientUuid, filter
                       {t('seeAllResults', 'See all results')}
                     </Button>
                   </div>
-                  <CommonOverview
-                    {...{
-                      patientUuid,
-                      overviewData: overviewData.slice(0, resultsToShow),
-                      insertSeparator: true,
-                      deactivateToolbar: true,
-                      isPatientSummaryDashboard: false,
-                      hideToolbar: true,
-                    }}
-                  />
+                  <CommonOverview patientUuid={patientUuid} overviewData={overviewData.slice(0, resultsToShow)} />
                   {overviewData.length > resultsToShow && (
                     <Button onClick={handleSeeAll} kind="ghost">
                       {t('moreResultsAvailable', 'More results available')}

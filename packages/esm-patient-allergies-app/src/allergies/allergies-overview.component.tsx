@@ -1,5 +1,4 @@
-import React from 'react';
-import classNames from 'classnames';
+import React, { useCallback, useMemo } from 'react';
 import {
   DataTableSkeleton,
   DataTable,
@@ -14,14 +13,8 @@ import {
   TableRow,
 } from '@carbon/react';
 import { useTranslation } from 'react-i18next';
-import { AddIcon, useLayoutType, usePagination } from '@openmrs/esm-framework';
-import {
-  CardHeader,
-  EmptyState,
-  ErrorState,
-  launchPatientWorkspace,
-  PatientChartPagination,
-} from '@openmrs/esm-patient-common-lib';
+import { AddIcon, launchWorkspace2, useLayoutType, usePagination } from '@openmrs/esm-framework';
+import { CardHeader, EmptyState, ErrorState, PatientChartPagination } from '@openmrs/esm-patient-common-lib';
 import { allergiesCount, patientAllergiesFormWorkspace } from '../constants';
 import { useAllergies } from './allergy-intolerance.resource';
 import styles from './allergies-overview.scss';
@@ -55,19 +48,25 @@ const AllergiesOverview: React.FC<AllergiesOverviewProps> = ({ patient }) => {
     },
   ];
 
-  const tableRows = React.useMemo(() => {
+  const tableRows = useMemo(() => {
     return paginatedAllergies?.map((allergy) => ({
       ...allergy,
-      reactions: `${allergy.reactionManifestations?.join(', ') || ''} ${
+      reactions: `${allergy.reactionManifestations?.sort((a, b) => a.localeCompare(b))?.join(', ') || ''} ${
         allergy.reactionSeverity ? `(${allergy.reactionSeverity})` : ''
       }`,
     }));
   }, [paginatedAllergies]);
 
-  const launchAllergiesForm = React.useCallback(() => launchPatientWorkspace(patientAllergiesFormWorkspace), []);
+  const launchAllergiesForm = useCallback(() => launchWorkspace2(patientAllergiesFormWorkspace), []);
 
-  if (isLoading) return <DataTableSkeleton role="progressbar" compact={isDesktop} zebra />;
-  if (error) return <ErrorState error={error} headerTitle={headerTitle} />;
+  if (isLoading) {
+    return <DataTableSkeleton role="progressbar" compact={isDesktop} zebra />;
+  }
+
+  if (error) {
+    return <ErrorState error={error} headerTitle={headerTitle} />;
+  }
+
   if (allergies?.length) {
     return (
       <div className={styles.widgetCard}>
@@ -93,10 +92,9 @@ const AllergiesOverview: React.FC<AllergiesOverviewProps> = ({ patient }) => {
                         className={styles.tableHeader}
                         {...getHeaderProps({
                           header,
-                          isSortable: header.isSortable,
                         })}
                       >
-                        {header.header?.content ?? header.header}
+                        {header.header}
                       </TableHeader>
                     ))}
                   </TableRow>

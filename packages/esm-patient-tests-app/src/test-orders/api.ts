@@ -1,9 +1,15 @@
 import { useCallback, useMemo } from 'react';
 import { chunk } from 'lodash-es';
-import useSWR, { mutate } from 'swr';
+import useSWR, { useSWRConfig } from 'swr';
 import useSWRImmutable from 'swr/immutable';
-import type { OrderPost, PatientOrderFetchResponse, TestOrderPost } from '@openmrs/esm-patient-common-lib';
-import type { TestOrderBasketItem } from '../types';
+import {
+  careSettingUuid,
+  type PostDataPrepFunction,
+  type OrderPost,
+  type PatientOrderFetchResponse,
+  type TestOrderBasketItem,
+  type TestOrderPost,
+} from '@openmrs/esm-patient-common-lib';
 import {
   type FetchResponse,
   openmrsFetch,
@@ -14,8 +20,6 @@ import {
 } from '@openmrs/esm-framework';
 import { type ConfigObject } from '../config-schema';
 
-export const careSettingUuid = '6f0c9a92-6f24-11e3-af88-005056821db0';
-
 /**
  * SWR-based data fetcher for patient orders.
  *
@@ -23,8 +27,9 @@ export const careSettingUuid = '6f0c9a92-6f24-11e3-af88-005056821db0';
  * @param status Allows fetching either all orders or only active orders.
  */
 export function usePatientLabOrders(patientUuid: string, status: 'ACTIVE' | 'any') {
-  const { labOrderTypeUuid: labOrderTypeUUID } = (useConfig() as ConfigObject).orders;
+  const { labOrderTypeUuid: labOrderTypeUUID } = useConfig<ConfigObject>().orders;
   const ordersUrl = `${restBaseUrl}/order?patient=${patientUuid}&careSetting=${careSettingUuid}&status=${status}&orderType=${labOrderTypeUUID}`;
+  const { mutate } = useSWRConfig();
 
   const { data, error, isLoading, isValidating } = useSWR<FetchResponse<PatientOrderFetchResponse>, Error>(
     patientUuid ? ordersUrl : null,
@@ -32,8 +37,13 @@ export function usePatientLabOrders(patientUuid: string, status: 'ACTIVE' | 'any
   );
 
   const mutateOrders = useCallback(
-    () => mutate((key) => typeof key === 'string' && key.startsWith(`${restBaseUrl}/order?patient=${patientUuid}`)),
-    [patientUuid],
+    () =>
+      mutate(
+        (key) => typeof key === 'string' && key.startsWith(`${restBaseUrl}/order?patient=${patientUuid}`),
+        undefined,
+        { revalidate: true },
+      ),
+    [mutate, patientUuid],
   );
 
   const labOrders = useMemo(
@@ -84,18 +94,19 @@ function getConceptReferenceUrls(conceptUuids: Array<string>) {
   );
 }
 
-export function prepTestOrderPostData(
+export const prepTestOrderPostData: PostDataPrepFunction = (
   order: TestOrderBasketItem,
-  patientUuid: string,
-  encounterUuid: string | null,
-): TestOrderPost {
+  patientUuid,
+  encounterUuid,
+  orderingProviderUuid,
+): TestOrderPost => {
   if (order.action === 'NEW' || order.action === 'RENEW') {
     return {
       action: 'NEW',
       type: 'testorder',
       patient: patientUuid,
       careSetting: careSettingUuid,
-      orderer: order.orderer,
+      orderer: orderingProviderUuid,
       encounter: encounterUuid,
       concept: order.testType.conceptUuid,
       instructions: order.instructions,
@@ -109,8 +120,8 @@ export function prepTestOrderPostData(
       action: 'REVISE',
       type: 'testorder',
       patient: patientUuid,
-      careSetting: order.careSetting,
-      orderer: order.orderer,
+      careSetting: careSettingUuid,
+      orderer: orderingProviderUuid,
       encounter: encounterUuid,
       concept: order.testType.conceptUuid,
       instructions: order.instructions,
@@ -125,8 +136,8 @@ export function prepTestOrderPostData(
       action: 'DISCONTINUE',
       type: 'testorder',
       patient: patientUuid,
-      careSetting: order.careSetting,
-      orderer: order.orderer,
+      careSetting: careSettingUuid,
+      orderer: orderingProviderUuid,
       encounter: encounterUuid,
       concept: order.testType.conceptUuid,
       orderReason: order.orderReason,
@@ -138,7 +149,7 @@ export function prepTestOrderPostData(
   } else {
     throw new Error(`Unknown order action: ${order.action}.`);
   }
-}
+};
 
 export type PostDataPrepLabOrderFunction = (
   order: TestOrderBasketItem,

@@ -1,11 +1,11 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import capitalize from 'lodash-es/capitalize';
+import { capitalize } from 'lodash-es';
 import { age, getPatientName, formatDate, parseDate } from '@openmrs/esm-framework';
 import styles from './patient-details-tile.scss';
 
 interface PatientDetailsTileInterface {
-  patient: fhir.Patient;
+  patient?: fhir.Patient;
 }
 
 const PatientDetailsTile: React.FC<PatientDetailsTileInterface> = ({ patient }) => {

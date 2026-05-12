@@ -1,6 +1,6 @@
 import { Injectable, OnDestroy } from '@angular/core';
 import { Subscription } from 'rxjs';
-import { SingleSpaProps, singleSpaPropsSubject } from 'src/single-spa-props';
+import { SingleSpaProps, singleSpaPropsSubject } from '../../single-spa-props';
 
 /**
  * A utility service simplifying common interactions with the MFs single SPA props.
@@ -32,7 +32,7 @@ export class SingleSpaPropsService implements OnDestroy {
 
     if (value === undefined) {
       const error = new Error(
-        `The module is missing the required Single SPA property "${name}". This is a development error likely caused by another microfrontend module. See the associated console log for details.`,
+        `The module is missing the required Single SPA property "${String(name)}". This is a development error likely caused by another microfrontend module. See the associated console log for details.`,
       );
       console.error(error, this.lastProps);
       throw error;

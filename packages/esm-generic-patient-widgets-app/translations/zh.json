@@ -1,7 +1,10 @@
 {
-  "chartView": "图表视图",
+  "addEncounter": "Add encounter",
+  "date": "Date",
   "dateAndTime": "日期&时间",
-  "displaying": "展示中",
+  "editabilityNote": "Tap an observation to edit",
   "encounterType": "问诊类型",
-  "tableView": "表格视图"
+  "errorSavingObservation": "Error saving observation",
+  "noValue": "No value",
+  "observationSaved": "Observation saved successfully"
 }

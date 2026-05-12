@@ -72,14 +72,13 @@
   padding: 0;
 
   :global(.cds--data-table-content) {
-    border: 1px solid $ui-03;
-    border-bottom: none;
+    border-top: 1px solid $ui-03;
     overflow: visible;
   }
 
   :global(.cds--table-toolbar) {
     position: relative;
-    height: layout.$spacing-07;
+    height: layout.$spacing-09;
     min-height: 0;
     overflow: visible;
     top: 0;

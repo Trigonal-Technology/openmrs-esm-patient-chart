@@ -57,18 +57,17 @@ const PatientBanner: React.FC<PatientBannerProps> = ({ patient, patientUuid, hid
       ref={patientBannerRef}
     >
       <div className={styles.patientBanner}>
-        <div className={styles.patientAvatar} role="img">
+        <div className={styles.patientAvatar}>
           <PatientPhoto patientUuid={patientUuid} patientName={patientName} />
         </div>
-        <PatientBannerPatientInfo patient={patient} />
+        <PatientBannerPatientInfo patient={patient} renderedFrom="patient-chart" />
         <div className={styles.buttonCol}>
           <div className={styles.buttonRow}>
             {!hideActionsOverflow ? (
               <PatientBannerActionsMenu
                 actionsSlotName="patient-actions-slot"
-                isDeceased={patient.deceasedBoolean}
-                patientUuid={patientUuid}
                 patient={patient}
+                patientUuid={patientUuid}
               />
             ) : null}
           </div>

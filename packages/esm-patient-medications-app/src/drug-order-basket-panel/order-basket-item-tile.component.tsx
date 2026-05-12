@@ -3,7 +3,7 @@ import classNames from 'classnames';
 import { useTranslation } from 'react-i18next';
 import { ClickableTile, IconButton, Tile } from '@carbon/react';
 import { ExtensionSlot, TrashCanIcon, useLayoutType, WarningIcon } from '@openmrs/esm-framework';
-import { type DrugOrderBasketItem } from '../types';
+import { type DrugOrderBasketItem } from '@openmrs/esm-patient-common-lib';
 import styles from './order-basket-item-tile.scss';
 
 export interface OrderBasketItemTileProps {
@@ -56,23 +56,33 @@ export default function OrderBasketItemTile({ orderBasketItem, onItemClick, onRe
           <span className={styles.label01}>
             <span className={styles.doseCaption}>{t('dose', 'Dose').toUpperCase()}</span>{' '}
             <span className={styles.dosageLabel}>
-              {orderBasketItem.dosage} {orderBasketItem.unit?.value}
+              {orderBasketItem.dosage != null ? orderBasketItem.dosage : '--'} {orderBasketItem.unit?.value ?? ''}
             </span>{' '}
             <span className={styles.dosageInfo}>
               &mdash; {orderBasketItem.route?.value ? <>{orderBasketItem.route.value} &mdash; </> : null}
               {orderBasketItem.frequency?.value ? <>{orderBasketItem.frequency.value} &mdash; </> : null}
-              {t('refills', 'Refills').toUpperCase()} {orderBasketItem.numRefills}{' '}
-              {t('quantity', 'Quantity').toUpperCase()}{' '}
-              {`${orderBasketItem.pillsDispensed} ${orderBasketItem.quantityUnits?.value?.toLowerCase() ?? ''}`}
+              {orderBasketItem.numRefills ? (
+                <>
+                  {t('refills', 'Refills').toUpperCase()} {orderBasketItem.numRefills} &mdash;{' '}
+                </>
+              ) : null}
+              {orderBasketItem.pillsDispensed ? (
+                <>
+                  {t('quantity', 'Quantity').toUpperCase()} {orderBasketItem.pillsDispensed}{' '}
+                  {orderBasketItem.quantityUnits?.value?.toLowerCase()} &mdash;{' '}
+                </>
+              ) : null}
               {orderBasketItem.patientInstructions && <>&mdash; {orderBasketItem.patientInstructions}</>}
             </span>
           </span>
           <br />
           <span className={styles.label01}>
-            <span className={styles.indicationLabel}>{t('indication', 'Indication').toUpperCase()}</span>{' '}
-            <span className={styles.dosageInfo}>
-              {!!orderBasketItem.indication ? orderBasketItem.indication : <i>{t('none', 'None')}</i>}
-            </span>
+            {orderBasketItem.indication && (
+              <>
+                <span className={styles.indicationLabel}>{t('indication', 'Indication').toUpperCase()}</span>{' '}
+                <span className={styles.dosageInfo}>{orderBasketItem.indication}</span>
+              </>
+            )}
             {!!orderBasketItem.orderError && (
               <>
                 <br />

@@ -1,7 +1,61 @@
-import useSWR from 'swr';
-import { fhirBaseUrl, openmrsFetch, restBaseUrl, useConfig } from '@openmrs/esm-framework';
-import { type FHIRCondition, type FHIRConditionResponse } from '../types';
 import { useMemo, useState } from 'react';
+import useSWR from 'swr';
+import { type DataTableSortState } from '@carbon/react';
+import { fhirBaseUrl, openmrsFetch, restBaseUrl, useConfig } from '@openmrs/esm-framework';
+
+export interface FHIRConditionResponse {
+  entry: Array<{
+    resource: FHIRCondition;
+  }>;
+  id: string;
+  meta: {
+    lastUpdated: string;
+  };
+  resourceType: string;
+  total: number;
+  type: string;
+}
+
+export interface FHIRCondition {
+  clinicalStatus: {
+    coding: Array<CodingData>;
+    display: string;
+  };
+  code: {
+    coding: Array<CodingData>;
+  };
+  id: string;
+  onsetDateTime: string;
+  recordedDate: string;
+  recorder: {
+    display: string;
+    reference: string;
+    type: string;
+  };
+  resourceType: string;
+  subject: {
+    display: string;
+    reference: string;
+    type: string;
+  };
+  text: {
+    div: string;
+    status: string;
+  };
+  abatementDateTime?: string;
+}
+
+interface CodingData {
+  code: string;
+  display: string;
+  extension?: Array<ExtensionData>;
+  system?: string;
+}
+
+interface ExtensionData {
+  extension: [];
+  url: string;
+}
 
 export type Condition = {
   clinicalStatus: string;
@@ -246,11 +300,14 @@ export interface ConditionTableHeader {
 export function useConditionsSorting(tableHeaders: Array<ConditionTableHeader>, tableRows: Array<ConditionTableRow>) {
   const [sortParams, setSortParams] = useState<{
     key: ConditionTableHeader['key'] | '';
-    sortDirection: 'ASC' | 'DESC' | 'NONE';
+    sortDirection: DataTableSortState;
   }>({ key: '', sortDirection: 'NONE' });
+
   const sortRow = (cellA, cellB, { key, sortDirection }) => {
     setSortParams({ key, sortDirection });
+    return 0;
   };
+
   const sortedRows = useMemo(() => {
     if (sortParams.sortDirection === 'NONE') {
       return tableRows;
@@ -258,6 +315,10 @@ export function useConditionsSorting(tableHeaders: Array<ConditionTableHeader>, 
 
     const { key, sortDirection } = sortParams;
     const tableHeader = tableHeaders.find((h) => h.key === key);
+
+    if (!tableHeader) {
+      return tableRows;
+    }
 
     return tableRows?.slice().sort((a, b) => {
       const sortingNum = tableHeader.sortFunc(a, b);

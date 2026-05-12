@@ -4,7 +4,6 @@ import { useTranslation } from 'react-i18next';
 import {
   Button,
   DataTable,
-  type DataTableHeader,
   DataTableSkeleton,
   InlineLoading,
   InlineNotification,
@@ -24,8 +23,9 @@ import {
   useConfig,
   useLayoutType,
   isDesktop as desktopLayout,
+  launchWorkspace2,
 } from '@openmrs/esm-framework';
-import { CardHeader, EmptyState, ErrorState, launchPatientWorkspace } from '@openmrs/esm-patient-common-lib';
+import { CardHeader, EmptyState, ErrorState } from '@openmrs/esm-patient-common-lib';
 import { findLastState, usePrograms } from './programs.resource';
 import { ProgramsActionMenu } from './programs-action-menu.component';
 import styles from './programs-detailed-summary.scss';
@@ -40,12 +40,12 @@ const ProgramsDetailedSummary: React.FC<ProgramsDetailedSummaryProps> = ({ patie
   const layout = useLayoutType();
   const isTablet = layout === 'tablet';
   const isDesktop = desktopLayout(layout);
-  const displayText = t('programEnrollments', 'Program enrollments');
+  const displayText = t('programEnrollmentsLower', 'program enrollments');
   const headerTitle = t('carePrograms', 'Care Programs');
 
   const { enrollments, isLoading, error, isValidating, availablePrograms } = usePrograms(patientUuid);
 
-  const tableHeaders: Array<typeof DataTableHeader> = useMemo(() => {
+  const tableHeaders = useMemo(() => {
     const headers = [
       {
         key: 'display',
@@ -91,7 +91,12 @@ const ProgramsDetailedSummary: React.FC<ProgramsDetailedSummaryProps> = ({ patie
     [enrollments, t],
   );
 
-  const launchProgramsForm = useCallback(() => launchPatientWorkspace('programs-form-workspace'), []);
+  const enrollmentsByUuid = useMemo(
+    () => new Map(enrollments?.map((enrollment) => [enrollment.uuid, enrollment]) ?? []),
+    [enrollments],
+  );
+
+  const launchProgramsForm = useCallback(() => launchWorkspace2('programs-form-workspace'), []);
 
   const isEnrolledInAllPrograms = useMemo(() => {
     if (!availablePrograms?.length || !enrollments?.length) {
@@ -146,26 +151,31 @@ const ProgramsDetailedSummary: React.FC<ProgramsDetailedSummaryProps> = ({ patie
                         className={classNames(styles.productiveHeading01, styles.text02)}
                         {...getHeaderProps({
                           header,
-                          isSortable: header.isSortable,
                         })}
                       >
-                        {header.header?.content ?? header.header}
+                        {header.header}
                       </TableHeader>
                     ))}
                     <TableHeader />
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {rows.map((row, i) => (
-                    <TableRow key={row.id} {...getRowProps({ row })}>
-                      {row.cells.map((cell) => (
-                        <TableCell key={cell.id}>{cell.value?.content ?? cell.value}</TableCell>
-                      ))}
-                      <TableCell className="cds--table-column-menu">
-                        <ProgramsActionMenu patientUuid={patientUuid} programEnrollmentId={enrollments[i]?.uuid} />
-                      </TableCell>
-                    </TableRow>
-                  ))}
+                  {rows.map((row) => {
+                    const enrollment = enrollmentsByUuid.get(row.id);
+
+                    return (
+                      <TableRow key={row.id} {...getRowProps({ row })}>
+                        {row.cells.map((cell) => (
+                          <TableCell key={cell.id}>{cell.value?.content ?? cell.value}</TableCell>
+                        ))}
+                        {enrollment && (
+                          <TableCell className="cds--table-column-menu">
+                            <ProgramsActionMenu patientUuid={patientUuid} programEnrollmentId={enrollment.uuid} />
+                          </TableCell>
+                        )}
+                      </TableRow>
+                    );
+                  })}
                 </TableBody>
               </Table>
             </TableContainer>
@@ -174,6 +184,7 @@ const ProgramsDetailedSummary: React.FC<ProgramsDetailedSummaryProps> = ({ patie
       </div>
     );
   }
+
   return <EmptyState displayText={displayText} headerTitle={headerTitle} launchForm={launchProgramsForm} />;
 };
 

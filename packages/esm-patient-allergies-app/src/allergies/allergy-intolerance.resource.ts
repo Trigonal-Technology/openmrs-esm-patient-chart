@@ -1,31 +1,19 @@
 import useSWR from 'swr';
 import { map } from 'rxjs/operators';
-import capitalize from 'lodash-es/capitalize';
-import { fhirBaseUrl, openmrsFetch, openmrsObservableFetch, restBaseUrl } from '@openmrs/esm-framework';
-import { type FHIRAllergy, type FHIRAllergyResponse, type ReactionSeverity } from '../types';
-
-export type Allergy = {
-  id: string;
-  clinicalStatus: string;
-  criticality: string;
-  display: string;
-  recordedDate: string;
-  recordedBy: string;
-  recorderType: string;
-  note: string;
-  reactionToSubstance: string;
-  reactionManifestations: Array<string>;
-  reactionSeverity: ReactionSeverity;
-  lastUpdated: string;
-};
-
-type UseAllergies = {
-  allergies: Array<Allergy>;
-  error: Error | null;
-  isLoading: boolean;
-  isValidating: boolean;
-  mutate: () => void;
-};
+import {
+  fhirBaseUrl,
+  openmrsFetch,
+  openmrsObservableFetch,
+  restBaseUrl,
+  type OpenmrsResource,
+} from '@openmrs/esm-framework';
+import {
+  type Allergy,
+  type FHIRAllergy,
+  type FHIRAllergyResponse,
+  type PatientAllergyPayload,
+  type UseAllergies,
+} from '../types';
 
 export function useAllergies(patientUuid: string): UseAllergies {
   const allergiesUrl = `${fhirBaseUrl}/AllergyIntolerance?patient=${patientUuid}`;
@@ -45,7 +33,7 @@ export function useAllergies(patientUuid: string): UseAllergies {
 
   return {
     allergies: data ? formattedAllergies : null,
-    error: error,
+    error,
     isLoading,
     isValidating,
     mutate,
@@ -58,7 +46,7 @@ function mapAllergyProperties(allergy: FHIRAllergy): Allergy {
     id: allergy?.id,
     clinicalStatus: allergy?.clinicalStatus?.coding[0]?.display,
     criticality: allergy?.criticality,
-    display: allergy?.code?.text,
+    display: allergy?.code?.text ?? allergy?.code?.coding[0]?.display,
     recordedDate: allergy?.recordedDate,
     recordedBy: allergy?.recorder?.display,
     recorderType: allergy?.recorder?.type,
@@ -76,8 +64,12 @@ export function fetchAllergyByUuid(allergyUuid: string) {
   );
 }
 
-export function saveAllergy(patientAllergy: any, patientUuid: string, abortController: AbortController) {
-  const reactions = patientAllergy.reactionUuids.map((reaction: any) => {
+export function saveAllergy(
+  patientAllergy: PatientAllergyPayload,
+  patientUuid: string,
+  abortController: AbortController,
+) {
+  const reactions = patientAllergy.reactionUuids.map((reaction: OpenmrsResource) => {
     return {
       reaction: {
         uuid: reaction.uuid,
@@ -107,43 +99,7 @@ export function saveAllergy(patientAllergy: any, patientUuid: string, abortContr
   });
 }
 
-export function updatePatientAllergy(
-  patientAllergy: any,
-  patientUuid: string,
-  allergyUuid: any,
-  abortController: AbortController,
-) {
-  const reactions = patientAllergy.reactionUuids.map((reaction: any) => {
-    return {
-      reaction: {
-        uuid: reaction.uuid,
-      },
-    };
-  });
-
-  return openmrsFetch(`${restBaseUrl}/patient/${patientUuid}/allergy/${allergyUuid.allergyUuid}`, {
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    method: 'POST',
-    body: {
-      allergen: {
-        allergenType: patientAllergy.allergenType,
-        codedAllergen: {
-          uuid: patientAllergy.codedAllergenUuid,
-        },
-      },
-      severity: {
-        uuid: patientAllergy.severityUuid,
-      },
-      comment: patientAllergy.comment,
-      reactions: reactions,
-    },
-    signal: abortController.signal,
-  });
-}
-
-export function deletePatientAllergy(patientUuid: string, allergyUuid: any, abortController: AbortController) {
+export function deletePatientAllergy(patientUuid: string, allergyUuid: string, abortController: AbortController) {
   return openmrsFetch(`${restBaseUrl}/patient/${patientUuid}/allergy/${allergyUuid}`, {
     method: 'DELETE',
     signal: abortController.signal,

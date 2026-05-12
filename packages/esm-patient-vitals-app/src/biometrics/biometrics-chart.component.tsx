@@ -1,20 +1,14 @@
-import React, { useMemo, useState } from 'react';
+import React, { useId, useMemo, useState } from 'react';
 import classNames from 'classnames';
 import { useTranslation } from 'react-i18next';
-import { Tab, Tabs, TabList } from '@carbon/react';
-import { LineChart } from '@carbon/charts-react';
+import { Tab, TabListVertical, TabPanel, TabPanels, TabsVertical } from '@carbon/react';
+import { LineChart, ScaleTypes } from '@carbon/charts-react';
 import { formatDate, parseDate } from '@openmrs/esm-framework';
 import { type ConfigObject } from '../config-schema';
-import { type PatientVitalsAndBiometrics } from '../common';
+import { withUnit, type PatientVitalsAndBiometrics } from '../common';
 import styles from './biometrics-chart.scss';
 
-enum ScaleTypes {
-  LABELS = 'labels',
-  LABELS_RATIO = 'labels-ratio',
-  LINEAR = 'linear',
-  LOG = 'log',
-  TIME = 'time',
-}
+type BiometricType = 'weight' | 'height' | 'bmi';
 
 interface BiometricsChartProps {
   conceptUnits: Map<string, string>;
@@ -23,39 +17,68 @@ interface BiometricsChartProps {
 }
 
 interface BiometricChartData {
+  groupName: BiometricType;
+  label: string;
   title: string;
+  unit: string;
   value: number | string;
-  groupName: 'Weight' | 'Height' | 'Body mass index' | string;
 }
-
-const chartColors = { weight: '#6929c4', height: '#6929c4', bmi: '#6929c4' };
 
 const BiometricsChart: React.FC<BiometricsChartProps> = ({ patientBiometrics, conceptUnits, config }) => {
   const { t } = useTranslation();
+  const labelId = useId();
   const { bmiUnit } = config.biometrics;
+  const weightUnit = conceptUnits.get(config.concepts.weightUuid) ?? '';
+  const heightUnit = conceptUnits.get(config.concepts.heightUuid) ?? '';
+
   const [selectedBiometrics, setSelectedBiometrics] = useState<BiometricChartData>({
-    title: `${t('weight', 'Weight')} (${conceptUnits.get(config.concepts.weightUuid) ?? ''})`,
+    label: t('weight', 'Weight'),
+    title: withUnit(t('weight', 'Weight'), weightUnit),
+    unit: weightUnit,
     value: 'weight',
     groupName: 'weight',
   });
+
+  const biometrics: { id: BiometricType; label: string; title: string; unit: string; value: BiometricType }[] = [
+    {
+      id: 'weight',
+      label: t('weight', 'Weight'),
+      title: withUnit(t('weight', 'Weight'), weightUnit),
+      unit: weightUnit,
+      value: 'weight',
+    },
+    {
+      id: 'height',
+      label: t('height', 'Height'),
+      title: withUnit(t('height', 'Height'), heightUnit),
+      unit: heightUnit,
+      value: 'height',
+    },
+    {
+      id: 'bmi',
+      label: t('bmi', 'BMI'),
+      title: withUnit(t('bmi', 'BMI'), bmiUnit),
+      unit: bmiUnit,
+      value: 'bmi',
+    },
+  ];
 
   const chartData = useMemo(
     () =>
       patientBiometrics
         .filter((biometrics) => biometrics[selectedBiometrics.value])
-        .splice(0, 10)
+        .slice(0, 10)
         .sort((biometricA, biometricB) => new Date(biometricA.date).getTime() - new Date(biometricB.date).getTime())
-        .map((biometric) => {
-          return (
-            biometric[selectedBiometrics.value] && {
-              group: selectedBiometrics.groupName,
-              key: formatDate(new Date(biometric.date), { mode: 'wide', year: false, time: false }),
-              value: biometric[selectedBiometrics.value],
-              date: biometric.date,
-            }
-          );
-        }),
-    [patientBiometrics, selectedBiometrics.groupName, selectedBiometrics.value],
+        .map(
+          (biometrics) =>
+            biometrics[selectedBiometrics.value] && {
+              group: selectedBiometrics.title,
+              key: formatDate(parseDate(biometrics.date), { year: true }),
+              value: biometrics[selectedBiometrics.value],
+              date: biometrics.date,
+            },
+        ),
+    [patientBiometrics, selectedBiometrics.title, selectedBiometrics.value],
   );
 
   const chartOptions = useMemo(() => {
@@ -64,8 +87,8 @@ const BiometricsChart: React.FC<BiometricsChartProps> = ({ patientBiometrics, co
       axes: {
         bottom: {
           title: t('date', 'Date'),
-          mapsTo: 'key',
-          scaleType: ScaleTypes.LABELS,
+          mapsTo: 'date',
+          scaleType: ScaleTypes.TIME,
         },
         left: {
           mapsTo: 'value',
@@ -78,15 +101,47 @@ const BiometricsChart: React.FC<BiometricsChartProps> = ({ patientBiometrics, co
         enabled: false,
       },
       color: {
-        scale: chartColors,
+        scale: {
+          [selectedBiometrics.title]: '#6929c4',
+        },
       },
       tooltip: {
-        customHTML: ([{ value, date }]) =>
-          `<div class="cds--tooltip cds--tooltip--shown" style="min-width: max-content; font-weight:600">${formatDate(
-            parseDate(date),
-            { year: true },
-          )} -
-          <span style="color: #c6c6c6; font-size: 1rem; font-weight:400">${value}</span></div>`,
+        customHTML: ([{ value, date }]) => {
+          const dateLabel = t('date', 'Date');
+          return `<div class="cds--tooltip cds--tooltip--shown" style="min-width: max-content; font-weight:600">
+              <div style="font-size:1rem; line-height:1.4">${selectedBiometrics.label}: <span>${value} ${selectedBiometrics.unit}</span></div>
+              <div style="color:#6F6F6F; font-size:0.875rem; font-weight:500; margin-top:0.125rem">${dateLabel}: ${formatDate(parseDate(date), { year: true })}</div>
+            </div>`;
+        },
+      },
+      toolbar: {
+        enabled: true,
+        numberOfIcons: 4,
+        controls: [
+          {
+            type: 'Zoom in',
+          },
+          {
+            type: 'Zoom out',
+          },
+          {
+            type: 'Reset zoom',
+          },
+          {
+            type: 'Export as CSV',
+          },
+          {
+            type: 'Export as PNG',
+          },
+          {
+            type: 'Make fullscreen',
+          },
+        ],
+      },
+      zoomBar: {
+        top: {
+          enabled: true,
+        },
       },
       height: '400px',
     };
@@ -95,43 +150,40 @@ const BiometricsChart: React.FC<BiometricsChartProps> = ({ patientBiometrics, co
   return (
     <div className={styles.biometricChartContainer}>
       <div className={styles.biometricsArea}>
-        <label className={styles.biometricLabel} htmlFor="biometrics-chart-radio-group">
+        <label className={styles.biometricLabel} id={labelId}>
           {t('biometricDisplayed', 'Biometric displayed')}
         </label>
-        <Tabs className={styles.verticalTabs}>
-          <TabList className={styles.tablist} aria-label="Biometrics tabs">
-            {[
-              {
-                id: 'weight',
-                label: `${t('weight', 'Weight')} (${conceptUnits.get(config.concepts.weightUuid) ?? ''})`,
-              },
-              {
-                id: 'height',
-                label: `${t('height', 'Height')} (${conceptUnits.get(config.concepts.heightUuid) ?? ''})`,
-              },
-              { id: 'bmi', label: `${t('bmi', 'BMI')} (${bmiUnit})` },
-            ].map(({ id, label }) => (
+        <TabsVertical>
+          <TabListVertical aria-labelledby={labelId}>
+            {biometrics.map(({ id, label, title, unit, value }) => (
               <Tab
                 className={classNames(styles.tab, styles.bodyLong01, {
-                  [styles.selectedTab]: selectedBiometrics.title === label,
+                  [styles.selectedTab]: selectedBiometrics.title === title,
                 })}
+                id={`${id}-tab`}
                 key={id}
                 onClick={() =>
                   setSelectedBiometrics({
-                    title: label,
-                    value: id,
+                    label,
+                    title,
+                    unit,
+                    value,
                     groupName: id,
                   })
                 }
               >
-                {label}
+                {title}
               </Tab>
             ))}
-          </TabList>
-        </Tabs>
-      </div>
-      <div className={styles.biometricsChartArea}>
-        <LineChart data={chartData} options={chartOptions} />
+          </TabListVertical>
+          <TabPanels>
+            {biometrics.map(({ id }) => (
+              <TabPanel key={id}>
+                <LineChart data={chartData} options={chartOptions} key={id} />
+              </TabPanel>
+            ))}
+          </TabPanels>
+        </TabsVertical>
       </div>
     </div>
   );

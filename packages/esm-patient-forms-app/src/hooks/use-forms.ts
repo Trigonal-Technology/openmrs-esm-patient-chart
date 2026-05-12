@@ -2,25 +2,43 @@ import dayjs from 'dayjs';
 import useSWR from 'swr';
 import {
   getDynamicOfflineDataEntries,
+  interpolateUrl,
   openmrsFetch,
   restBaseUrl,
   useConfig,
   userHasAccess,
   useSession,
 } from '@openmrs/esm-framework';
-import type { ConfigObject } from '../config-schema';
+import type { FormEntryConfigSchema } from '../config-schema';
 import type { ListResponse, Form, EncounterWithFormRef, CompletedFormInfo } from '../types';
-import { customEncounterRepresentation, formEncounterUrl, formEncounterUrlPoc } from '../constants';
+import {
+  customEncounterRepresentation,
+  customFormRepresentation,
+  formEncounterUrl,
+  formEncounterUrlPoc,
+} from '../constants';
 import { isValidOfflineFormEncounter } from '../offline-forms/offline-form-helpers';
 
-export function useFormEncounters(cachedOfflineFormsOnly = false, patientUuid: string = '') {
-  const { customFormsUrl, showHtmlFormEntryForms } = useConfig<ConfigObject>();
+function useCustomFormsUrl(patientUuid: string, visitUuid: string) {
+  const { customFormsUrl, showHtmlFormEntryForms } = useConfig<FormEntryConfigSchema>();
   const hasCustomFormsUrl = Boolean(customFormsUrl);
-  const url = hasCustomFormsUrl
-    ? customFormsUrl.concat(`?patientUuid=${patientUuid}`)
-    : showHtmlFormEntryForms
-    ? formEncounterUrl
-    : formEncounterUrlPoc;
+
+  const baseUrl = hasCustomFormsUrl ? customFormsUrl : showHtmlFormEntryForms ? formEncounterUrl : formEncounterUrlPoc;
+
+  const url = interpolateUrl(baseUrl, {
+    patientUuid: patientUuid,
+    visitUuid: visitUuid,
+    representation: customFormRepresentation,
+  });
+
+  return {
+    url,
+    hasCustomFormsUrl,
+  };
+}
+
+export function useFormEncounters(cachedOfflineFormsOnly = false, patientUuid: string = '', visitUuid: string = '') {
+  const { url, hasCustomFormsUrl } = useCustomFormsUrl(patientUuid, visitUuid);
 
   return useSWR([url, cachedOfflineFormsOnly], async () => {
     const res = await openmrsFetch<ListResponse<Form>>(url);
@@ -54,13 +72,14 @@ const MINIMUM_DATE = new Date(0);
 
 export function useForms(
   patientUuid: string,
+  visitUuid?: string,
   startDate?: Date,
   endDate?: Date,
   cachedOfflineFormsOnly = false,
   orderBy: 'name' | 'most-recent' = 'name',
 ) {
-  const { htmlFormEntryForms } = useConfig<ConfigObject>();
-  const allFormsRes = useFormEncounters(cachedOfflineFormsOnly, patientUuid);
+  const { htmlFormEntryForms } = useConfig<FormEntryConfigSchema>();
+  const allFormsRes = useFormEncounters(cachedOfflineFormsOnly, patientUuid, visitUuid);
   const encountersRes = useEncountersWithFormRef(patientUuid, startDate, endDate);
   const pastEncounters = encountersRes.data?.data?.results ?? [];
   const data = allFormsRes.data ? mapToFormCompletedInfo(allFormsRes.data, pastEncounters) : undefined;
@@ -103,7 +122,6 @@ export function useForms(
     data: formsToDisplay,
     error: allFormsRes.error,
     isValidating: allFormsRes.isValidating || encountersRes.isValidating,
-    allForms: allFormsRes.data,
     mutateForms,
   };
 }

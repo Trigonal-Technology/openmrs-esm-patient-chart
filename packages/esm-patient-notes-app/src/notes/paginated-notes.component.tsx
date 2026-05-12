@@ -3,6 +3,8 @@ import { useTranslation } from 'react-i18next';
 import classNames from 'classnames';
 import {
   DataTable,
+  type DataTableCell,
+  type DataTableSortState,
   Table,
   TableCell,
   TableContainer,
@@ -14,10 +16,10 @@ import {
   TableExpandRow,
   TableExpandedRow,
 } from '@carbon/react';
+import { orderBy } from 'lodash-es';
 import { formatDate, formatTime, parseDate, useLayoutType, usePagination } from '@openmrs/esm-framework';
 import { PatientChartPagination } from '@openmrs/esm-patient-common-lib';
 import type { PatientNote } from '../types';
-import orderBy from 'lodash-es/orderBy';
 import styles from './notes-overview.scss';
 
 interface PaginatedNotes {
@@ -56,12 +58,24 @@ const PaginatedNotes: React.FC<PaginatedNotes> = ({ notes, pageSize, pageUrl, ur
     key === 'encounterDate'
       ? sortDate(notes, order)
       : order === 'DESC'
-      ? orderBy(notes, [key], ['desc'])
-      : orderBy(notes, [key], ['asc']);
+        ? orderBy(notes, [key], ['desc'])
+        : orderBy(notes, [key], ['asc']);
 
-  function customSortRow(noteA, noteB, { sortDirection, sortStates, ...props }) {
-    const { key } = props;
-    setSortParams({ key, order: sortDirection });
+  function customSortRow(
+    cellA,
+    cellB,
+    {
+      sortDirection,
+      sortStates,
+    }: {
+      sortDirection: string;
+      sortStates: any;
+      locale: string;
+    },
+  ) {
+    const key = Object.keys(sortStates).find((k) => sortStates[k] === sortDirection);
+    setSortParams({ key: key ?? '', order: sortDirection });
+    return 0;
   }
 
   const { results: paginatedNotes, goTo, currentPage } = usePagination(sortedData, pageSize);
@@ -87,15 +101,16 @@ const PaginatedNotes: React.FC<PaginatedNotes> = ({ notes, pageSize, pageUrl, ur
         useZebraStyles
       >
         {({
-          rows,
-          headers,
+          getExpandedRowProps,
           getExpandHeaderProps,
-          getTableProps,
-          getTableContainerProps,
           getHeaderProps,
           getRowProps,
+          getTableContainerProps,
+          getTableProps,
+          headers,
+          rows,
         }) => (
-          <TableContainer {...getTableContainerProps}>
+          <TableContainer {...getTableContainerProps()}>
             <Table {...getTableProps()}>
               <TableHead>
                 <TableRow>
@@ -122,7 +137,11 @@ const PaginatedNotes: React.FC<PaginatedNotes> = ({ notes, pageSize, pageUrl, ur
                       ))}
                     </TableExpandRow>
                     {row.isExpanded ? (
-                      <TableExpandedRow className={styles.expandedRow} colSpan={headers.length + 1}>
+                      <TableExpandedRow
+                        className={styles.expandedRow}
+                        colSpan={headers.length + 1}
+                        {...getExpandedRowProps({ row })}
+                      >
                         <div className={styles.container} key={i}>
                           {tableRows?.[i]?.encounterNote ? (
                             <div className={styles.copy}>

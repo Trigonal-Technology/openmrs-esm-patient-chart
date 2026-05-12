@@ -1,3 +1,4 @@
+import { OBSERVATION_INTERPRETATION } from '@openmrs/esm-patient-common-lib/src/types';
 import { ObsRecord } from '../packages/esm-patient-tests-app/src/types';
 
 export const mockPanelData = {
@@ -498,7 +499,7 @@ export const mockResults = [
               {
                 obsDatetime: '2024-11-04 05:48:00.0',
                 value: '56.0',
-                interpretation: 'LOW',
+                interpretation: 'LOW' as OBSERVATION_INTERPRETATION,
               },
             ],
             datatype: 'Numeric',
@@ -786,7 +787,7 @@ export const mockResults = [
                   {
                     obsDatetime: '2024-11-04 05:48:00.0',
                     value: '56.0',
-                    interpretation: 'LOW',
+                    interpretation: 'LOW' as OBSERVATION_INTERPRETATION,
                   },
                 ],
                 datatype: 'Numeric',
@@ -1407,17 +1408,23 @@ export const mockResults = [
     display: 'HIV viral load',
     subSets: [
       {
-        obs: [],
+        obs: [
+          {
+            obsDatetime: '2024-11-04 05:48:00.0',
+            value: '600',
+            interpretation: 'NORMAL' as OBSERVATION_INTERPRETATION,
+          },
+        ],
         datatype: 'Numeric',
         lowAbsolute: 0,
         display: 'HIV viral load',
         conceptUuid: '856AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
         units: 'copies/ml',
         flatName: 'HIV viral load-HIV viral load',
-        hasData: false,
+        hasData: true,
       },
     ],
     flatName: 'HIV viral load',
-    hasData: false,
+    hasData: true,
   },
 ];

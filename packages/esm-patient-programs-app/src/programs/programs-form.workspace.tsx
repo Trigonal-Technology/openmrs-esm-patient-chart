@@ -1,12 +1,11 @@
-import React, { useCallback, useEffect, useMemo } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import classNames from 'classnames';
-import { type TFunction, useTranslation } from 'react-i18next';
+import { useTranslation } from 'react-i18next';
+import type { TFunction } from 'i18next';
 import dayjs from 'dayjs';
 import {
   Button,
   ButtonSet,
-  DatePicker,
-  DatePickerInput,
   Form,
   FormGroup,
   FormLabel,
@@ -20,19 +19,29 @@ import {
 import { z } from 'zod';
 import { useForm, Controller, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { parseDate, showSnackbar, useConfig, useLayoutType, useLocations, useSession } from '@openmrs/esm-framework';
-import { type DefaultPatientWorkspaceProps } from '@openmrs/esm-patient-common-lib';
+import {
+  getCoreTranslation,
+  LocationPicker,
+  OpenmrsDatePicker,
+  parseDate,
+  showSnackbar,
+  useConfig,
+  useLayoutType,
+  useSession,
+  Workspace2,
+} from '@openmrs/esm-framework';
+import { type PatientWorkspace2DefinitionProps } from '@openmrs/esm-patient-common-lib';
 import { type ConfigObject } from '../config-schema';
 import {
   createProgramEnrollment,
+  findLastState,
+  updateProgramEnrollment,
   useAvailablePrograms,
   useEnrollments,
-  updateProgramEnrollment,
-  findLastState,
 } from './programs.resource';
 import styles from './programs-form.scss';
 
-interface ProgramsFormProps extends DefaultPatientWorkspaceProps {
+export interface ProgramsFormProps {
   programEnrollmentId?: string;
 }
 
@@ -40,24 +49,21 @@ const createProgramsFormSchema = (t: TFunction) =>
   z.object({
     selectedProgram: z.string().refine((value) => !!value, t('programRequired', 'Program is required')),
     enrollmentDate: z.date(),
-    completionDate: z.date().nullable(),
+    completionDate: z.date().optional().nullable(),
     enrollmentLocation: z.string(),
     selectedProgramStatus: z.string(),
   });
 
 export type ProgramsFormData = z.infer<ReturnType<typeof createProgramsFormSchema>>;
 
-const ProgramsForm: React.FC<ProgramsFormProps> = ({
+const ProgramsForm: React.FC<PatientWorkspace2DefinitionProps<ProgramsFormProps, {}>> = ({
   closeWorkspace,
-  closeWorkspaceWithSavedChanges,
-  patientUuid,
-  programEnrollmentId,
-  promptBeforeClosing,
+  groupProps: { patientUuid },
+  workspaceProps: { programEnrollmentId },
 }) => {
   const { t } = useTranslation();
   const isTablet = useLayoutType() === 'tablet';
   const session = useSession();
-  const availableLocations = useLocations();
   const { data: availablePrograms } = useAvailablePrograms();
   const { data: enrollments, mutateEnrollments } = useEnrollments(patientUuid);
   const { showProgramStatusField } = useConfig<ConfigObject>();
@@ -108,10 +114,6 @@ const ProgramsForm: React.FC<ProgramsFormProps> = ({
 
   const selectedProgram = useWatch({ control, name: 'selectedProgram' });
 
-  useEffect(() => {
-    promptBeforeClosing(() => isDirty);
-  }, [isDirty, promptBeforeClosing]);
-
   const onSubmit = useCallback(
     async (data: ProgramsFormData) => {
       const { selectedProgram, enrollmentDate, completionDate, enrollmentLocation, selectedProgramStatus } = data;
@@ -138,7 +140,7 @@ const ProgramsForm: React.FC<ProgramsFormProps> = ({
         }
 
         await mutateEnrollments();
-        closeWorkspaceWithSavedChanges();
+        closeWorkspace({ discardUnsavedChanges: true });
 
         showSnackbar({
           kind: 'success',
@@ -157,7 +159,7 @@ const ProgramsForm: React.FC<ProgramsFormProps> = ({
         });
       }
     },
-    [closeWorkspaceWithSavedChanges, currentEnrollment, currentState, mutateEnrollments, patientUuid, t],
+    [closeWorkspace, currentEnrollment, currentState, mutateEnrollments, patientUuid, t],
   );
 
   const programName = (
@@ -196,19 +198,19 @@ const ProgramsForm: React.FC<ProgramsFormProps> = ({
     <Controller
       name="enrollmentDate"
       control={control}
-      render={({ field: { onChange, value } }) => (
-        <DatePicker
-          aria-label="enrollment date"
+      render={({ field, fieldState }) => (
+        <OpenmrsDatePicker
+          {...field}
           id="enrollmentDate"
-          datePickerType="single"
-          dateFormat="d/m/Y"
-          maxDate={new Date().toISOString()}
-          placeholder="dd/mm/yyyy"
-          onChange={([date]) => onChange(date)}
-          value={value}
-        >
-          <DatePickerInput id="enrollmentDateInput" labelText={t('dateEnrolled', 'Date enrolled')} />
-        </DatePicker>
+          data-testid="enrollmentDate"
+          maxDate={(() => {
+            const completionDate = watch('completionDate');
+            return completionDate ? dayjs(completionDate).subtract(1, 'day').toDate() : new Date();
+          })()}
+          labelText={t('dateEnrolled', 'Date enrolled')}
+          invalid={Boolean(fieldState?.error?.message)}
+          invalidText={fieldState?.error?.message}
+        />
       )}
     />
   );
@@ -217,20 +219,18 @@ const ProgramsForm: React.FC<ProgramsFormProps> = ({
     <Controller
       name="completionDate"
       control={control}
-      render={({ field: { onChange, value } }) => (
-        <DatePicker
-          aria-label="completion date"
+      render={({ field, fieldState }) => (
+        <OpenmrsDatePicker
+          {...field}
           id="completionDate"
-          datePickerType="single"
-          dateFormat="d/m/Y"
-          minDate={new Date(watch('enrollmentDate')).toISOString()}
-          maxDate={new Date().toISOString()}
-          placeholder="dd/mm/yyyy"
-          onChange={([date]) => onChange(date)}
-          value={value}
-        >
-          <DatePickerInput id="completionDateInput" labelText={t('dateCompleted', 'Date completed')} />
-        </DatePicker>
+          data-testid="completionDate"
+          minDate={dayjs(watch('enrollmentDate')).add(1, 'day').toDate()}
+          maxDate={new Date()}
+          isDisabled={dayjs(watch('enrollmentDate')).isSame(dayjs(), 'day')}
+          labelText={t('dateCompleted', 'Date completed')}
+          invalid={Boolean(fieldState?.error?.message)}
+          invalidText={fieldState?.error?.message}
+        />
       )}
     />
   );
@@ -240,20 +240,17 @@ const ProgramsForm: React.FC<ProgramsFormProps> = ({
       name="enrollmentLocation"
       control={control}
       render={({ field: { onChange, value } }) => (
-        <Select
-          aria-label="enrollment location"
-          id="location"
-          labelText={t('enrollmentLocation', 'Enrollment location')}
-          onChange={(event) => onChange(event.target.value)}
-          value={value}
-        >
-          {availableLocations?.length > 0 &&
-            availableLocations.map((location) => (
-              <SelectItem key={location.uuid} text={location.display} value={location.uuid}>
-                {location.display}
-              </SelectItem>
-            ))}
-        </Select>
+        <React.Fragment>
+          <FormLabel className={`${styles.locationLabel} cds--label`}>
+            {t('enrollmentLocation', 'Enrollment location')}
+          </FormLabel>
+          <LocationPicker
+            selectedLocationUuid={value}
+            defaultLocationUuid={session?.sessionLocation?.uuid}
+            locationTag="Login Location"
+            onChange={(locationUuid) => onChange(locationUuid)}
+          />
+        </React.Fragment>
       )}
     />
   );
@@ -314,7 +311,7 @@ const ProgramsForm: React.FC<ProgramsFormProps> = ({
       value: completionDate,
     },
     {
-      style: { width: '50%' },
+      style: { width: '100%' },
       legendText: '',
       value: enrollmentLocation,
     },
@@ -329,36 +326,38 @@ const ProgramsForm: React.FC<ProgramsFormProps> = ({
   }
 
   return (
-    <Form className={styles.form} onSubmit={handleSubmit(onSubmit)}>
-      <Stack className={styles.formContainer} gap={7}>
-        {!availablePrograms.length && (
-          <InlineNotification
-            className={styles.notification}
-            kind="error"
-            lowContrast
-            subtitle={t('configurePrograms', 'Please configure programs to continue.')}
-            title={t('noProgramsConfigured', 'No programs configured')}
-          />
-        )}
-        {formGroups.map((group, i) => (
-          <FormGroup style={group.style} legendText={group.legendText} key={i}>
-            <div className={styles.selectContainer}>{isTablet ? <Layer>{group.value}</Layer> : group.value}</div>
-          </FormGroup>
-        ))}
-      </Stack>
-      <ButtonSet className={classNames(isTablet ? styles.tablet : styles.desktop)}>
-        <Button className={styles.button} kind="secondary" onClick={closeWorkspace}>
-          {t('cancel', 'Cancel')}
-        </Button>
-        <Button className={styles.button} disabled={isSubmitting} kind="primary" type="submit">
-          {isSubmitting ? (
-            <InlineLoading description={t('saving', 'Saving') + '...'} />
-          ) : (
-            <span>{t('saveAndClose', 'Save and close')}</span>
+    <Workspace2 title={t('programEnrollmentWorkspaceTitle', 'Program enrollment')} hasUnsavedChanges={isDirty}>
+      <Form className={styles.form} onSubmit={handleSubmit(onSubmit)}>
+        <Stack className={styles.formContainer} gap={7}>
+          {!availablePrograms.length && (
+            <InlineNotification
+              className={styles.notification}
+              kind="error"
+              lowContrast
+              subtitle={t('configurePrograms', 'Please configure programs to continue.')}
+              title={t('noProgramsConfigured', 'No programs configured')}
+            />
           )}
-        </Button>
-      </ButtonSet>
-    </Form>
+          {formGroups.map((group, i) => (
+            <FormGroup style={group.style} legendText={group.legendText} key={i}>
+              <div className={styles.selectContainer}>{isTablet ? <Layer>{group.value}</Layer> : group.value}</div>
+            </FormGroup>
+          ))}
+        </Stack>
+        <ButtonSet className={classNames(isTablet ? styles.tablet : styles.desktop)}>
+          <Button className={styles.button} kind="secondary" onClick={() => closeWorkspace()}>
+            {getCoreTranslation('cancel')}
+          </Button>
+          <Button className={styles.button} disabled={isSubmitting} kind="primary" type="submit">
+            {isSubmitting ? (
+              <InlineLoading description={t('saving', 'Saving') + '...'} />
+            ) : (
+              <span>{t('saveAndClose', 'Save and close')}</span>
+            )}
+          </Button>
+        </ButtonSet>
+      </Form>
+    </Workspace2>
   );
 };
 

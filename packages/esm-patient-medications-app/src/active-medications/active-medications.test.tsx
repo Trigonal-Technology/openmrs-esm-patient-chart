@@ -1,5 +1,5 @@
 import React from 'react';
-import { launchWorkspace, openmrsFetch, useSession } from '@openmrs/esm-framework';
+import { launchWorkspace2, openmrsFetch, useSession } from '@openmrs/esm-framework';
 import { screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { mockPatientDrugOrdersApiData, mockSessionDataResponse } from '__mocks__';
@@ -8,9 +8,9 @@ import ActiveMedications from './active-medications.component';
 
 const mockUseSession = jest.mocked(useSession);
 const mockOpenmrsFetch = openmrsFetch as jest.Mock;
-const mockLaunchWorkspace = launchWorkspace as jest.Mock;
-const mockUseLaunchWorkspaceRequiringVisit = jest.fn().mockImplementation((name) => {
-  return () => mockLaunchWorkspace(name);
+const mockLaunchWorkspace2 = launchWorkspace2 as jest.Mock;
+const mockUseLaunchWorkspaceRequiringVisit = jest.fn().mockImplementation((_, name) => {
+  return () => mockLaunchWorkspace2(name);
 });
 mockUseSession.mockReturnValue(mockSessionDataResponse.data);
 
@@ -20,14 +20,6 @@ jest.mock('@openmrs/esm-patient-common-lib', () => {
   return {
     ...originalModule,
     useLaunchWorkspaceRequiringVisit: (...args) => mockUseLaunchWorkspaceRequiringVisit(...args),
-    useWorkspaces: jest.fn(() => {
-      return { workspaces: [{ name: 'order-basket' }] };
-    }),
-    useVisitOrOfflineVisit: jest.fn(() => ({
-      currentVisit: {
-        uuid: '8ef90c91-14be-42dd-a1c0-e67fbf904470',
-      },
-    })),
   };
 });
 
@@ -90,7 +82,7 @@ describe('ActiveMedications', () => {
 
     const expectedTableRows = [
       /14-Aug-2023 Admin User Acetaminophen 325 mg — 325mg — tablet DOSE 2 tablet — oral — twice daily — indefinite duration — take it sometimes INDICATION Bad boo-boo/,
-      /14-Aug-2023 Admin User Acetaminophen 325 mg — 325mg — tablet 14-Aug-2023 DOSE 2 tablet — oral — twice daily — indefinite duration INDICATION No good 0/,
+      /14-Aug-2023 Admin User Acetaminophen 325 mg — 325mg — tablet 14-Aug-2023 DOSE 2 tablet — oral — twice daily — indefinite duration INDICATION No good — QUANTITY 0 Tablet/,
       /14-Aug-2023 Admin User Sulfacetamide 0.1 — 10% DOSE 1 application — for 1 weeks — REFILLS 1 — apply it INDICATION Pain — QUANTITY 8 Application/,
       /14-Aug-2023 Admin User Aspirin 162.5mg — 162.5mg — tablet DOSE 1 tablet — oral — once daily — for 30 days INDICATION Heart — QUANTITY 30 Tablet/,
     ];
@@ -108,9 +100,9 @@ test('clicking the Record active medications link opens the order basket form', 
   renderWithSwr(<ActiveMedications patient={mockPatient} />);
 
   await waitForLoadingToFinish();
-  const orderLink = screen.getByText('Record active medications');
+  const orderLink = screen.getByText(/Record active medications/i);
   await user.click(orderLink);
-  expect(mockLaunchWorkspace).toHaveBeenCalledWith('add-drug-order');
+  expect(mockLaunchWorkspace2).toHaveBeenCalledWith('order-basket');
 });
 
 test('clicking the Add button opens the order basket form', async () => {
@@ -122,5 +114,5 @@ test('clicking the Add button opens the order basket form', async () => {
   await waitForLoadingToFinish();
   const button = screen.getByRole('button', { name: /Add/i });
   await user.click(button);
-  expect(mockLaunchWorkspace).toHaveBeenCalledWith('add-drug-order');
+  expect(mockLaunchWorkspace2).toHaveBeenCalledWith('order-basket');
 });

@@ -1,28 +1,33 @@
 import React, { type ComponentProps, useCallback } from 'react';
-import styles from './active-visit-buttons.scss';
 import { useTranslation } from 'react-i18next';
 import { Button, MenuButton, MenuItem } from '@carbon/react';
 import { AddIcon, type Visit } from '@openmrs/esm-framework';
-import { useLaunchWorkspaceRequiringVisit } from '@openmrs/esm-patient-common-lib';
 import { showModal, useLayoutType } from '@openmrs/esm-framework';
+import { useLaunchWorkspaceRequiringVisit } from '@openmrs/esm-patient-common-lib';
+import styles from './active-visit-buttons.scss';
 
 export interface ActiveVisitActionsInterface {
   visit: Visit;
   patientUuid: string;
 }
+
+/**
+ * This is an extension that is used not in the refapp, but in other distributions.
+ */
 const ActiveVisitActions: React.FC<ActiveVisitActionsInterface> = ({ visit, patientUuid }) => {
   const { t } = useTranslation();
   const layout = useLayoutType();
   const isTablet = layout === 'tablet';
   const isMobile = layout === 'phone';
 
-  const launchAllergiesFormWorkspace = useLaunchWorkspaceRequiringVisit('patient-allergy-form-workspace');
-  const launchAppointmentsFormWorkspace = useLaunchWorkspaceRequiringVisit('appointments-form-workspace');
-  const launchClinicalFormsWorkspace = useLaunchWorkspaceRequiringVisit('clinical-forms-workspace');
-  const launchConditionsFormWorkspace = useLaunchWorkspaceRequiringVisit('conditions-form-workspace');
-  const launchOrderBasketFormWorkspace = useLaunchWorkspaceRequiringVisit('order-basket');
-  const launchVisitNotesFormWorkspace = useLaunchWorkspaceRequiringVisit('visit-notes-form-workspace');
+  const launchAllergiesFormWorkspace = useLaunchWorkspaceRequiringVisit(patientUuid, 'patient-allergy-form-workspace');
+  const launchAppointmentsFormWorkspace = useLaunchWorkspaceRequiringVisit(patientUuid, 'appointments-form-workspace');
+  const launchClinicalFormsWorkspace = useLaunchWorkspaceRequiringVisit(patientUuid, 'clinical-forms-workspace');
+  const launchConditionsFormWorkspace = useLaunchWorkspaceRequiringVisit(patientUuid, 'conditions-form-workspace');
+  const launchOrderBasketFormWorkspace = useLaunchWorkspaceRequiringVisit(patientUuid, 'order-basket');
+  const launchVisitNotesFormWorkspace = useLaunchWorkspaceRequiringVisit(patientUuid, 'visit-notes-form-workspace');
   const launchVitalsAndBiometricsFormWorkspace = useLaunchWorkspaceRequiringVisit(
+    patientUuid,
     'patient-vitals-biometrics-form-workspace',
   );
 
@@ -34,43 +39,43 @@ const ActiveVisitActions: React.FC<ActiveVisitActionsInterface> = ({ visit, pati
 
           <MenuButton label={t('more', 'More')} kind="ghost">
             <MenuItem
-              kind="ghost"
+              kind="default"
               label={t('addNote', 'Add note')}
               onClick={launchVisitNotesFormWorkspace}
               renderIcon={AddIcon}
             />
             <MenuItem
-              kind="ghost"
+              kind="default"
               label={t('addLabOrPrescription', 'Add lab or prescription')}
               onClick={launchOrderBasketFormWorkspace}
               renderIcon={AddIcon}
             />
             <MenuItem
-              kind="ghost"
+              kind="default"
               label={t('addVitals', 'Add vitals')}
               onClick={launchVitalsAndBiometricsFormWorkspace}
               renderIcon={AddIcon}
             />
             <MenuItem
-              kind="ghost"
+              kind="default"
               label={t('addCondition', 'Add condition')}
               onClick={launchConditionsFormWorkspace}
               renderIcon={AddIcon}
             />
             <MenuItem
-              kind="ghost"
+              kind="default"
               label={t('addAllergy', 'Add allergy')}
               onClick={launchAllergiesFormWorkspace}
               renderIcon={AddIcon}
             />
             <MenuItem
-              kind="ghost"
+              kind="default"
               label={t('addAppointment', 'Add appointment')}
               onClick={launchAppointmentsFormWorkspace}
               renderIcon={AddIcon}
             />
             <MenuItem
-              kind="ghost"
+              kind="default"
               label={t('otherForm', 'Other form')}
               onClick={launchClinicalFormsWorkspace}
               renderIcon={AddIcon}
@@ -100,31 +105,31 @@ const ActiveVisitActions: React.FC<ActiveVisitActionsInterface> = ({ visit, pati
 
           <MenuButton label={t('more', 'More')} kind="ghost">
             <MenuItem
-              kind="ghost"
+              kind="default"
               label={t('addVitals', 'Add vitals')}
               onClick={launchVitalsAndBiometricsFormWorkspace}
               renderIcon={AddIcon}
             />
             <MenuItem
-              kind="ghost"
+              kind="default"
               label={t('addCondition', 'Add condition')}
               onClick={launchConditionsFormWorkspace}
               renderIcon={AddIcon}
             />
             <MenuItem
-              kind="ghost"
+              kind="default"
               label={t('addAllergy', 'Add allergy')}
               onClick={launchAllergiesFormWorkspace}
               renderIcon={AddIcon}
             />
             <MenuItem
-              kind="ghost"
+              kind="default"
               label={t('addAppointment', 'Add appointment')}
               onClick={launchAppointmentsFormWorkspace}
               renderIcon={AddIcon}
             />
             <MenuItem
-              kind="ghost"
+              kind="default"
               label={t('otherForm', 'Other form')}
               onClick={launchClinicalFormsWorkspace}
               renderIcon={AddIcon}
@@ -157,19 +162,13 @@ const VisitActionsComponent: React.FC<VisitActionsProps> = ({ patientUuid }) => 
   return (
     <MenuButton label={t('endVisit', 'End visit')} kind="ghost">
       <MenuItem
-        kind="ghost"
+        kind="default"
         label={t('endVisit', 'End visit')}
         onClick={() => openModal('end-visit-dialog')}
         renderIcon={AddIcon}
       />
       <MenuItem
-        kind="ghost"
-        label={t('cancelVisit', 'Cancel visit')}
-        onClick={() => openModal('cancel-visit-dialog')}
-        renderIcon={AddIcon}
-      />
-      <MenuItem
-        kind="ghost"
+        kind="default"
         label={t('deleteVisit', 'Delete visit')}
         onClick={() => openModal('delete-visit-dialog')}
         renderIcon={AddIcon}

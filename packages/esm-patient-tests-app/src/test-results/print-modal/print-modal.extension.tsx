@@ -3,8 +3,6 @@ import { useTranslation } from 'react-i18next';
 import {
   Button,
   DataTable,
-  DatePicker,
-  DatePickerInput,
   ModalBody,
   ModalFooter,
   ModalHeader,
@@ -27,18 +25,27 @@ import {
   formatDate,
   useConfig,
   useLayoutType,
-  usePatient,
   useSession,
   ResponsiveWrapper,
+  getCoreTranslation,
+  OpenmrsDatePicker,
 } from '@openmrs/esm-framework';
-import usePanelData from '../panel-view/usePanelData';
+import usePanelData from '../individual-results-table-tablet/usePanelData';
 import styles from './print-modal.scss';
 
-function PrintModal({ patientUuid, closeDialog }) {
+function PrintModal({
+  patientUuid,
+  patient,
+  closeDialog,
+}: {
+  patientUuid: string;
+  patient: fhir.Patient;
+  closeDialog: () => void;
+}) {
   const { t } = useTranslation();
   const isTablet = useLayoutType() === 'tablet';
   const session = useSession();
-  const { panels } = usePanelData();
+  const { panels } = usePanelData(patientUuid);
   const printContainerRef = useRef(null);
   const [selectedFromDate, setSelectedFromDate] = useState(null);
   const [selectedToDate, setSelectedToDate] = useState(null);
@@ -50,8 +57,6 @@ function PrintModal({ patientUuid, closeDialog }) {
     externalModuleName: '@openmrs/esm-patient-banner-app',
   });
   const headerTitle = t('testResults_title', 'Test Results');
-  const datePickerPlaceHolder = 'dd/mm/yyyy';
-  const datePickerFormat = 'd/m/Y';
 
   const tableHeaders = [
     { key: 'testType', header: 'Test Type' },
@@ -64,37 +69,35 @@ function PrintModal({ patientUuid, closeDialog }) {
     content: () => printContainerRef.current,
   });
 
-  const patient = usePatient(patientUuid);
-
   const patientDetails = useMemo(() => {
     const getGender = (gender: string): string => {
       switch (gender) {
         case 'male':
-          return t('male', 'Male');
+          return getCoreTranslation('male');
         case 'female':
-          return t('female', 'Female');
+          return getCoreTranslation('female');
         case 'other':
-          return t('other', 'Other');
+          return getCoreTranslation('other');
         case 'unknown':
-          return t('unknown', 'Unknown');
+          return getCoreTranslation('unknown');
         default:
           return gender;
       }
     };
 
     const identifiers =
-      patient?.patient?.identifier?.filter(
-        (identifier) => !excludePatientIdentifierCodeTypes?.uuids.includes(identifier.type.coding[0].code),
+      patient?.identifier?.filter(
+        (identifier) => !excludePatientIdentifierCodeTypes?.uuids.includes(identifier.type?.coding?.[0]?.code),
       ) ?? [];
 
     return {
-      name: patient?.patient ? getPatientName(patient?.patient) : '',
-      age: age(patient?.patient?.birthDate),
-      gender: getGender(patient?.patient?.gender),
-      location: patient?.patient?.address?.[0].city,
+      name: patient ? getPatientName(patient) : '',
+      age: age(patient?.birthDate),
+      gender: getGender(patient?.gender),
+      location: patient?.address?.[0].city,
       identifiers: identifiers?.length ? identifiers.map(({ value }) => value) : [],
     };
-  }, [patient, t, excludePatientIdentifierCodeTypes?.uuids]);
+  }, [patient, excludePatientIdentifierCodeTypes?.uuids]);
 
   const testResults = useMemo(() => {
     if (selectedFromDate && selectedToDate) {
@@ -117,35 +120,23 @@ function PrintModal({ patientUuid, closeDialog }) {
       <ModalBody className={styles.modalBody}>
         <ResponsiveWrapper>
           <div className={styles.datePickerContainers}>
-            <DatePicker
+            <OpenmrsDatePicker
               className={styles.datePicker}
-              dateFormat={datePickerFormat}
-              datePickerType="single"
               maxDate={new Date().toISOString()}
-              onChange={([date]) => setSelectedFromDate(date)}
+              onChange={setSelectedFromDate}
               value={selectedFromDate}
-            >
-              <DatePickerInput
-                labelText={t('startDate', 'Start date')}
-                placeholder={datePickerPlaceHolder}
-                style={{ width: '100%' }}
-              />
-            </DatePicker>
-            <DatePicker
+              labelText={t('startDate', 'Start date')}
+              aria-required="true"
+              data-testid="start-date-picker"
+            />
+            <OpenmrsDatePicker
               className={styles.datePicker}
-              dateFormat={datePickerFormat}
-              datePickerType="single"
               minDate={selectedFromDate}
-              maxDate={new Date().toISOString()}
-              onChange={([date]) => setSelectedToDate(date)}
+              maxDate={new Date()}
+              onChange={setSelectedToDate}
               value={selectedToDate}
-            >
-              <DatePickerInput
-                labelText={t('endDate', 'End date')}
-                placeholder={datePickerPlaceHolder}
-                style={{ width: '100%' }}
-              />
-            </DatePicker>
+              labelText={t('endDate', 'End date')}
+            />
           </div>
         </ResponsiveWrapper>
         <div className={styles.printContainer} ref={printContainerRef}>
@@ -180,7 +171,6 @@ function PrintModal({ patientUuid, closeDialog }) {
 
           {testResults?.length > 0 && (
             <DataTable
-              className={styles.table}
               rows={testResults}
               headers={tableHeaders}
               isSortable
@@ -189,7 +179,7 @@ function PrintModal({ patientUuid, closeDialog }) {
             >
               {({ rows, headers, getHeaderProps, getTableProps }) => (
                 <TableContainer>
-                  <Table {...getTableProps()}>
+                  <Table className={styles.table} {...getTableProps()}>
                     <TableHead>
                       <TableRow>
                         {headers.map((header) => (
@@ -197,10 +187,9 @@ function PrintModal({ patientUuid, closeDialog }) {
                             className={styles.heading}
                             {...getHeaderProps({
                               header,
-                              isSortable: header.isSortable,
                             })}
                           >
-                            {header.header?.content ?? header.header}
+                            {header.header}
                           </TableHeader>
                         ))}
                       </TableRow>

@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   DataTable,
   Table,
@@ -8,10 +9,12 @@ import {
   TableHead,
   TableHeader,
   TableRow,
+  type DataTableSortState,
 } from '@carbon/react';
 import { useLayoutType, usePagination } from '@openmrs/esm-framework';
 import { PatientChartPagination } from '@openmrs/esm-patient-common-lib';
 import type { VitalsTableHeader, VitalsTableRow } from './types';
+import { VitalsAndBiometricsActionMenu } from '../components/action-menu/vitals-biometrics-action-menu.component';
 import styles from './paginated-vitals.scss';
 
 interface PaginatedVitalsProps {
@@ -21,6 +24,7 @@ interface PaginatedVitalsProps {
   tableHeaders: Array<VitalsTableHeader>;
   tableRows: Array<VitalsTableRow>;
   urlLabel: string;
+  patient: fhir.Patient;
 }
 
 const PaginatedVitals: React.FC<PaginatedVitalsProps> = ({
@@ -30,10 +34,12 @@ const PaginatedVitals: React.FC<PaginatedVitalsProps> = ({
   tableHeaders,
   tableRows,
   urlLabel,
+  patient,
 }) => {
+  const { t } = useTranslation();
   const isTablet = useLayoutType() === 'tablet';
 
-  const StyledTableCell = ({ interpretation, children }: { interpretation: string; children: React.ReactNode }) => {
+  const StyledTableCell = ({ children, interpretation }: { children: React.ReactNode; interpretation: string }) => {
     switch (interpretation) {
       case 'critically_high':
         return <TableCell className={styles.criticallyHigh}>{children}</TableCell>;
@@ -54,15 +60,16 @@ const PaginatedVitals: React.FC<PaginatedVitalsProps> = ({
   });
 
   const handleSorting = (
-    cellA,
-    cellB,
-    { key, sortDirection }: { key: string; sortDirection: 'ASC' | 'DESC' | 'NONE' },
+    cellA: any,
+    cellB: any,
+    { key, sortDirection }: { key: string; sortDirection: DataTableSortState },
   ) => {
     if (sortDirection === 'NONE') {
       setSortParams({ key: '', sortDirection });
     } else {
       setSortParams({ key, sortDirection });
     }
+    return 0;
   };
 
   const sortedData: Array<VitalsTableRow> = useMemo(() => {
@@ -91,23 +98,25 @@ const PaginatedVitals: React.FC<PaginatedVitalsProps> = ({
   return (
     <>
       <DataTable
-        rows={rows}
         headers={tableHeaders}
-        size={isTablet ? 'lg' : 'sm'}
-        useZebraStyles
-        sortRow={handleSorting}
         isSortable
+        overflowMenuOnHover={!isTablet}
+        rows={rows}
+        size={isTablet ? 'lg' : 'sm'}
+        sortRow={handleSorting}
+        useZebraStyles
       >
         {({ rows, headers, getTableProps, getHeaderProps }) => (
           <TableContainer className={styles.tableContainer}>
-            <Table className={styles.table} aria-label="vitals" {...getTableProps()}>
+            <Table aria-label="vitals" className={styles.table} {...getTableProps()}>
               <TableHead>
                 <TableRow>
                   {headers.map((header) => (
-                    <TableHeader {...getHeaderProps({ header, isSortable: header.isSortable })} key={header.key}>
-                      {header.header?.content ?? header.header}
+                    <TableHeader {...getHeaderProps({ header })} key={header.key}>
+                      {header.header}
                     </TableHeader>
                   ))}
+                  <TableHeader aria-label={t('actions', 'Actions')} />
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -115,14 +124,18 @@ const PaginatedVitals: React.FC<PaginatedVitalsProps> = ({
                   <TableRow key={row.id}>
                     {row.cells.map((cell) => {
                       const vitalsObj = paginatedVitals.find((obj) => obj.id === row.id);
-                      const vitalSignInterpretation = vitalsObj && vitalsObj[cell.id.substring(2) + 'Interpretation'];
+                      const interpretationKey = cell.info.header + 'Interpretation';
+                      const interpretation = vitalsObj?.[interpretationKey];
 
                       return (
-                        <StyledTableCell key={`styled-cell-${cell.id}`} interpretation={vitalSignInterpretation}>
+                        <StyledTableCell key={`styled-cell-${cell.id}`} interpretation={interpretation}>
                           {cell.value?.content ?? cell.value}
                         </StyledTableCell>
                       );
                     })}
+                    <TableCell className="cds--table-column-menu" id="actions">
+                      <VitalsAndBiometricsActionMenu patient={patient} encounterUuid={row.id} />
+                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
