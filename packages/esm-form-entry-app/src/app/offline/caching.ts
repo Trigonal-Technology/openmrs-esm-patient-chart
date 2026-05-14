@@ -9,6 +9,7 @@ import {
   subscribePrecacheStaticDependencies,
 } from '@openmrs/esm-framework';
 import type { FormSchema } from '../types';
+import { formMetadataRestVParam } from '../openmrs-api/form-rest.constants';
 
 export function setupStaticDataOfflinePrecaching() {
   subscribePrecacheStaticDependencies(async () => {
@@ -79,7 +80,7 @@ async function getCacheableFormUrls(formUuid: string) {
     // - https://github.com/openmrs/openmrs-esm-patient-chart/blob/415790e1ad9b8bdbd1201958d21a06fa93ec7237/packages/esm-form-entry-app/src/app/openmrs-api/form-resource.service.ts#L21
     // - https://github.com/openmrs/openmrs-esm-patient-chart/blob/415790e1ad9b8bdbd1201958d21a06fa93ec7237/packages/esm-form-entry-app/src/app/form-schema/form-schema.service.ts#L31
     // - https://github.com/openmrs/openmrs-esm-patient-chart/blob/415790e1ad9b8bdbd1201958d21a06fa93ec7237/packages/esm-form-entry-app/src/app/form-schema/form-schema.service.ts#L164
-    `${restBaseUrl}/form/${formUuid}?v=full`,
+    `${restBaseUrl}/form/${formUuid}?v=${encodeURIComponent(formMetadataRestVParam)}`,
 
     // Required by:
     // - https://github.com/openmrs/openmrs-esm-patient-chart/blob/415790e1ad9b8bdbd1201958d21a06fa93ec7237/packages/esm-form-entry-app/src/app/openmrs-api/form-resource.service.ts#L10

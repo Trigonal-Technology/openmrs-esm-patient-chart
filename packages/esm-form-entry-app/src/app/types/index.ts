@@ -152,6 +152,8 @@ export interface FormMetadataObject {
   uuid: string;
   display: string;
   resources: Array<{ name: string; valueReference: string }>;
+  /** Nidancore visibility/context rules from REST ({@code formRules}). */
+  formRules?: Record<string, unknown> | string | null;
 }
 
 export interface FormSchemaAndTranslations extends FormSchema {

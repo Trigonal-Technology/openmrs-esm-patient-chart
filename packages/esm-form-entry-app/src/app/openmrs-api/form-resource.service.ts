@@ -4,6 +4,7 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { WindowRef } from '../window-ref';
 import { Observable } from 'rxjs';
 import { FormMetadataObject } from '../types';
+import { formMetadataRestVParam } from './form-rest.constants';
 
 @Injectable()
 export class FormResourceService {
@@ -19,7 +20,8 @@ export class FormResourceService {
 
   public getFormMetaDataByUuid(uuid: string, v: string = null) {
     const url = `${this.windowRef.openmrsRestBase}form/${uuid}`;
-    const params: HttpParams = new HttpParams().set('v', v && v.length > 0 ? v : 'full');
+    const vParam = v && v.length > 0 ? v : formMetadataRestVParam;
+    const params: HttpParams = new HttpParams().set('v', vParam);
     return this.http.get<FormMetadataObject>(url, { params });
   }
 }

@@ -13,9 +13,15 @@ import {
   TableToolbar,
   TableToolbarContent,
   TableToolbarSearch,
+  Tag,
 } from '@carbon/react';
 import { type Form } from '../types';
 import styles from './forms-table.scss';
+
+/*
+ * For automated translations:
+ * t('formContextTags', 'Form context')
+ */
 
 interface FormsTableProps {
   tableHeaders: Array<{
@@ -29,6 +35,7 @@ interface FormsTableProps {
     formUuid: string;
     encounterUuid: string;
     form: Form;
+    contextTags?: string[];
   }>;
   isTablet: boolean;
   handleSearch: (search: string) => void;
@@ -68,16 +75,27 @@ const FormsTable = ({ tableHeaders, tableRows, isTablet, handleSearch, handleFor
                   {rows.map((row, i) => (
                     <TableRow {...getRowProps({ row })}>
                       <TableCell key={row.cells[0].id}>
-                        <Link
-                          style={{ cursor: 'pointer' }}
-                          onClick={() => {
-                            handleFormOpen(tableRows[i].form, null);
-                          }}
-                          role="presentation"
-                          className={styles.formName}
-                        >
-                          {tableRows[i]?.formName}
-                        </Link>
+                        <div className={styles.formNameCell}>
+                          <Link
+                            style={{ cursor: 'pointer' }}
+                            onClick={() => {
+                              handleFormOpen(tableRows[i].form, tableRows[i]?.encounterUuid ?? '');
+                            }}
+                            role="presentation"
+                            className={styles.formName}
+                          >
+                            {tableRows[i]?.formName}
+                          </Link>
+                          {(tableRows[i]?.contextTags?.length ?? 0) > 0 && (
+                            <div className={styles.contextTags} aria-label={t('formContextTags', 'Form context')}>
+                              {(tableRows[i]?.contextTags ?? []).map((tag, idx) => (
+                                <Tag key={`${tag}-${idx}`} type="blue" size="sm">
+                                  {tag}
+                                </Tag>
+                              ))}
+                            </div>
+                          )}
+                        </div>
                       </TableCell>
                       <TableCell className={styles.editCell}>
                         <span>{row.cells[1].value ?? t('never', 'Never')}</span>

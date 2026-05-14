@@ -7,6 +7,10 @@ import { mockPatient } from 'tools';
 
 const mockUseConfig = jest.mocked(useConfig<FormEntryConfigSchema>);
 
+jest.mock('@openmrs/esm-patient-common-lib', () => ({
+  EmptyDataIllustration: () => <div data-testid="empty-illustration" />,
+}));
+
 jest.mock('../hooks/use-forms', () => ({
   useForms: jest.fn().mockReturnValueOnce({
     data: [],
@@ -14,6 +18,18 @@ jest.mock('../hooks/use-forms', () => ({
     isValidating: false,
     allForms: [],
   }),
+}));
+
+jest.mock('../hooks/use-form-evaluation-context', () => ({
+  useFormEvaluationContext: jest.fn(() => ({
+    mlcAttributeLoaded: true,
+    activeDiagnosisCodes: [],
+    diagnosesLoaded: true,
+    locationTagDisplays: [],
+    locationTagsLoaded: true,
+    roleDisplayNamesLower: [],
+    user: { privileges: [], roles: [] },
+  })),
 }));
 
 mockUseConfig.mockReturnValue({ ...getDefaultsFromConfigSchema(configSchema), htmlFormEntryForms: [] });

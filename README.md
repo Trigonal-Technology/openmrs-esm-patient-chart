@@ -46,6 +46,19 @@ yarn start --sources 'packages/esm-patient-<insert-package-name>-app'
 
 This command uses the [openmrs](https://www.npmjs.com/package/openmrs) tooling to fire up a dev server running `esm-patient-chart` as well as the specified microfrontend.
 
+### Form entry (Angular form engine)
+
+To run the **patient chart shell** plus **`esm-form-entry-app`** together (needed to launch forms in the chart):
+
+```bash
+cp example.env .env   # optional; set OPENMRS_BACKEND_URL for local Docker
+yarn start:form-entry
+```
+
+Backend resolution: CLI `--backend` → `.env` `OPENMRS_BACKEND_URL` → `https://dev2.openmrs.org`. Same optional `--host` / `--port` / `NODE_*` behaviour as documented in `example.env`.
+
+Then open the printed **`/openmrs/spa/`** URL, pick a patient, and use **Forms** to exercise the form engine.
+
 There are two approaches for working on multiple microfrontends simultaneously.
 
 You could run `yarn start` with as many `sources` arguments as you require. For example, to run the biometrics and vitals microfrontends simultaneously, you'd use:

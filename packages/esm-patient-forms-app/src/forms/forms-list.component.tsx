@@ -3,8 +3,10 @@ import { useTranslation } from 'react-i18next';
 import { debounce } from 'lodash-es';
 import fuzzy from 'fuzzy';
 import { DataTableSkeleton } from '@carbon/react';
-import { formatDatetime, useLayoutType, ResponsiveWrapper } from '@openmrs/esm-framework';
+import { formatDatetime, useConfig, useLayoutType, ResponsiveWrapper } from '@openmrs/esm-framework';
+import type { FormEntryConfigSchema } from '../config-schema';
 import type { CompletedFormInfo, Form } from '../types';
+import { getDisplayTagsForForm } from './form-context-filter';
 import FormsTable from './forms-table.component';
 import styles from './forms-list.scss';
 
@@ -18,10 +20,13 @@ export type FormsListProps = {
 /*
  * For the benefit of our automated translations:
  * t('forms', 'Forms')
+ * t('recommendedForLocation', 'Recommended for this location')
+ * t('generalForms', 'General forms')
  */
 
 const FormsList: React.FC<FormsListProps> = ({ forms, error, sectionName, handleFormOpen }) => {
   const { t } = useTranslation();
+  const config = useConfig<FormEntryConfigSchema>();
   const [searchTerm, setSearchTerm] = useState('');
   const isTablet = useLayoutType() === 'tablet';
 
@@ -61,9 +66,10 @@ const FormsList: React.FC<FormsListProps> = ({ forms, error, sectionName, handle
           formUuid: formData.form.uuid,
           encounterUuid: formData?.associatedEncounters[0]?.uuid,
           form: formData.form,
+          contextTags: getDisplayTagsForForm(formData.form, config),
         };
       }) ?? [],
-    [filteredForms],
+    [filteredForms, config],
   );
 
   if (!forms && !error) {
@@ -78,7 +84,13 @@ const FormsList: React.FC<FormsListProps> = ({ forms, error, sectionName, handle
     <ResponsiveWrapper>
       {sectionName && (
         <div className={isTablet ? styles.tabletHeading : styles.desktopHeading}>
-          <h4>{t(sectionName)}</h4>
+          <h4>
+            {sectionName === 'recommendedForLocation'
+              ? t('recommendedForLocation', 'Recommended for this location')
+              : sectionName === 'generalForms'
+                ? t('generalForms', 'General forms')
+                : t(sectionName)}
+          </h4>
         </div>
       )}
       <FormsTable
