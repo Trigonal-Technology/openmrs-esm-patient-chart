@@ -1,0 +1,135 @@
+.row {
+  border: 1px solid var(--cds-border-subtle);
+  background: var(--cds-ui-background, #ffffff);
+  transition: background 0.11s;
+  overflow: hidden;
+  margin: 0.5rem 0;
+
+  &.invalid {
+    border-left: 2px solid var(--cds-support-warning);
+  }
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 1.5rem;
+  background: var(--cds-layer-01, #f4f4f4);
+}
+
+.drugName {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--cds-text-primary);
+  margin: 0;
+}
+
+.prnTag {
+  margin-left: 0.5rem;
+  padding: 0.125rem 0.375rem;
+  font-size: 0.625rem;
+  background: var(--cds-support-info);
+  color: white;
+  border-radius: 2px;
+}
+
+.removeBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.375rem;
+  background: transparent;
+  border: none;
+  color: var(--cds-text-secondary);
+  cursor: pointer;
+  opacity: 0.6;
+
+  &:hover {
+    opacity: 1;
+    color: var(--cds-support-error);
+  }
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: minmax(auto, 1fr) minmax(auto, 1fr) minmax(auto, 1fr);
+  row-gap: 1.5rem;
+  column-gap: 2rem;
+  padding: 1.25rem 1.5rem 1.5rem;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  gap: 0.25rem;
+}
+
+.label {
+  font-size: 0.75rem;
+  color: var(--cds-text-secondary);
+}
+
+.inputGroup {
+  display: flex;
+  align-items: flex-end;
+  gap: 0.5rem;
+}
+
+.input {
+  width: 4rem;
+  padding: 0.25rem 0.5rem 0.25rem 0;
+  font-size: 0.875rem;
+  border: 0;
+  border-bottom: 1px solid var(--cds-border-strong);
+  background: transparent;
+  height: 2rem;
+
+  &:focus {
+    outline: none;
+    border-bottom-color: var(--cds-focus);
+  }
+
+  &[type='number'] {
+    -moz-appearance: textfield;
+    appearance: textfield;
+  }
+
+  &::-webkit-outer-spin-button,
+  &::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+}
+
+.select {
+  width: auto;
+  min-width: 5rem;
+
+  :global(.cds--label) {
+    display: none !important;
+  }
+
+  :global(.cds--select-input) {
+    background: transparent;
+    border: none;
+    border-bottom: 1px solid var(--cds-border-strong);
+    padding: 0 2rem 0 0;
+    height: 2rem;
+
+    &:focus {
+      outline: none;
+      border-bottom: 1px solid var(--cds-focus);
+    }
+  }
+}
+
+.qtyValue {
+  font-size: 0.875rem;
+  font-weight: 500;
+  padding: 0.25rem 0.5rem;
+  height: 2rem;
+  display: flex;
+  align-items: center;
+}

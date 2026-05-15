@@ -6,7 +6,7 @@ import { Warning } from '@carbon/react/icons';
 import { useTranslation } from 'react-i18next';
 import { useLayoutType, ResponsiveWrapper } from '@openmrs/esm-framework';
 import { generatePlaceholder } from '../common';
-import { type VitalsBiometricsFormData } from './vitals-biometrics-form.workspace';
+import { type VitalsBiometricsFormData } from './schema';
 import styles from './vitals-biometrics-input.scss';
 
 type fieldId =
@@ -107,7 +107,9 @@ const VitalsAndBiometricsInput: React.FC<VitalsAndBiometricsInputProps> = ({
     <>
       <div className={containerClasses} style={{ width: fieldWidth }}>
         <section className={styles.labelContainer}>
-          <span className={styles.label}>{label}</span>
+          <span className={styles.label} id={`${fieldId}-label`}>
+            {label}
+          </span>
 
           {Boolean(hasAbnormalValue) ? (
             <span className={styles[interpretation.replace('_', '-')]} title={t('abnormalValue', 'Abnormal value')} />
@@ -140,7 +142,6 @@ const VitalsAndBiometricsInput: React.FC<VitalsAndBiometricsInputProps> = ({
                             <NumberInput
                               allowEmpty
                               className={numberInputClasses}
-                              defaultValue={''}
                               disableWheel
                               hideSteppers
                               id={`${fieldId}-${fieldProperty.id}`}
@@ -148,17 +149,15 @@ const VitalsAndBiometricsInput: React.FC<VitalsAndBiometricsInputProps> = ({
                               min={fieldProperty.min ?? undefined}
                               name={fieldProperty.name}
                               onBlur={() => handleFocusChange(false)}
-                              onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
-                                checkValidity(event.target.value, onChange)
-                              }
+                              onChange={(event, { value }) => checkValidity(value, onChange)}
                               onFocus={() => handleFocusChange(true)}
                               placeholder={generatePlaceholder(fieldProperty.name)}
                               readOnly={readOnly}
                               ref={ref}
                               style={{ ...fieldStyles }}
                               title={fieldProperty.name}
-                              type={fieldProperty.type}
-                              value={value}
+                              type="number"
+                              value={value ?? ''}
                             />
                           );
                         }}
@@ -180,6 +179,7 @@ const VitalsAndBiometricsInput: React.FC<VitalsAndBiometricsInputProps> = ({
                           className={styles.textarea}
                           id={`${fieldId}-${fieldProperty.id}`}
                           labelText={''}
+                          aria-labelledby={`${fieldId}-label`}
                           maxCount={100}
                           name={fieldProperty.name}
                           onBlur={() => handleFocusChange(false)}
@@ -190,7 +190,7 @@ const VitalsAndBiometricsInput: React.FC<VitalsAndBiometricsInputProps> = ({
                           rows={2}
                           style={{ ...fieldStyles }}
                           title={fieldProperty.name}
-                          value={value}
+                          value={value ?? ''}
                         />
                       )}
                     />

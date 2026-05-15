@@ -1,4 +1,4 @@
-import React, { type ComponentProps } from 'react';
+import React, { useMemo, type ComponentProps } from 'react';
 import classNames from 'classnames';
 import { useTranslation } from 'react-i18next';
 import {
@@ -14,16 +14,10 @@ import {
   TableHeader,
   TableRow,
 } from '@carbon/react';
-import { AddIcon, formatDate, parseDate, usePagination } from '@openmrs/esm-framework';
-import {
-  launchPatientWorkspace,
-  CardHeader,
-  EmptyState,
-  ErrorState,
-  PatientChartPagination,
-} from '@openmrs/esm-patient-common-lib';
-import styles from './immunizations-overview.scss';
+import { AddIcon, formatDate, launchWorkspace2, parseDate, usePagination } from '@openmrs/esm-framework';
+import { CardHeader, EmptyState, ErrorState, PatientChartPagination } from '@openmrs/esm-patient-common-lib';
 import { useImmunizations } from '../hooks/useImmunizations';
+import styles from './immunizations-overview.scss';
 
 export interface ImmunizationsOverviewProps {
   basePath: string;
@@ -42,7 +36,7 @@ const ImmunizationsOverview: React.FC<ImmunizationsOverviewProps> = ({ patient, 
   const { data: immunizations, error, isLoading, isValidating } = useImmunizations(patientUuid);
   const { results: paginatedImmunizations, goTo, currentPage } = usePagination(immunizations ?? [], immunizationsCount);
 
-  const launchImmunizationsForm = React.useCallback(() => launchPatientWorkspace('immunization-form-workspace'), []);
+  const launchImmunizationsForm = React.useCallback(() => launchWorkspace2('immunization-form-workspace'), []);
 
   const tableHeaders = [
     {
@@ -55,7 +49,7 @@ const ImmunizationsOverview: React.FC<ImmunizationsOverviewProps> = ({ patient, 
     },
   ];
 
-  const tableRows = React.useMemo(() => {
+  const tableRows = useMemo(() => {
     return paginatedImmunizations?.map((immunization, index) => ({
       ...immunization,
       id: `${index}`,
@@ -67,8 +61,14 @@ const ImmunizationsOverview: React.FC<ImmunizationsOverviewProps> = ({ patient, 
     }));
   }, [paginatedImmunizations]);
 
-  if (isLoading) return <DataTableSkeleton role="progressbar" />;
-  if (error) return <ErrorState error={error} headerTitle={headerTitle} />;
+  if (isLoading) {
+    return <DataTableSkeleton role="progressbar" />;
+  }
+
+  if (error) {
+    return <ErrorState error={error} headerTitle={headerTitle} />;
+  }
+
   if (immunizations?.length) {
     return (
       <div className={styles.widgetCard}>
@@ -94,10 +94,9 @@ const ImmunizationsOverview: React.FC<ImmunizationsOverviewProps> = ({ patient, 
                         className={classNames(styles.productiveHeading01, styles.text02)}
                         {...getHeaderProps({
                           header,
-                          isSortable: header.isSortable,
                         })}
                       >
-                        {header.header?.content ?? header.header}
+                        {header.header}
                       </TableHeader>
                     ))}
                   </TableRow>
@@ -115,15 +114,17 @@ const ImmunizationsOverview: React.FC<ImmunizationsOverviewProps> = ({ patient, 
             </TableContainer>
           )}
         </DataTable>
-        <PatientChartPagination
-          currentItems={paginatedImmunizations.length}
-          onPageNumberChange={({ page }) => goTo(page)}
-          pageNumber={currentPage}
-          pageSize={immunizationsCount}
-          totalItems={immunizations.length}
-          dashboardLinkUrl={pageUrl}
-          dashboardLinkLabel={urlLabel}
-        />
+        <div className={styles.paginationContainer}>
+          <PatientChartPagination
+            currentItems={paginatedImmunizations.length}
+            onPageNumberChange={({ page }) => goTo(page)}
+            pageNumber={currentPage}
+            pageSize={immunizationsCount}
+            totalItems={immunizations.length}
+            dashboardLinkUrl={pageUrl}
+            dashboardLinkLabel={urlLabel}
+          />
+        </div>
       </div>
     );
   }

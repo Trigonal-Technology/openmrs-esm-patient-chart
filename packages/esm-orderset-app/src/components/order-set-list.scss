@@ -1,0 +1,191 @@
+@use '@carbon/colors';
+@use '@openmrs/esm-styleguide/src/vars' as *;
+
+.container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+  padding: 1rem;
+  gap: 1rem;
+  background-color: var(--cds-layer-01, #f4f4f4);
+}
+
+.topRow {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.createButton {
+  background-color: colors.$teal-70 !important;
+
+  &:hover {
+    background-color: colors.$teal-80 !important;
+  }
+}
+
+.list {
+  flex: 1;
+  overflow-y: auto;
+}
+
+.category {
+  margin-bottom: 1rem;
+}
+
+.categoryLabel {
+  margin: 0 0 0.5rem 0;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: $text-02;
+}
+
+.cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 0.75rem;
+}
+
+.card {
+  background-color: colors.$white-0;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  padding: 1rem;
+}
+
+.clickableCard {
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  &:hover {
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+    background-color: var(--cds-layer-hover-01, colors.$gray-10);
+  }
+}
+
+.cardHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.cardTitleBlock {
+  flex: 1;
+  min-width: 0;
+  margin-right: 0.5rem;
+}
+
+.cardTitleRow {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-bottom: 0.25rem;
+}
+
+.cardTitle {
+  margin: 0;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--cds-text-01, #0f62fe);
+}
+
+.drugCountBadge {
+  background-color: colors.$teal-60;
+  color: colors.$white-0;
+  padding: 0.125rem 0.625rem;
+  border-radius: 1rem;
+  font-size: 0.75rem;
+  font-weight: 400;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.cardDescription {
+  margin: 0.125rem 0 0 0;
+  font-size: 0.75rem;
+  color: $text-02;
+}
+
+.cardDrugPreview {
+  margin-top: 0.75rem;
+  padding: 0.5rem;
+  background-color: colors.$white-0;
+  border-radius: 4px;
+}
+
+.previewEmpty {
+  margin: 0;
+  font-size: 0.75rem;
+  color: $text-02;
+  font-style: italic;
+}
+
+.previewList {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 0.75rem;
+
+  li {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.375rem;
+    color: colors.$gray-80;
+
+    &:last-child {
+      margin-bottom: 0;
+    }
+  }
+}
+
+.checkIconContainer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: $ui-02;
+  padding: 0.125rem;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+
+.checkIcon {
+  fill: var(--cds-text-01, #161616);
+}
+
+.previewName {
+  font-weight: 500;
+}
+
+.previewMeta {
+  color: $text-02;
+}
+
+.previewMore {
+  color: $text-02 !important;
+  font-style: italic;
+
+  &::before {
+    content: '' !important;
+    width: 0 !important;
+  }
+
+  padding-left: 0.75rem;
+}
+
+.cardActions {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
+.empty {
+  padding: 2rem;
+  text-align: center;
+  color: $text-02;
+}

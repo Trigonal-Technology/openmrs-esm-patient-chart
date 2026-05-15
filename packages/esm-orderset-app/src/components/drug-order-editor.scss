@@ -1,0 +1,241 @@
+@use '@carbon/colors';
+@use '@openmrs/esm-styleguide/src/vars' as *;
+
+.container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+}
+
+.header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid $ui-03;
+  flex-shrink: 0;
+}
+
+.title {
+  margin: 0;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #000000;
+}
+
+.subtitle {
+  margin: 0.25rem 0 0 0;
+  font-size: 0.6875rem;
+  color: $text-02;
+}
+
+.headerActions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.badge {
+  font-size: 0.75rem;
+  color: $text-02;
+}
+
+.addSection {
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid $ui-03;
+  background-color: var(--cds-layer-01, #f4f4f4);
+  flex-shrink: 0;
+}
+
+.searchInput {
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  margin-bottom: 0.5rem;
+  font-size: 0.875rem;
+  border: 1px solid $ui-03;
+  border-radius: 4px;
+  background-color: $field-01;
+
+  &:focus {
+    outline: 2px solid var(--cds-focus, #0f62fe);
+    outline-offset: -2px;
+  }
+}
+
+.drugChips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+}
+
+.noResults {
+  font-size: 0.75rem;
+  color: $text-02;
+  padding: 0.25rem 0;
+}
+
+.loadingSkeleton {
+  width: 100%;
+  padding: 0.5rem;
+}
+
+.drugChip {
+  padding: 0.25rem 0.5rem;
+  font-size: 0.75rem;
+  border: 1px solid $ui-03;
+  border-radius: 4px;
+  background-color: var(--cds-layer-01, #f4f4f4);
+  color: #000000;
+  cursor: pointer;
+  transition: background-color 0.15s, border-color 0.15s;
+
+  &:hover {
+    background-color: var(--cds-layer-selected-01, #e0e0e0);
+    border-color: var(--cds-border-interactive, #0f62fe);
+  }
+}
+
+.cardsWrapper {
+  flex: 1;
+  overflow-y: auto;
+  min-height: 0;
+  padding: 1rem;
+  background-color: var(--cds-layer-01, #f4f4f4);
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.card {
+  padding: 0 !important;
+  background-color: colors.$white-0;
+  border: 1px solid $ui-03;
+  margin: 0;
+}
+
+.cardDuplicate {
+  border-color: var(--cds-support-warning, #f1c21b);
+}
+
+.warningIcon {
+  flex-shrink: 0;
+  fill: var(--cds-support-warning, #f1c21b);
+}
+
+.cardHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.5rem;
+  cursor: pointer;
+  
+  &:hover {
+    background-color: var(--cds-layer-hover-01, #e5e5e5);
+  }
+}
+
+.cardHeaderLeft {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  overflow: hidden;
+}
+
+.cardHeaderRight {
+  flex-shrink: 0;
+}
+
+.drugName {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #000000;
+  white-space: nowrap;
+}
+
+.collapsedSummary {
+  font-size: 0.75rem;
+  color: $text-02;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.cardBody {
+  padding: 1rem;
+  border-top: 1px solid $ui-03;
+}
+
+.formGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 1rem;
+  align-items: end;
+}
+
+.formGroup {
+  display: flex;
+  flex-direction: column;
+
+  :global(.cds--select), :global(.cds--number) {
+    width: 100%;
+  }
+}
+
+.formGroupInstructions {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-direction: column;
+}
+
+.deleteButton {
+  fill: var(--cds-support-error, #da1e28);
+}
+
+.emptyState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem;
+  color: $text-02;
+}
+
+.emptyText {
+  margin: 0;
+  font-size: 0.875rem;
+}
+
+.emptyHint {
+  margin: 0.25rem 0 0 0;
+  font-size: 0.75rem;
+}
+
+.notes {
+  padding: 0.75rem 1rem;
+  border-top: 1px solid $ui-03;
+  background-color: #ffffff;
+  flex-shrink: 0;
+}
+
+.notesLabel {
+  margin: 0 0 0.25rem 0;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: $text-02;
+}
+
+.noteItem {
+  margin: 0;
+  font-size: 0.75rem;
+  color: #000000;
+}
+
+.noteDrug {
+  font-weight: 500;
+}
+
+.noteText {
+  color: $text-02;
+}

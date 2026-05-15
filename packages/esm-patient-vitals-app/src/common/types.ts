@@ -20,30 +20,105 @@ export type ObservationInterpretation = 'critically_low' | 'critically_high' | '
 
 export type MappedVitals = {
   code: string;
-  interpretation: string;
-  recordedDate: Date;
+  interpretation: ObservationInterpretation;
+  recordedDate: string | Date;
   value: number;
+  encounterId: string;
 };
+
+export type FHIRInterpretation = 'Critically Low' | 'Critically High' | 'High' | 'Low' | 'Normal';
+
+export interface FHIRObservationResource {
+  resourceType: string;
+  id: string;
+  category: Array<{
+    coding: Array<{
+      system: string;
+      code: string;
+      display: string;
+    }>;
+  }>;
+  code: {
+    coding: Array<{
+      code: string;
+      display: string;
+    }>;
+    text: string;
+  };
+  encounter?: {
+    reference: string;
+    type: string;
+  };
+  effectiveDateTime: string;
+  issued: string;
+  valueString?: string;
+  valueQuantity?: {
+    value: number;
+    unit: string;
+    system: string;
+    code: string;
+  };
+  valueCodeableConcept?: {
+    coding: [
+      {
+        code: string;
+        display: string;
+      },
+    ];
+    text: string;
+  };
+  referenceRange: Array<{
+    low?: {
+      value: number;
+    };
+    high?: {
+      value: number;
+    };
+    type: {
+      coding: Array<{
+        system: string;
+        code: string;
+      }>;
+    };
+  }>;
+  hasMember?: Array<{
+    reference: string;
+  }>;
+  interpretation?: Array<{
+    coding: Array<{
+      code: string;
+      display: FHIRInterpretation;
+      system: string;
+    }>;
+    text: string;
+  }>;
+}
 
 export interface PatientVitalsAndBiometrics {
   id: string;
   date: string;
   systolic?: number;
+  systolicRenderInterpretation?: ObservationInterpretation;
   diastolic?: number;
+  diastolicRenderInterpretation?: ObservationInterpretation;
   bloodPressureRenderInterpretation?: ObservationInterpretation;
   pulse?: number;
+  pulseRenderInterpretation?: ObservationInterpretation;
   temperature?: number;
+  temperatureRenderInterpretation?: ObservationInterpretation;
   spo2?: number;
+  spo2RenderInterpretation?: ObservationInterpretation;
   height?: number;
   weight?: number;
   bmi?: number | null;
   respiratoryRate?: number;
+  respiratoryRateRenderInterpretation?: ObservationInterpretation;
   muac?: number;
 }
 
 export interface VitalsResponse {
   entry: Array<{
-    resource: FHIRResource['resource'];
+    resource: FHIRObservationResource;
   }>;
   id: string;
   meta: {

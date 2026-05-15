@@ -1,0 +1,50 @@
+.compactField {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--cds-text-secondary);
+}
+
+.numberInput {
+  position: relative;
+}
+
+.input {
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.875rem;
+  border: 0;
+  border-bottom: 2px solid var(--cds-border-subtle);
+  background: var(--cds-layer-01);
+  color: var(--cds-text-primary);
+  transition: border-color 0.11s;
+
+  &:focus {
+    outline: none;
+    border-bottom-color: var(--cds-focus);
+  }
+
+  &[type='number'] {
+    -moz-appearance: textfield;
+  }
+
+  &::-webkit-outer-spin-button,
+  &::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+}
+
+.suffix {
+  position: absolute;
+  right: 0.75rem;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 0.75rem;
+  color: var(--cds-text-secondary);
+}

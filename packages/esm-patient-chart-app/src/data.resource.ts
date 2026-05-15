@@ -35,13 +35,6 @@ export function useCausesOfDeath() {
   };
 }
 
-export function usePatientDeceasedStatus(patient: fhir.Patient) {
-  return {
-    deathDate: patient?.deceasedDateTime,
-    isDead: patient?.deceasedBoolean ?? Boolean(patient?.deceasedDateTime),
-  };
-}
-
 const changePatientDeathStatus = (personUuid: string, payload: CauseOfDeathPayload) => {
   const abortController = new AbortController();
 
@@ -67,8 +60,8 @@ export function markPatientDeceased(
     ...(nonCodedCauseOfDeath
       ? { causeOfDeathNonCoded: nonCodedCauseOfDeath }
       : {
-          causeOfDeath: selectedCauseOfDeathValue,
-        }),
+        causeOfDeath: selectedCauseOfDeathValue,
+      }),
   };
 
   return changePatientDeathStatus(personUuid, payload);
@@ -121,4 +114,18 @@ export function useCauseOfDeathConcept() {
     };
   }, [data?.data?.value, error, isLoading, isValidating]);
   return result;
+}
+
+export function useFormByName(formName: string) {
+  const { data, error, isLoading, isValidating } = useSWR<{ data: { results: Array<{ uuid: string; display: string }> } }, Error>(
+    `${restBaseUrl}/form?q=${encodeURIComponent(formName)}`,
+    openmrsFetch,
+  );
+
+  return {
+    form: data?.data?.results?.[0],
+    isLoading,
+    error,
+    isValidating,
+  };
 }

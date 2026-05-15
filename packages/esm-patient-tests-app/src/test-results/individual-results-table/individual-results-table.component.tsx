@@ -1,8 +1,8 @@
-import React, { type ComponentProps, useCallback, useMemo } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import classNames from 'classnames';
 import { useTranslation } from 'react-i18next';
+import { formatRangeWithUnits } from '../grouped-timeline/reference-range-helpers';
 import {
-  Button,
   DataTable,
   DataTableSkeleton,
   Table,
@@ -13,12 +13,13 @@ import {
   TableHeader,
   TableRow,
 } from '@carbon/react';
-import { ArrowRightIcon, showModal, useLayoutType, isDesktop, formatDate } from '@openmrs/esm-framework';
-import { getPatientUuidFromStore, type OBSERVATION_INTERPRETATION } from '@openmrs/esm-patient-common-lib';
-import styles from './individual-results-table.scss';
+import { showModal, useLayoutType, formatDate, parseDate } from '@openmrs/esm-framework';
+import { type OBSERVATION_INTERPRETATION } from '@openmrs/esm-patient-common-lib';
 import { type GroupedObservation } from '../../types';
+import styles from './individual-results-table.scss';
 
 interface IndividualResultsTableProps {
+  patientUuid;
   isLoading: boolean;
   subRows: GroupedObservation;
   index: number;
@@ -51,11 +52,18 @@ const getClasses = (interpretation: OBSERVATION_INTERPRETATION) => {
   }
 };
 
-const IndividualResultsTable: React.FC<IndividualResultsTableProps> = ({ isLoading, subRows, index, title }) => {
+const IndividualResultsTable: React.FC<IndividualResultsTableProps> = ({
+  patientUuid,
+  isLoading,
+  subRows,
+  index,
+  title,
+}) => {
   const { t } = useTranslation();
   const layout = useLayoutType();
-  const patientUuid = getPatientUuidFromStore();
   const isDesktop = layout === 'small-desktop' || layout === 'large-desktop';
+
+  const getColumnClass = (columnKey: string) => styles[`col-${columnKey}`];
 
   const headerTitle = t(title);
 
@@ -86,8 +94,13 @@ const IndividualResultsTable: React.FC<IndividualResultsTableProps> = ({ isLoadi
     () =>
       subRows?.entries.length &&
       subRows.entries.map((row, i) => {
-        const { units = '', range = '' } = row;
+        // Use observation-level range/units if available, otherwise fallback to node-level
+        // MappedObservation has range and units fields, but they may come from node-level
+        const displayRange = row.range ?? '';
+        const displayUnits = row.units ?? '';
         const isString = isNaN(parseFloat(row.value));
+
+        const referenceRangeDisplay = formatRangeWithUnits(displayRange, displayUnits);
 
         return {
           ...row,
@@ -107,16 +120,18 @@ const IndividualResultsTable: React.FC<IndividualResultsTableProps> = ({ isLoadi
             </span>
           ),
           value: {
-            value: `${row.value} ${row.units ?? ''}`,
+            value: `${row.value} ${displayUnits}`,
             interpretation: row?.interpretation,
           },
-          referenceRange: `${range || '--'} ${units || '--'}`,
+          referenceRange: referenceRangeDisplay,
         };
       }),
     [index, subRows, launchResultsDialog],
   );
 
-  if (isLoading) return <DataTableSkeleton role="progressbar" compact={isDesktop} zebra />;
+  if (isLoading) {
+    return <DataTableSkeleton role="progressbar" compact={isDesktop} zebra />;
+  }
 
   if (subRows.entries?.length) {
     return (
@@ -126,45 +141,49 @@ const IndividualResultsTable: React.FC<IndividualResultsTableProps> = ({ isLoadi
             <div className={styles.cardTitle}>
               <h4 className={styles.resultType}>{headerTitle}</h4>
               <div className={styles.displayFlex}>
-                <span className={styles.date}>{formatDate(new Date(subRows.date), { mode: 'standard' })}</span>
-                <Button
-                  className={styles.viewTimeline}
-                  iconDescription="view timeline"
-                  kind="ghost"
-                  renderIcon={(props: ComponentProps<typeof ArrowRightIcon>) => <ArrowRightIcon size={16} {...props} />}
-                  onClick={() => launchResultsDialog(headerTitle, subRows[0]?.conceptUuid)}
-                  size="sm"
-                >
-                  {t('viewTimeline', 'View timeline')}
-                </Button>
+                <span className={styles.date}>
+                  {formatDate(parseDate(subRows.date), { mode: 'standard', time: false })}
+                </span>
               </div>
             </div>
             <Table className={styles.table} {...getTableProps()} size={isDesktop ? 'md' : 'sm'}>
               <TableHead>
                 <TableRow>
-                  {headers.map((header) => (
-                    <TableHeader {...getHeaderProps({ header })}>{header.header}</TableHeader>
-                  ))}
+                  {headers.map((header) => {
+                    const headerProps = getHeaderProps({ header });
+                    return (
+                      <TableHeader
+                        {...headerProps}
+                        className={classNames(headerProps.className, getColumnClass(header.key))}
+                      >
+                        {header.header}
+                      </TableHeader>
+                    );
+                  })}
                 </TableRow>
               </TableHead>
               <TableBody>
-                {rows.map((row) => {
-                  return (
-                    <TableRow key={row.id}>
-                      {row.cells.map((cell) =>
-                        cell?.value?.interpretation ? (
-                          <TableCell className={classNames(getClasses(cell?.value?.interpretation))} key={cell.id}>
-                            <p>{cell?.value?.value ?? cell?.value}</p>
-                          </TableCell>
-                        ) : (
-                          <TableCell key={cell.id}>
-                            <p>{cell?.value}</p>
-                          </TableCell>
-                        ),
-                      )}
-                    </TableRow>
-                  );
-                })}
+                {rows.map((row) => (
+                  <TableRow key={row.id}>
+                    {row.cells.map((cell) =>
+                      cell?.value?.interpretation ? (
+                        <TableCell
+                          key={cell.id}
+                          className={classNames(
+                            getClasses(cell?.value?.interpretation),
+                            getColumnClass(cell.info.header),
+                          )}
+                        >
+                          <p>{cell?.value?.value ?? cell?.value}</p>
+                        </TableCell>
+                      ) : (
+                        <TableCell key={cell.id} className={getColumnClass(cell.info.header)}>
+                          <p>{cell?.value}</p>
+                        </TableCell>
+                      ),
+                    )}
+                  </TableRow>
+                ))}
               </TableBody>
             </Table>
           </TableContainer>

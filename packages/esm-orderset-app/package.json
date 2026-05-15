@@ -1,0 +1,44 @@
+{
+  "name": "@openmrs/esm-orderset-app",
+  "version": "12.0.1",
+  "license": "MPL-2.0",
+  "description": "Order set entry microfrontend for the OpenMRS patient chart",
+  "browser": "dist/openmrs-esm-orderset-app.js",
+  "main": "src/index.ts",
+  "source": true,
+  "scripts": {
+    "start": "openmrs develop",
+    "serve": "webpack serve --mode=development",
+    "debug": "npm run serve",
+    "build": "webpack --mode production --color",
+    "lint": "cross-env eslint src --ext tsx,ts --fix --max-warnings=0",
+    "test": "cross-env TZ=UTC jest --config jest.config.js --verbose false --passWithNoTests --color",
+    "typescript": "tsc",
+    "extract-translations": "i18next 'src/**/*.component.tsx' 'src/**/*.tsx' 'src/**/*.resource.ts' 'src/index.ts' --config ../../tools/i18next-parser.config.js"
+  },
+  "browserslist": [
+    "extends browserslist-config-openmrs"
+  ],
+  "keywords": [
+    "openmrs"
+  ],
+  "dependencies": {
+    "@carbon/react": "^1.83.0",
+    "@openmrs/esm-patient-common-lib": "next",
+    "lodash-es": "^4.17.23"
+  },
+  "peerDependencies": {
+    "@openmrs/esm-framework": "9.x",
+    "@openmrs/esm-patient-common-lib": "12.x",
+    "dayjs": "1.x",
+    "react": "18.x",
+    "react-i18next": "16.x",
+    "react-router-dom": "6.x",
+    "rxjs": "6.x",
+    "swr": "2.x"
+  },
+  "devDependencies": {
+    "@openmrs/esm-patient-common-lib": "workspace:*",
+    "webpack": "^5.99.9"
+  }
+}

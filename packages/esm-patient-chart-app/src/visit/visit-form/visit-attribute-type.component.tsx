@@ -1,8 +1,6 @@
 import React, { useEffect, useId, useMemo } from 'react';
 import {
   Checkbox,
-  DatePicker,
-  DatePickerInput,
   NumberInput,
   Select,
   SelectItem,
@@ -11,10 +9,9 @@ import {
   TextInput,
   TextInputSkeleton,
 } from '@carbon/react';
-import dayjs from 'dayjs';
 import { useTranslation } from 'react-i18next';
-import { Controller, type ControllerRenderProps, useFormContext } from 'react-hook-form';
-import { useConfig } from '@openmrs/esm-framework';
+import { Controller, type ControllerFieldState, type ControllerRenderProps, useFormContext } from 'react-hook-form';
+import { OpenmrsDatePicker, useConfig } from '@openmrs/esm-framework';
 import { type ChartConfig } from '../../config-schema';
 import { useConceptAnswersForVisitAttributeType, useVisitAttributeType } from '../hooks/useVisitAttributeType';
 import { type VisitFormData } from './visit-form.resource';
@@ -69,12 +66,13 @@ const VisitAttributeTypeFields: React.FC<VisitAttributeTypeFieldsProps> = ({ set
                 key={attributeType.uuid}
                 name={`visitAttributes.${attributeType.uuid}`}
                 control={control}
-                render={({ field }) => (
+                render={({ field, fieldState }) => (
                   <AttributeTypeField
                     key={attributeType.uuid}
                     attributeType={attributeType}
                     setErrorFetchingResources={setErrorFetchingResources}
                     fieldProps={field}
+                    fieldState={fieldState}
                   />
                 )}
               />
@@ -90,6 +88,7 @@ const VisitAttributeTypeFields: React.FC<VisitAttributeTypeFieldsProps> = ({ set
 
 interface AttributeTypeFieldProps {
   fieldProps: ControllerRenderProps<VisitFormData, `visitAttributes.${string}`>;
+  fieldState: ControllerFieldState;
   attributeType: {
     uuid: string;
     required: boolean;
@@ -105,6 +104,7 @@ const AttributeTypeField: React.FC<AttributeTypeFieldProps> = ({
   attributeType,
   setErrorFetchingResources,
   fieldProps,
+  fieldState,
 }) => {
   const { uuid, required } = attributeType;
   const { data, isLoading, error: errorFetchingVisitAttributeType } = useVisitAttributeType(uuid);
@@ -114,8 +114,9 @@ const AttributeTypeField: React.FC<AttributeTypeFieldProps> = ({
     error: errorFetchingVisitAttributeAnswers,
   } = useConceptAnswersForVisitAttributeType(data?.datatypeConfig);
   const { t } = useTranslation();
-  const id = useId();
-  const labelText = !required ? `${data?.display} (${t('optional', 'optional')})` : data?.display;
+  const baseId = useId();
+  const displayText = data?.display?.trim() || data?.name?.trim() || '--';
+  const labelText = !required ? `${displayText} (${t('optional', 'optional')})` : displayText;
 
   const {
     formState: { errors },
@@ -130,7 +131,6 @@ const AttributeTypeField: React.FC<AttributeTypeFieldProps> = ({
   }, [errorFetchingVisitAttributeAnswers, errorFetchingVisitAttributeType, required, setErrorFetchingResources]);
 
   const fieldToRender = useMemo(() => {
-    const { onChange } = fieldProps;
     if (isLoading) {
       return <></>;
     }
@@ -151,11 +151,11 @@ const AttributeTypeField: React.FC<AttributeTypeFieldProps> = ({
 
         return (
           <Select
-            id={`select-${id}`}
+            id={`select-${baseId}`}
             {...fieldProps}
             labelText={labelText}
-            invalid={!!errors.visitAttributes?.[uuid]}
-            invalidText={errors.visitAttributes?.[uuid]?.message}
+            invalid={!!fieldState?.error?.message}
+            invalidText={fieldState?.error?.message}
           >
             <SelectItem text={t('selectAnOption', 'Select an option')} value={''} />
             {answers.map((ans, indx) => (
@@ -167,82 +167,77 @@ const AttributeTypeField: React.FC<AttributeTypeFieldProps> = ({
         return (
           <NumberInput
             {...fieldProps}
+            id={`number-${baseId}`}
             label={labelText}
             hideSteppers
-            invalid={!!errors.visitAttributes?.[uuid]}
-            invalidText={errors.visitAttributes?.[uuid]?.message}
+            invalid={!!fieldState?.error?.message}
+            invalidText={fieldState?.error?.message}
           />
         );
       case 'org.openmrs.customdatatype.datatype.FreeTextDatatype':
         return (
           <TextInput
             {...fieldProps}
-            id={uuid}
+            id={`text-${baseId}`}
             labelText={labelText}
             placeholder={labelText}
-            invalid={!!errors.visitAttributes?.[uuid]}
-            invalidText={errors.visitAttributes?.[uuid]?.message}
+            invalid={!!fieldState?.error?.message}
+            invalidText={fieldState?.error?.message}
           />
         );
       case 'org.openmrs.customdatatype.datatype.LongFreeTextDatatype':
         return (
           <TextArea
             {...fieldProps}
+            id={`textarea-${baseId}`}
             labelText={labelText}
-            invalid={!!errors.visitAttributes?.[uuid]}
-            invalidText={errors.visitAttributes?.[uuid]?.message}
+            invalid={!!fieldState?.error?.message}
+            invalidText={fieldState?.error?.message}
           />
         );
       case 'org.openmrs.customdatatype.datatype.BooleanDatatype':
         return (
           <Checkbox
             {...fieldProps}
+            id={`checkbox-${baseId}`}
             labelText={labelText}
-            invalid={!!errors.visitAttributes?.[uuid]}
-            invalidText={errors.visitAttributes?.[uuid]?.message}
+            invalid={!!fieldState?.error?.message}
+            invalidText={fieldState?.error?.message}
           />
         );
       case 'org.openmrs.customdatatype.datatype.DateDatatype':
         return (
-          <DatePicker
+          <OpenmrsDatePicker
             {...fieldProps}
-            dateFormat="d/m/Y"
-            datePickerType="single"
-            onChange={([date]) => onChange(dayjs(date).format('YYYY-MM-DD'))}
-          >
-            <DatePickerInput
-              id="date-picker-default-id"
-              placeholder="dd/mm/yyyy"
-              labelText={labelText}
-              type="text"
-              invalid={!!errors.visitAttributes?.[uuid]}
-              invalidText={errors.visitAttributes?.[uuid]?.message}
-            />
-          </DatePicker>
+            id={`date-${baseId}`}
+            labelText={labelText}
+            aria-invalid={!!fieldState?.error?.message}
+            invalidText={fieldState?.error?.message}
+          />
         );
       default:
         return (
           <TextInput
             {...fieldProps}
+            id={`text-${baseId}`}
             labelText={labelText}
-            invalid={!!errors.visitAttributes?.[uuid]}
-            invalidText={errors.visitAttributes?.[uuid]?.message}
+            invalid={!!fieldState?.error?.message}
+            invalidText={fieldState?.error?.message}
           />
         );
     }
   }, [
-    uuid,
-    answers,
-    data,
     isLoading,
-    isLoadingAnswers,
-    labelText,
-    t,
     errorFetchingVisitAttributeType,
+    data?.datatypeClassname,
+    isLoadingAnswers,
     errorFetchingVisitAttributeAnswers,
+    baseId,
     fieldProps,
-    errors.visitAttributes,
-    id,
+    labelText,
+    fieldState?.error?.message,
+    t,
+    answers,
   ]);
 
   if (isLoading) {

@@ -1,23 +1,17 @@
 import React from 'react';
 import { Button } from '@carbon/react';
 import { useTranslation } from 'react-i18next';
-import { clinicalFormsWorkspace, launchPatientWorkspace } from '@openmrs/esm-patient-common-lib';
 import styles from './form-error.scss';
 
 interface FormErrorProps {
   closeWorkspace: () => void;
-  clinicalFormsWorkspaceName?: string;
 }
 
-const FormError: React.FC<FormErrorProps> = ({
-  closeWorkspace,
-  clinicalFormsWorkspaceName = clinicalFormsWorkspace,
-}) => {
+const FormError: React.FC<FormErrorProps> = ({ closeWorkspace }) => {
   const { t } = useTranslation();
 
   const handleOpenFormList = () => {
     closeWorkspace();
-    launchPatientWorkspace(clinicalFormsWorkspaceName);
   };
 
   return (
@@ -31,7 +25,7 @@ const FormError: React.FC<FormErrorProps> = ({
           </span>
         </div>
         <div className={styles.separator}>{t('or', 'or')}</div>
-        <Button onClick={closeWorkspace} kind="ghost">
+        <Button onClick={() => closeWorkspace()} kind="ghost">
           {t('closeThisPanel', 'Close this panel')}
         </Button>
       </div>

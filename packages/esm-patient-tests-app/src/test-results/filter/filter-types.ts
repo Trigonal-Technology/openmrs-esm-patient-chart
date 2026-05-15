@@ -1,4 +1,5 @@
 import { type OBSERVATION_INTERPRETATION } from '@openmrs/esm-patient-common-lib';
+import { type GroupedObservation } from '../../types';
 
 interface Observation {
   display: string;
@@ -13,6 +14,7 @@ export interface TreeNode {
   flatName: string;
   subSets?: Array<TreeNode>;
   hasData?: boolean;
+  hiAbsolute?: number;
   hiCritical?: number;
   hiNormal?: number;
   lowAbsolute?: number;
@@ -51,17 +53,16 @@ export type LowestNode = Pick<TreeNode, 'display' | 'flatName'>;
 export interface ReducerState {
   checkboxes: TreeCheckboxes;
   parents: TreeParents;
-  roots: Array<LowestNode>;
+  roots: Array<TreeNode>;
   tests: TreeTests;
   lowestParents: Array<TreeNode>;
 }
 
 export enum ReducerActionType {
-  INITIALIZE = 'initialize',
-  TOGGLEVAL = 'toggleVal',
-  UDPATEPARENT = 'updateParent',
-  UPDATEBASEPATH = 'updateBasePath',
-  RESET_TREE = 'resetTree',
+  INITIALIZE = 'INITIALIZE',
+  TOGGLE_CHECKBOX = 'TOGGLE_CHECKBOX',
+  TOGGLE_PARENT = 'TOGGLE_PARENT',
+  RESET_TREE = 'RESET_TREE',
 }
 
 export interface ReducerAction {
@@ -75,6 +76,15 @@ export interface ObservationData {
   obsDatetime: string;
   value: string;
   interpretation: OBSERVATION_INTERPRETATION;
+  // Reference range fields from observation-level (criteria-based)
+  // Note: Units are only at the concept/node level, not observation-level
+  hiAbsolute?: number;
+  hiCritical?: number;
+  hiNormal?: number;
+  lowAbsolute?: number;
+  lowCritical?: number;
+  lowNormal?: number;
+  range?: string; // Formatted range string for display
 }
 
 export interface ParsedTimeType {
@@ -101,13 +111,16 @@ export interface TimelineData {
 
 export interface FilterContextProps extends ReducerState {
   timelineData: TimelineData;
-  tableData?: any;
+  tableData: GroupedObservation[] | null;
+  trendlineData: TreeNode | null;
   activeTests: string[];
   someChecked: boolean;
   totalResultsCount: number;
-  initialize: any;
-  toggleVal: any;
-  updateParent: any;
+  filteredResultsCount: number;
+  isLoading: boolean;
+  initialize: (trees: Array<TreeNode>) => void;
+  toggleVal: (name: string) => void;
+  updateParent: (name: string) => void;
   resetTree: () => void;
 }
 
@@ -121,7 +134,20 @@ export interface RowData extends TreeNode {
         obsDatetime: string;
         value: string;
         interpretation: OBSERVATION_INTERPRETATION;
+        // Reference range fields from observation-level (criteria-based)
+        // Note: Units are only at the concept/node level, not observation-level
+        hiAbsolute?: number;
+        hiCritical?: number;
+        hiNormal?: number;
+        lowAbsolute?: number;
+        lowCritical?: number;
+        lowNormal?: number;
+        range?: string; // Formatted range string for display
       }
     | undefined
   >;
+}
+
+export interface EmptyStateProps {
+  clearFilter(): void;
 }

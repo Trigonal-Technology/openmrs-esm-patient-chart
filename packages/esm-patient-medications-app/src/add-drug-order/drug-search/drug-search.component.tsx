@@ -1,18 +1,28 @@
 import React, { useCallback, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button, Search } from '@carbon/react';
-import { useConfig, useDebounce, ResponsiveWrapper, closeWorkspace, useLayoutType } from '@openmrs/esm-framework';
-import { launchPatientWorkspace } from '@openmrs/esm-patient-common-lib';
+import {
+  ExtensionSlot,
+  useConfig,
+  useDebounce,
+  ResponsiveWrapper,
+  useLayoutType,
+  type Workspace2DefinitionProps,
+  type Visit,
+} from '@openmrs/esm-framework';
+import { type DrugOrderBasketItem } from '@openmrs/esm-patient-common-lib';
 import { type ConfigObject } from '../../config-schema';
-import { type DrugOrderBasketItem } from '../../types';
 import OrderBasketSearchResults from './order-basket-search-results.component';
 import styles from './order-basket-search.scss';
 
 export interface DrugSearchProps {
   openOrderForm: (searchResult: DrugOrderBasketItem) => void;
+  closeWorkspace: Workspace2DefinitionProps['closeWorkspace'];
+  patient: fhir.Patient;
+  visit: Visit;
 }
 
-export default function DrugSearch({ openOrderForm }: DrugSearchProps) {
+export default function DrugSearch({ closeWorkspace, openOrderForm, patient, visit }: DrugSearchProps) {
   const { t } = useTranslation();
   const isTablet = useLayoutType() === 'tablet';
   const [searchTerm, setSearchTerm] = useState('');
@@ -20,42 +30,44 @@ export default function DrugSearch({ openOrderForm }: DrugSearchProps) {
   const debouncedSearchTerm = useDebounce(searchTerm, debounceDelayInMs ?? 300);
   const searchInputRef = useRef(null);
 
-  const cancelDrugOrder = useCallback(() => {
-    closeWorkspace('add-drug-order', {
-      onWorkspaceClose: () => launchPatientWorkspace('order-basket'),
-    });
-  }, []);
+  const handleSearchTermChange = useCallback(
+    (event: React.ChangeEvent<HTMLInputElement>) => {
+      setSearchTerm(event.target.value ?? '');
+    },
+    [setSearchTerm],
+  );
 
-  const focusAndClearSearchInput = () => {
+  const focusAndClearSearchInput = useCallback(() => {
     setSearchTerm('');
     searchInputRef.current?.focus();
-  };
-
-  const handleSearchTermChange = (event: React.ChangeEvent<HTMLInputElement>) =>
-    setSearchTerm(event.target.value ?? '');
+  }, [setSearchTerm]);
 
   return (
     <div className={styles.searchPopupContainer}>
+      <ExtensionSlot name="allergy-list-pills-slot" state={{ patientUuid: patient?.id }} />
       <ResponsiveWrapper>
         <Search
-          autoFocus
-          size="lg"
-          placeholder={t('searchFieldPlaceholder', 'Search for a drug or orderset (e.g. "Aspirin")')}
+          className={styles.searchInput}
           labelText={t('searchFieldPlaceholder', 'Search for a drug or orderset (e.g. "Aspirin")')}
           onChange={handleSearchTermChange}
+          placeholder={t('searchFieldPlaceholder', 'Search for a drug or orderset (e.g. "Aspirin")')}
           ref={searchInputRef}
+          size="lg"
           value={searchTerm}
         />
       </ResponsiveWrapper>
       <OrderBasketSearchResults
         searchTerm={debouncedSearchTerm}
+        closeWorkspace={closeWorkspace}
         openOrderForm={openOrderForm}
         focusAndClearSearchInput={focusAndClearSearchInput}
+        patient={patient}
+        visit={visit}
       />
       {isTablet && (
         <div className={styles.separatorContainer}>
           <p className={styles.separator}>{t('or', 'or')}</p>
-          <Button iconDescription="Return to order basket" kind="ghost" onClick={cancelDrugOrder}>
+          <Button iconDescription="Return to order basket" kind="ghost" onClick={() => closeWorkspace()}>
             {t('returnToOrderBasket', 'Return to order basket')}
           </Button>
         </div>

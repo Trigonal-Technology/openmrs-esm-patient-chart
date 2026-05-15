@@ -1,23 +1,13 @@
 import { expect } from '@playwright/test';
-import { type Visit } from '@openmrs/esm-framework';
 import { test } from '../core';
-import { generateRandomPatient, deletePatient, type Patient, startVisit, endVisit } from '../commands';
 import { ChartPage, VisitsPage } from '../pages';
-
-let patient: Patient;
-let visit: Visit;
 
 const subjectiveFindings = `I've had a headache for the last two days`;
 const objectiveFindings = `General appearance is healthy. No signs of distress. Head exam shows no abnormalities, no tenderness on palpation. Neurological exam is normal; cranial nerves intact, normal gait and coordination.`;
 const assessment = `Diagnosis: Tension-type headache. Differential Diagnoses: Migraine, sinusitis, refractive error.`;
 const plan = `Advise use of over-the-counter ibuprofen as needed for headache pain. Educate about proper posture during reading and screen time; discuss healthy sleep hygiene. Schedule a follow-up appointment in 2 weeks or sooner if the headache becomes more frequent or severe.`;
 
-test.beforeEach(async ({ api }) => {
-  patient = await generateRandomPatient(api);
-  visit = await startVisit(api, patient.uuid);
-});
-
-test('Fill a clinical form', async ({ page }) => {
+test('Fill a clinical form', async ({ page, patient }) => {
   const chartPage = new ChartPage(page);
   const visitsPage = new VisitsPage(page);
 
@@ -47,7 +37,7 @@ test('Fill a clinical form', async ({ page }) => {
   });
 
   await test.step('Then I should see the `Soap note template` form launch in the workspace', async () => {
-    await expect(page.getByText(/soap note template/i)).toBeVisible();
+    await expect(page.locator('header').filter({ hasText: /soap note template/i })).toBeVisible();
   });
 
   await test.step('When I fill the `Subjective findings` question', async () => {
@@ -67,15 +57,15 @@ test('Fill a clinical form', async ({ page }) => {
   });
 
   await test.step('And I click the `Order basket` button on the siderail', async () => {
-    await page.getByRole('button', { name: /order basket/i, exact: true }).click();
+    await page.getByRole('button', { name: /order basket/i }).click();
   });
 
   await test.step('And I click the `Add +` button to order drugs', async () => {
-    await page.getByRole('button', { name: /add/i }).nth(1).click();
+    await page.getByRole('button', { name: 'Add', exact: true }).first().click();
   });
 
   await test.step('And I click the `Clinical forms` button on the siderail', async () => {
-    await page.getByLabel(/clinical forms/i, { exact: true }).click();
+    await page.getByRole('button', { name: /clinical forms/i }).click();
   });
 
   await test.step('Then I should see retained inputs in `Soap note template` form', async () => {
@@ -85,8 +75,8 @@ test('Fill a clinical form', async ({ page }) => {
     await expect(page.getByText(plan)).toBeVisible();
   });
 
-  await test.step('And I click on the `Save and close` button', async () => {
-    await page.getByRole('button', { name: /save/i }).click();
+  await test.step('And I click on the `Save` button', async () => {
+    await page.getByRole('button', { name: 'Save', exact: true }).click();
   });
 
   await test.step('Then I should see a success notification', async () => {
@@ -98,10 +88,10 @@ test('Fill a clinical form', async ({ page }) => {
   });
 
   await test.step('Then I should see the newly filled form in the encounters table', async () => {
-    await expect(page.getByRole('tab', { name: /visit summaries/i })).toBeVisible();
+    await expect(page.getByRole('tab', { name: /visits/i })).toBeVisible();
     await expect(page.getByRole('tab', { name: /all encounters/i })).toBeVisible();
 
-    await page.getByRole('tab', { name: /^encounters$/i }).click();
+    await page.getByRole('tab', { name: /^all encounters$/i }).click();
 
     const headerRow = page.getByRole('table').locator('thead > tr');
 
@@ -109,7 +99,7 @@ test('Fill a clinical form', async ({ page }) => {
     await expect(headerRow).toContainText(/encounter type/i);
     await expect(headerRow).toContainText(/provider/i);
 
-    await page.getByRole('table').locator('th#expand').click();
+    await page.getByRole('button', { name: /expand all rows/i }).click();
 
     await expect(page.getByText(subjectiveFindings)).toBeVisible();
     await expect(page.getByText(objectiveFindings)).toBeVisible();
@@ -118,9 +108,10 @@ test('Fill a clinical form', async ({ page }) => {
   });
 });
 
-test('Fill a form with a browser slightly ahead of time', async ({ page }) => {
+test('Fill a form with a browser slightly ahead of time', async ({ page, patient }) => {
   const chartPage = new ChartPage(page);
-  const visitsPage = new VisitsPage(page);
+
+  await page.clock.setSystemTime(new Date());
   await page.clock.fastForward('01:00'); // Advances the time by 1 minute in the testing environment.
 
   await test.step('When I visit the chart summary page', async () => {
@@ -140,7 +131,7 @@ test('Fill a form with a browser slightly ahead of time', async ({ page }) => {
   });
 
   await test.step('Then I should see the `Laboratory Test Results` form launch in the workspace', async () => {
-    await expect(page.getByText(/laboratory test results/i)).toBeVisible();
+    await expect(page.locator('header').filter({ hasText: /laboratory test results/i })).toBeVisible();
   });
 
   await test.step('When I fill the `White Blood Cells (WBC)` result as `5000', async () => {
@@ -164,11 +155,11 @@ test('Fill a form with a browser slightly ahead of time', async ({ page }) => {
   });
 
   await test.step('And I should not see any error messages', async () => {
-    await expect(page.getByText('error')).not.toBeVisible();
+    await expect(page.getByText('error')).toBeHidden();
   });
 });
 
-test('Form state is retained when moving between forms in the workspace', async ({ page }) => {
+test('Form state is retained when moving between forms in the workspace', async ({ page, patient }) => {
   const chartPage = new ChartPage(page);
 
   await test.step('When I visit the chart summary page', async () => {
@@ -188,7 +179,7 @@ test('Form state is retained when moving between forms in the workspace', async 
   });
 
   await test.step('Then I should see the `Soap note template` form launch in the workspace', async () => {
-    await expect(page.getByText(/soap note template/i)).toBeVisible();
+    await expect(page.locator('header').filter({ hasText: /soap note template/i })).toBeVisible();
   });
 
   await test.step('When I fill the `Subjective findings` and `Objective findings` questions', async () => {
@@ -197,11 +188,11 @@ test('Form state is retained when moving between forms in the workspace', async 
   });
 
   await test.step('And I click the `Order basket` button on the siderail', async () => {
-    await page.getByRole('button', { name: /order basket/i, exact: true }).click();
+    await page.getByRole('button', { name: /order basket/i }).click();
   });
 
   await test.step('And I click the `Add +` button to order drugs', async () => {
-    await page.getByRole('button', { name: /add/i }).nth(1).click();
+    await page.getByRole('button', { name: 'Add', exact: true }).first().click();
   });
 
   await test.step('And I click the `Clinical forms` button on the siderail', async () => {
@@ -215,7 +206,7 @@ test('Form state is retained when moving between forms in the workspace', async 
   });
 });
 
-test('Form state is retained when minimizing a form in the workspace', async ({ page }) => {
+test('Form state is retained when minimizing a form in the workspace', async ({ page, patient }) => {
   const chartPage = new ChartPage(page);
 
   await test.step('When I visit the chart summary page', async () => {
@@ -235,11 +226,15 @@ test('Form state is retained when minimizing a form in the workspace', async ({ 
   });
 
   await test.step('Then I should see the `Laboratory Test Results` form launch in the workspace', async () => {
-    await expect(page.getByText(/laboratory test results/i)).toBeVisible();
+    await expect(page.locator('header').filter({ hasText: /laboratory test results/i })).toBeVisible();
   });
 
   await test.step('And I maximize the form', async () => {
-    await page.getByRole('button', { name: /maximize/i }).click();
+    await page
+      .locator('header')
+      .filter({ hasText: /laboratory test results/i })
+      .getByRole('button', { name: /maximize/i })
+      .click();
   });
 
   await test.step('And I fill in values for the `White Blood Cells (WBC)`, `Platelets`, and `Neutrophils` questions', async () => {
@@ -250,11 +245,19 @@ test('Form state is retained when minimizing a form in the workspace', async ({ 
   });
 
   await test.step('Then I minimize the form in the workspace', async () => {
-    await page.getByRole('button', { name: /minimize/i }).click();
+    await page
+      .locator('header')
+      .filter({ hasText: /laboratory test results/i })
+      .getByRole('button', { name: /minimize/i })
+      .click();
   });
 
   await test.step('And then I maximize the form in the workspace', async () => {
-    await page.getByRole('button', { name: /maximize/i }).click();
+    await page
+      .locator('header')
+      .filter({ hasText: /laboratory test results/i })
+      .getByRole('button', { name: /maximize/i })
+      .click();
   });
 
   await test.step('And I should see the original form state retained', async () => {
@@ -270,9 +273,4 @@ test('Form state is retained when minimizing a form in the workspace', async ({ 
   await test.step('Then I should see a success notification', async () => {
     await expect(page.getByText(/form submitted successfully/i)).toBeVisible();
   });
-});
-
-test.afterEach(async ({ api }) => {
-  await endVisit(api, visit);
-  await deletePatient(api, patient.uuid);
 });

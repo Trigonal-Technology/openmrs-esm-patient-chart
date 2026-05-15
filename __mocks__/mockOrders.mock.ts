@@ -3,6 +3,7 @@ export const mockOrders = [
     uuid: '6709526b-878f-4d8c-8554-f51a8d1b218e',
     orderNumber: 'ORD-321',
     accessionNumber: null,
+    scheduleDate: '2024-11-22T05:40:29.000+0000',
     patient: {
       uuid: 'ae493d14-c793-4fce-8f1d-6f0cc6ad0010',
       display: '100014M - Daniel Scott',
@@ -25,7 +26,7 @@ export const mockOrders = [
         },
       ],
     },
-    action: 'NEW',
+    action: 'NEW' as const,
     careSetting: {
       uuid: '6f0c9a92-6f24-11e3-af88-005056821db0',
       name: 'Outpatient',
@@ -55,6 +56,9 @@ export const mockOrders = [
     encounter: {
       uuid: 'f7aa3e36-9aed-421b-acf4-f3b6af71cca8',
       display: 'Order 11/21/2024',
+      visit: {
+        uuid: 'some-visit-uuid-1',
+      },
       links: [
         {
           rel: 'self',
@@ -131,8 +135,20 @@ export const mockOrders = [
           resourceAlias: 'drug',
         },
       ],
+      name: 'Permethrin',
+      retired: false,
+      description: 'Permethrin',
+      strength: '10mg',
+      concept: {
+        uuid: '6315c226-01f6-4c59-9332-74f5347c3ef7',
+        display: 'Permethrin',
+      },
+      dosageForm: {
+        uuid: '162335AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
+        display: 'Ampule(s)',
+      },
     },
-    dosingType: 'org.openmrs.SimpleDosingInstructions',
+    dosingType: 'org.openmrs.SimpleDosingInstructions' as const,
     dose: 1,
     doseUnits: {
       uuid: '162335AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
@@ -700,6 +716,9 @@ export const mockOrders = [
     encounter: {
       uuid: '9468dc74-3b4c-4db9-b782-2a05df88e099',
       display: 'Order 11/20/2022',
+      visit: {
+        uuid: 'some-visit-uuid-2',
+      },
       links: [
         {
           rel: 'self',
@@ -837,6 +856,9 @@ export const mockOrders = [
     encounter: {
       uuid: '9468dc74-3b4c-4db9-b782-2a05df88e099',
       display: 'Order 11/20/2022',
+      visit: {
+        uuid: 'some-visit-uuid-2',
+      },
       links: [
         {
           rel: 'self',
@@ -974,6 +996,9 @@ export const mockOrders = [
     encounter: {
       uuid: '9468dc74-3b4c-4db9-b782-2a05df88e099',
       display: 'Order 11/20/2022',
+      visit: {
+        uuid: 'some-visit-uuid-2',
+      },
       links: [
         {
           rel: 'self',
@@ -1111,6 +1136,9 @@ export const mockOrders = [
     encounter: {
       uuid: '9468dc74-3b4c-4db9-b782-2a05df88e099',
       display: 'Order 11/20/2022',
+      visit: {
+        uuid: 'some-visit-uuid-2',
+      },
       links: [
         {
           rel: 'self',

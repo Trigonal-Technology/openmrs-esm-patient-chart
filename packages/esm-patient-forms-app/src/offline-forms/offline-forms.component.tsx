@@ -2,9 +2,6 @@ import React, { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   DataTable,
-  type DataTableCustomRenderProps,
-  type DataTableHeader,
-  type DataTableRow,
   Layer,
   Search,
   SkeletonPlaceholder,
@@ -33,7 +30,7 @@ import { type Form } from '../types';
 import { useValidOfflineFormEncounters } from './use-offline-form-encounters';
 import styles from './offline-forms.scss';
 
-export interface OfflineFormsProps {}
+export type OfflineFormsProps = object;
 
 const OfflineForms: React.FC<OfflineFormsProps> = () => {
   const { t } = useTranslation();
@@ -42,12 +39,12 @@ const OfflineForms: React.FC<OfflineFormsProps> = () => {
   const layout = useLayoutType();
   const canMarkFormsAsOffline = useConnectivity();
   const toolbarItemSize = isDesktop(layout) ? 'sm' : undefined;
-  const headers: Array<typeof DataTableHeader> = [
+  const headers = [
     { key: 'formName', header: t('offlineFormsTableFormNameHeader', 'Form name') },
     { key: 'availableOffline', header: t('offlineFormsTableFormAvailableOffline', 'Offline') },
   ];
 
-  const rows: Array<typeof DataTableRow & Record<string, unknown>> = useMemo(() => {
+  const rows = useMemo(() => {
     const filteredForms = forms?.data?.filter((formInfo) =>
       userHasAccess(formInfo?.encounterType?.editPrivilege?.display, session?.user),
     );
@@ -81,15 +78,7 @@ const OfflineForms: React.FC<OfflineFormsProps> = () => {
       </header>
       <main className={styles.contentContainer}>
         <DataTable rows={rows} headers={headers} size="sm" useZebraStyles>
-          {({
-            rows,
-            headers,
-            getTableProps,
-            getHeaderProps,
-            getRowProps,
-            getTableContainerProps,
-            onInputChange,
-          }: typeof DataTableCustomRenderProps) => (
+          {({ rows, headers, getTableProps, getHeaderProps, getRowProps, getTableContainerProps, onInputChange }) => (
             <TableContainer {...getTableContainerProps()}>
               <div className={styles.tableHeaderContainer}>
                 <Layer>
@@ -98,7 +87,7 @@ const OfflineForms: React.FC<OfflineFormsProps> = () => {
                     labelText={t('offlinePatientsTableSearchLabel', 'Search this list')}
                     placeholder={t('offlinePatientsTableSearchPlaceholder', 'Search this list')}
                     size={toolbarItemSize}
-                    onChange={onInputChange}
+                    onChange={(e) => onInputChange(e as unknown as React.ChangeEvent<HTMLInputElement>)}
                   />
                 </Layer>
               </div>
@@ -163,9 +152,9 @@ function OfflineFormToggle({ form, disabled }: { form: Form; disabled: boolean }
         aria-label={t('offlineToggle', 'Offline toggle')}
         id={`${form.uuid}-offline-toggle`}
         className={styles.availableOfflineToggle}
-        labelA=""
-        labelB=""
-        labelText=""
+        labelA={t('off', 'Off')}
+        labelB={t('on', 'On')}
+        labelText={t('offlineToggle', 'Offline toggle')}
         size="sm"
         toggled={isMarkedAsOffline}
         disabled={disabled || isUpdating || dynamicFormEntriesSwr.isValidating}

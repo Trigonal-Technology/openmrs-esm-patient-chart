@@ -10,10 +10,14 @@ import {
   TableCell,
   TableBody,
 } from '@carbon/react';
-import { useLayoutType } from '@openmrs/esm-framework';
+import { formatDate, parseDate, useLayoutType } from '@openmrs/esm-framework';
 import { type OBSERVATION_INTERPRETATION } from '@openmrs/esm-patient-common-lib';
-import { type OverviewPanelData } from './useOverviewData';
+import { type OverviewPanelData as BaseOverviewPanelData } from './useOverviewData';
 import styles from './common-datatable.scss';
+
+interface OverviewPanelData extends BaseOverviewPanelData {
+  dateTime?: string;
+}
 
 interface CommonDataTableProps {
   data: Array<OverviewPanelData>;
@@ -38,6 +42,11 @@ const CommonDataTable: React.FC<CommonDataTableProps> = ({ title, data, descript
   };
 
   const isTablet = useLayoutType() === 'tablet';
+
+  data = data.map((item) => ({
+    ...item,
+    dateTime: formatDate(parseDate(item?.dateTime), { mode: 'standard', time: true }),
+  }));
 
   return (
     <DataTable rows={data} headers={tableHeaders} size="sm" useZebraStyles>
@@ -66,7 +75,11 @@ const CommonDataTable: React.FC<CommonDataTableProps> = ({ title, data, descript
             </TableHead>
             <TableBody>
               {rows.map((row, i) => (
-                <TypedTableRow key={row.id} interpretation={data[i]?.value?.interpretation} {...getRowProps({ row })}>
+                <TypedTableRow
+                  key={row.id}
+                  interpretation={data[i]?.interpretation as OBSERVATION_INTERPRETATION}
+                  {...getRowProps({ row })}
+                >
                   {row.cells.map((cell) => {
                     return cell.value?.interpretation ? (
                       <TableCell className={styles[interpretationToCSS[cell.value.interpretation]]} key={cell.id}>
@@ -86,9 +99,11 @@ const CommonDataTable: React.FC<CommonDataTableProps> = ({ title, data, descript
   );
 };
 
-const TypedTableRow: React.FC<{
-  interpretation: OBSERVATION_INTERPRETATION;
-}> = ({ interpretation, ...props }) => {
+const TypedTableRow: React.FC<
+  {
+    interpretation: OBSERVATION_INTERPRETATION;
+  } & React.ComponentProps<typeof TableRow>
+> = ({ interpretation, ...props }) => {
   switch (interpretation) {
     case 'OFF_SCALE_HIGH':
       return <TableRow {...props} className={styles['off-scale-high']} />;

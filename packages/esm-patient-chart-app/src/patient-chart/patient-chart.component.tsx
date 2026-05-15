@@ -1,90 +1,62 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import { ExtensionSlot, useLeftNav } from '@openmrs/esm-framework';
 import classNames from 'classnames';
-import {
-  ExtensionSlot,
-  WorkspaceContainer,
-  setCurrentVisit,
-  setLeftNav,
-  unsetLeftNav,
-  usePatient,
-  useWorkspaces,
-} from '@openmrs/esm-framework';
+import React, { useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { spaBasePath } from '../constants';
-import { type LayoutMode } from './chart-review/dashboard-view.component';
-import ChartReview from '../patient-chart/chart-review/chart-review.component';
 import Loader from '../loader/loader.component';
-import styles from './patient-chart.scss';
-import VisitHeader from '../visit-header/visit-header.component';
+import ChartReview from '../patient-chart/chart-review/chart-review.component';
 import SideMenuPanel from '../side-nav/side-menu.component';
-import { getPatientChartStore } from '@openmrs/esm-patient-common-lib';
+import { type LayoutMode } from './chart-review/dashboard-view.component';
+import styles from './patient-chart.scss';
+import { usePatientChartPatientAndVisit } from './patient-chart.resources';
 
 const PatientChart: React.FC = () => {
   const { patientUuid, view: encodedView } = useParams();
+
+  // specify key to ensure that WrapPatientChart instance is re-created
+  // when we switch patient
+  return <WrappedPatientChart key={patientUuid} patientUuid={patientUuid} encodedView={encodedView} />;
+};
+
+interface WrappedPatientChartProps {
+  patientUuid: string;
+  encodedView: string;
+}
+
+const WrappedPatientChart: React.FC<WrappedPatientChartProps> = ({ patientUuid, encodedView }) => {
   const view = decodeURIComponent(encodedView);
-  const { isLoading: isLoadingPatient, patient } = usePatient(patientUuid);
-  const state = useMemo(() => ({ patient, patientUuid }), [patient, patientUuid]);
-  const { workspaceWindowState, active } = useWorkspaces();
   const [layoutMode, setLayoutMode] = useState<LayoutMode>();
-
-  // We are responsible for creating a new offline visit while in offline mode.
-  // The patient chart widgets assume that this is handled by the chart itself.
-  // We are also the module that holds the offline visit type UUID config.
-  // The following hook takes care of the creation.
-
-  // Keep state updated with the current patient. Anything used outside the patient
-  // chart (e.g., the current visit is used by the Active Visit Tag used in the
-  // patient search) must be updated in the callback, which is called when the patient
-  // chart unmounts.
-  useEffect(() => {
-    return () => {
-      setCurrentVisit(null, null);
-    };
-  }, [patientUuid]);
-
-  useEffect(() => {
-    getPatientChartStore().setState({
-      patientUuid,
-    });
-    return () => {
-      getPatientChartStore().setState({
-        patientUuid: null,
-      });
-    };
-  }, [patientUuid]);
+  const state = usePatientChartPatientAndVisit(patientUuid);
+  const { isLoadingPatient, patient } = state;
 
   const leftNavBasePath = useMemo(() => spaBasePath.replace(':patientUuid', patientUuid), [patientUuid]);
-  useEffect(() => {
-    setLeftNav({ name: 'patient-chart-dashboard-slot', basePath: leftNavBasePath });
-    return () => unsetLeftNav('patient-chart-dashboard-slot');
-  }, [leftNavBasePath]);
+
+  useLeftNav({ name: 'patient-chart-dashboard-slot', basePath: leftNavBasePath });
 
   return (
     <>
-      <VisitHeader patient={patient} />
       <SideMenuPanel />
       <main className={classNames('omrs-main-content', styles.chartContainer)}>
         <>
-          <div
-            className={classNames(
-              styles.innerChartContainer,
-              workspaceWindowState === 'normal' && active ? styles.closeWorkspace : styles.activeWorkspace,
-            )}
-          >
+          <div className={classNames(styles.innerChartContainer)}>
             {isLoadingPatient ? (
               <Loader />
             ) : (
               <>
                 <aside>
                   <ExtensionSlot name="patient-header-slot" state={state} />
-                  <ExtensionSlot name="patient-highlights-bar-slot" state={state} />
-                  <ExtensionSlot name="patient-info-slot" state={state} />
+                  <ExtensionSlot name="patient-info-slot" state={state} className={styles.patientInfoSlot} />
                 </aside>
                 <div className={styles.grid}>
                   <div
                     className={classNames(styles.chartReview, { [styles.widthContained]: layoutMode == 'contained' })}
                   >
-                    <ChartReview {...state} view={view} setDashboardLayoutMode={setLayoutMode} />
+                    <ChartReview
+                      patient={patient}
+                      patientUuid={patientUuid}
+                      view={view}
+                      setDashboardLayoutMode={setLayoutMode}
+                    />
                   </div>
                 </div>
               </>
@@ -92,7 +64,6 @@ const PatientChart: React.FC = () => {
           </div>
         </>
       </main>
-      <WorkspaceContainer showSiderailAndBottomNav contextKey={`patient/${patientUuid}`} />
     </>
   );
 };

@@ -1,32 +1,77 @@
 import React from 'react';
-import { Button } from '@carbon/react';
+import { Button, IconButton } from '@carbon/react';
 import { useTranslation } from 'react-i18next';
-import { EditIcon, UserHasAccess, type Visit, useLayoutType } from '@openmrs/esm-framework';
-import { launchPatientWorkspace } from '@openmrs/esm-patient-common-lib';
+import {
+  EditIcon,
+  UserHasAccess,
+  type Visit,
+  getCoreTranslation,
+  launchWorkspace2,
+  useLayoutType,
+} from '@openmrs/esm-framework';
+import { type VisitFormProps } from '../visit-form/visit-form.workspace';
+import {
+  invalidateVisitAndEncounterData,
+  invalidateVisitByUuid,
+  type PatientWorkspaceGroupProps,
+} from '@openmrs/esm-patient-common-lib';
+import { useSWRConfig } from 'swr';
 
 interface EditVisitDetailsActionItemProps {
-  patientUuid: string;
   visit: Visit;
+  patient: fhir.Patient;
+
+  /**
+   * If true, renders as IconButton instead
+   */
+  compact?: boolean;
 }
 
-const EditVisitDetailsActionItem: React.FC<EditVisitDetailsActionItemProps> = ({ visit }) => {
+/**
+ * This component
+ */
+const EditVisitDetailsActionItem: React.FC<EditVisitDetailsActionItemProps> = ({ visit, patient, compact }) => {
   const { t } = useTranslation();
+  const { mutate: globalMutate } = useSWRConfig();
 
   const isTablet = useLayoutType() === 'tablet';
+  const responsiveSize = isTablet ? 'lg' : 'sm';
+  const patientUuid = patient.id;
 
   const editVisitDetails = () => {
-    launchPatientWorkspace('start-visit-workspace-form', {
-      workspaceTitle: t('editVisitDetails', 'Edit visit details'),
-      visitToEdit: visit,
-      openedFrom: 'patient-chart-edit-visit',
-    });
+    launchWorkspace2<VisitFormProps, {}, PatientWorkspaceGroupProps>(
+      'start-visit-workspace-form',
+      { openedFrom: 'patient-chart-edit-visit' },
+      {},
+      {
+        patient,
+        patientUuid: patientUuid,
+        visitContext: visit,
+        mutateVisitContext: () => {
+          invalidateVisitByUuid(globalMutate, visit.uuid);
+          invalidateVisitAndEncounterData(globalMutate, patientUuid);
+        },
+      },
+    );
   };
 
   return (
     <UserHasAccess privilege="Edit Visits">
-      <Button onClick={editVisitDetails} kind="ghost" renderIcon={EditIcon} size={isTablet ? 'lg' : 'sm'}>
-        {t('editVisitDetails', 'Edit visit details')}
-      </Button>
+      {compact ? (
+        <IconButton
+          onClick={editVisitDetails}
+          label={getCoreTranslation('edit')}
+          size={responsiveSize}
+          kind="ghost"
+          align="top-end"
+        >
+          <EditIcon size={16} />
+        </IconButton>
+      ) : (
+        <Button onClick={editVisitDetails} kind="ghost" renderIcon={EditIcon} size={responsiveSize}>
+          {t('editVisitDetails', 'Edit visit details')}
+        </Button>
+      )}
     </UserHasAccess>
   );
 };

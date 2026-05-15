@@ -1,269 +1,100 @@
-import React, { useCallback, useMemo, useState } from 'react';
-import classNames from 'classnames';
-import fuzzy from 'fuzzy';
+import React, { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { Loading } from '@carbon/react';
 import {
-  Button,
-  ButtonSet,
-  DatePicker,
-  DatePickerInput,
-  DatePickerSkeleton,
-  Form,
-  InlineLoading,
-  RadioButton,
-  RadioButtonGroup,
-  Row,
-  Search,
-  StructuredListSkeleton,
-  TextInput,
-  Tile,
-} from '@carbon/react';
-import { Controller, useForm, type SubmitHandler } from 'react-hook-form';
-import { z } from 'zod';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { WarningFilled } from '@carbon/react/icons';
-import { EmptyState, type DefaultPatientWorkspaceProps } from '@openmrs/esm-patient-common-lib';
-import { ExtensionSlot, useLayoutType, showSnackbar, ResponsiveWrapper, useConfig } from '@openmrs/esm-framework';
-import { markPatientDeceased, useCausesOfDeath } from '../data.resource';
-import { type ChartConfig } from '../config-schema';
-import styles from './mark-patient-deceased-form.scss';
+  type PatientWorkspace2DefinitionProps,
+  invalidateCurrentVisit,
+  invalidateVisitAndEncounterData,
+  EmptyState,
+} from '@openmrs/esm-patient-common-lib';
+import {
+  ExtensionSlot,
+  showSnackbar,
+  Workspace2,
+  useConnectivity,
+} from '@openmrs/esm-framework';
+import { useSWRConfig } from 'swr';
+import { markPatientDeceased, useFormByName } from '../data.resource';
 
-const MarkPatientDeceasedForm: React.FC<DefaultPatientWorkspaceProps> = ({ closeWorkspace, patientUuid }) => {
+const MarkPatientDeceasedForm: React.FC<PatientWorkspace2DefinitionProps<{}, {}>> = ({
+  closeWorkspace,
+  groupProps: { patientUuid, patient, visitContext },
+}) => {
   const { t } = useTranslation();
-  const isTablet = useLayoutType() === 'tablet';
-  const memoizedPatientUuid = useMemo(() => ({ patientUuid }), [patientUuid]);
-  const [searchTerm, setSearchTerm] = useState('');
-  const { causesOfDeath, isLoading: isLoadingCausesOfDeath } = useCausesOfDeath();
-  const { freeTextFieldConceptUuid } = useConfig<ChartConfig>();
+  const { mutate: globalMutate } = useSWRConfig();
+  const isOnline = useConnectivity();
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
 
-  const filteredCausesOfDeath = useMemo(() => {
-    if (!searchTerm) {
-      return causesOfDeath;
-    }
-    return searchTerm
-      ? fuzzy
-          .filter(searchTerm, causesOfDeath, {
-            extract: (causeOfDeathConcept) => causeOfDeathConcept.display,
-          })
-          .sort((r1, r2) => r1.score - r2.score)
-          .map((result) => result.original)
-      : causesOfDeath;
-  }, [searchTerm, causesOfDeath]);
+  const { form, isLoading: isLoadingForm, error: formError } = useFormByName('Death Note');
 
-  const handleSearchTermChange = (event) => {
-    setSearchTerm(event.target.value);
-  };
+  const state = useMemo(
+    () => ({
+      view: 'form',
+      formUuid: form?.uuid,
+      patientUuid: patientUuid ?? null,
+      patient,
+      visitUuid: visitContext?.uuid ?? null,
+      visitTypeUuid: visitContext?.visitType?.uuid ?? null,
+      visitStartDatetime: visitContext?.startDatetime ?? null,
+      visitStopDatetime: visitContext?.stopDatetime ?? null,
+      isOffline: !isOnline,
+      encounterUuid: '',
+      additionalProps: {
+        mode: 'enter',
+      },
+      handlePostResponse: (encounter) => {
+        // Extract Pronounced death date and time (Concept: 086be09f-2360-4907-ad02-caa69c0ddb71)
+        const deathDateObs = encounter.obs.find(
+          (obs) => obs.concept.uuid === '086be09f-2360-4907-ad02-caa69c0ddb71',
+        );
+        const deathDate = deathDateObs ? new Date(deathDateObs.value) : new Date();
 
-  const schema = z
-    .object({
-      causeOfDeath: z.string().refine((causeOfDeath) => !!causeOfDeath, {
-        message: t('causeOfDeathIsRequired', 'Please select the cause of death'),
-      }),
-      deathDate: z.date().refine((date) => !!date, {
-        message: t('deathDateRequired', 'Please select the date of death'),
-      }),
-      nonCodedCauseOfDeath: z.string().optional(),
-    })
-    .refine((data) => !(data.causeOfDeath === freeTextFieldConceptUuid && !data.nonCodedCauseOfDeath), {
-      message: t('nonCodedCauseOfDeathRequired', 'Please enter the non-coded cause of death'),
-      path: ['nonCodedCauseOfDeath'],
-    });
+        // Extract Primary cause of death (textarea) (Concept: f5f376d8-3351-487b-b283-63561e03859d)
+        const causeObs = encounter.obs.find((obs) => obs.concept.uuid === 'f5f376d8-3351-487b-b283-63561e03859d');
+        const nonCodedCause = typeof causeObs?.value === 'string' ? causeObs.value : null;
 
-  type MarkPatientDeceasedFormSchema = z.infer<typeof schema>;
+        // Mark the patient as deceased in the person record
+        return markPatientDeceased(deathDate, patientUuid, undefined, nonCodedCause).then(() => {
+          globalMutate((key) => Array.isArray(key) && key[0] === 'patient' && key[1] === patientUuid);
+          invalidateCurrentVisit(globalMutate, patientUuid);
+          invalidateVisitAndEncounterData(globalMutate, patientUuid);
 
-  const {
-    control,
-    formState: { errors, isSubmitting },
-    handleSubmit,
-    watch,
-  } = useForm<MarkPatientDeceasedFormSchema>({
-    mode: 'onSubmit',
-    resolver: zodResolver(schema),
-    defaultValues: {
-      causeOfDeath: '',
-      deathDate: new Date(),
-      nonCodedCauseOfDeath: '',
-    },
-  });
-
-  const causeOfDeathValue = watch('causeOfDeath');
-
-  const onSubmit: SubmitHandler<MarkPatientDeceasedFormSchema> = useCallback(
-    (data) => {
-      const { causeOfDeath, deathDate, nonCodedCauseOfDeath } = data;
-
-      markPatientDeceased(deathDate, patientUuid, causeOfDeath, nonCodedCauseOfDeath)
-        .then(() => {
-          closeWorkspace();
-          window.location.reload();
-        })
-        .catch((error) => {
           showSnackbar({
-            kind: 'error',
-            isLowContrast: false,
-            subtitle: error?.message,
-            title: t('errorMarkingPatientDeceased', 'Error marking patient deceased'),
+            title: t('markDeceasedSuccessfully', 'Patient marked deceased successfully'),
           });
         });
-    },
-    [closeWorkspace, patientUuid, t],
+      },
+      closeWorkspace: () => {
+        return closeWorkspace();
+      },
+      closeWorkspaceWithSavedChanges: () => {
+        // Invalidate visit history and encounter tables
+        invalidateVisitAndEncounterData(globalMutate, patientUuid);
+
+        return closeWorkspace({ discardUnsavedChanges: true });
+      },
+      promptBeforeClosing: (func) => setHasUnsavedChanges(func()),
+      setHasUnsavedChanges,
+    }),
+    [closeWorkspace, form?.uuid, globalMutate, isOnline, patient, patientUuid, t, visitContext],
   );
 
-  const onError = (errors) => console.error(errors);
-
   return (
-    <Form className={styles.form} onSubmit={handleSubmit(onSubmit, onError)}>
-      <div>
-        {isTablet && (
-          <Row className={styles.headerGridRow}>
-            <ExtensionSlot className={styles.dataGridRow} name="visit-form-header-slot" state={memoizedPatientUuid} />
-          </Row>
-        )}
-        <div className={styles.container}>
-          <span className={styles.warningContainer}>
-            <WarningFilled aria-label={t('warning', 'Warning')} className={styles.warningIcon} size={20} />
-            <span className={styles.warningText}>
-              {t('markDeceasedWarning', 'Marking the patient as deceased will end any active visits for this patient')}
-            </span>
-          </span>
-          <section>
-            <div className={styles.sectionTitle}>{t('dateOfDeath', 'Date of death')}</div>
-            {causesOfDeath?.length ? (
-              <ResponsiveWrapper>
-                <Controller
-                  name="deathDate"
-                  control={control}
-                  render={({ field: { onChange, value } }) => (
-                    <DatePicker
-                      className={styles.datePicker}
-                      dateFormat="d/m/Y"
-                      datePickerType="single"
-                      id="deceasedDate"
-                      maxDate={new Date().toISOString()}
-                      onChange={([date]) => onChange(date)}
-                      value={value}
-                    >
-                      <DatePickerInput
-                        id="deceasedDateInput"
-                        labelText={t('date', 'Date')}
-                        placeholder="dd/mm/yyyy"
-                        style={{ width: '100%' }}
-                      />
-                    </DatePicker>
-                  )}
-                />
-                {errors?.deathDate && <p className={styles.errorMessage}>{errors?.deathDate?.message}</p>}
-              </ResponsiveWrapper>
-            ) : (
-              <DatePickerSkeleton />
-            )}
-          </section>
-          <section>
-            <div className={styles.sectionTitle}>{t('causeOfDeath', 'Cause of death')}</div>
-            <div
-              className={classNames(styles.conceptAnswerOverviewWrapper, {
-                [styles.conceptAnswerOverviewWrapperTablet]: isTablet,
-                [styles.conceptAnswerOverviewWrapperDesktop]: !isTablet,
-                [styles.errorOutline]: errors?.causeOfDeath?.message,
-              })}
-            >
-              {isLoadingCausesOfDeath ? <StructuredListSkeleton /> : null}
-
-              {causesOfDeath?.length ? (
-                <ResponsiveWrapper>
-                  <Search
-                    labelText=""
-                    onChange={handleSearchTermChange}
-                    placeholder={t('searchForCauseOfDeath', 'Search for a cause of death')}
-                  />
-                </ResponsiveWrapper>
-              ) : null}
-
-              {causesOfDeath?.length && filteredCausesOfDeath.length > 0 ? (
-                <Controller
-                  name="causeOfDeath"
-                  control={control}
-                  render={({ field: { onChange } }) => (
-                    <RadioButtonGroup
-                      className={styles.radioButtonGroup}
-                      name={
-                        causeOfDeathValue === freeTextFieldConceptUuid
-                          ? 'freeTextFieldCauseOfDeath'
-                          : 'codedCauseOfDeath'
-                      }
-                      orientation="vertical"
-                      onChange={onChange}
-                    >
-                      {filteredCausesOfDeath.map(({ uuid, display, name }) => (
-                        <RadioButton
-                          className={styles.radioButton}
-                          id={name}
-                          key={uuid}
-                          labelText={display}
-                          value={uuid}
-                        />
-                      ))}
-                    </RadioButtonGroup>
-                  )}
-                />
-              ) : null}
-
-              {searchTerm && filteredCausesOfDeath.length === 0 && (
-                <div className={styles.tileContainer}>
-                  <Tile className={styles.tile}>
-                    <div className={styles.tileContent}>
-                      <p className={styles.content}>
-                        {t('noMatchingCodedCausesOfDeath', 'No matching coded causes of death')}
-                      </p>
-                      <p className={styles.helper}>{t('checkFilters', 'Check the filters above')}</p>
-                    </div>
-                  </Tile>
-                </div>
-              )}
-
-              {!isLoadingCausesOfDeath && !causesOfDeath?.length ? (
-                <EmptyState
-                  displayText={t('causeOfDeath_lower', 'cause of death concepts configured in the system')}
-                  headerTitle={t('causeOfDeath', 'Cause of death')}
-                />
-              ) : null}
-            </div>
-            {errors?.causeOfDeath && <p className={styles.errorMessage}>{errors?.causeOfDeath?.message}</p>}
-          </section>
+    <Workspace2 title={t('markPatientDeceased', 'Mark patient deceased')} hasUnsavedChanges={hasUnsavedChanges}>
+      {isLoadingForm ? (
+        <Loading />
+      ) : form ? (
+        <div>
+          <ExtensionSlot name="visit-context-header-slot" state={{ patientUuid }} />
+          <ExtensionSlot key={state.formUuid} name="form-widget-slot" state={state} />
         </div>
-        {causeOfDeathValue === freeTextFieldConceptUuid && (
-          <div className={styles.nonCodedCauseOfDeath}>
-            <Controller
-              name="nonCodedCauseOfDeath"
-              control={control}
-              render={({ field: { onChange, value } }) => (
-                <TextInput
-                  id="freeTextCauseOfDeath"
-                  invalid={!!errors?.nonCodedCauseOfDeath}
-                  invalidText={errors?.nonCodedCauseOfDeath?.message}
-                  labelText={t('nonCodedCauseOfDeath', 'Non-coded cause of death')}
-                  onChange={onChange}
-                  placeholder={t('enterNonCodedCauseOfDeath', 'Enter non-coded cause of death')}
-                  value={value}
-                />
-              )}
-            />
-          </div>
-        )}
-      </div>
-      <ButtonSet className={classNames({ [styles.tablet]: isTablet, [styles.desktop]: !isTablet })}>
-        <Button className={styles.button} kind="secondary" onClick={closeWorkspace}>
-          {t('discard', 'Discard')}
-        </Button>
-        <Button className={styles.button} disabled={isSubmitting} kind="primary" type="submit">
-          {isSubmitting ? (
-            <InlineLoading description={t('saving', 'Saving') + '...'} role="progressbar" />
-          ) : (
-            t('saveAndClose', 'Save and close')
-          )}
-        </Button>
-      </ButtonSet>
-    </Form>
+      ) : (
+        <EmptyState
+          displayText={t('deathNoteFormNotFound', 'The "Death Note" form could not be found. Please ensure it is configured in the system.')}
+          headerTitle={t('formNotFound', 'Form Not Found')}
+        />
+      )}
+    </Workspace2>
   );
 };
 

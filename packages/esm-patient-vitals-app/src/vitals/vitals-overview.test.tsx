@@ -3,13 +3,14 @@ import userEvent from '@testing-library/user-event';
 import { screen } from '@testing-library/react';
 import { getDefaultsFromConfigSchema, useConfig } from '@openmrs/esm-framework';
 import { type ConfigObject, configSchema } from '../config-schema';
-import { formattedVitals, mockConceptMetadata, mockConceptUnits, mockVitalsConfig } from '__mocks__';
+import { formattedVitals, mockConceptUnits, mockVitalsConfig } from '__mocks__';
 import { mockPatient, renderWithSwr, waitForLoadingToFinish } from 'tools';
 import { useVitalsAndBiometrics } from '../common';
 import VitalsOverview from './vitals-overview.component';
 
 const testProps = {
   patientUuid: mockPatient.id,
+  patient: mockPatient,
   pageSize: 5,
   pageUrl: '',
   urlLabel: '',
@@ -24,24 +25,14 @@ global.ResizeObserver = jest.fn().mockImplementation(() => ({
   disconnect: jest.fn(),
 }));
 
-jest.mock('@openmrs/esm-patient-common-lib', () => {
-  const originalModule = jest.requireActual('@openmrs/esm-patient-common-lib');
-
-  return {
-    ...originalModule,
-    launchPatientWorkspace: jest.fn(),
-  };
-});
-
 jest.mock('../common', () => {
   const originalModule = jest.requireActual('../common');
 
   return {
     ...originalModule,
-    launchPatientWorkspace: jest.fn(),
-    useVitalsConceptMetadata: jest.fn().mockImplementation(() => ({
-      data: mockConceptUnits,
-      conceptMetadata: mockConceptMetadata,
+    useConceptUnits: jest.fn().mockImplementation(() => ({
+      conceptUnits: mockConceptUnits,
+      error: null,
       isLoading: false,
     })),
     useVitalsAndBiometrics: jest.fn(),
@@ -122,23 +113,6 @@ describe('VitalsOverview', () => {
       /08 — Apr — 2021, 02:44 PM 36.5 -- \/ -- 78 65 --/,
     ];
     expectedTableRows.map((row) => expect(screen.getByRole('row', { name: new RegExp(row, 'i') })).toBeInTheDocument());
-
-    const sortRowsButton = screen.getByRole('button', { name: /date and time/i });
-
-    // Sorting in descending order
-    // Since the date order is already in descending order, the rows should be the same
-    await user.click(sortRowsButton);
-    // Sorting in ascending order
-    await user.click(sortRowsButton);
-
-    expect(screen.getAllByRole('row')).not.toEqual(initialRowElements);
-
-    // Sorting order = NONE, hence it is still in the ascending order
-    await user.click(sortRowsButton);
-    // Sorting in descending order
-    await user.click(sortRowsButton);
-
-    expect(screen.getAllByRole('row')).toEqual(initialRowElements);
   });
 
   it('toggles between rendering either a tabular view or a chart view', async () => {

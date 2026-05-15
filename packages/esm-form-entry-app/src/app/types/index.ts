@@ -1,5 +1,3 @@
-import { Form } from '@openmrs/ngx-formentry';
-
 interface OpenmrsResource {
   display: string;
   uuid: string;
@@ -151,6 +149,7 @@ export interface FormSchema {
 }
 
 export interface FormMetadataObject {
+  uuid: string;
   display: string;
   resources: Array<{ name: string; valueReference: string }>;
 }

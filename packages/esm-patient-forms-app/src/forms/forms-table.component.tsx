@@ -14,6 +14,7 @@ import {
   TableToolbarContent,
   TableToolbarSearch,
 } from '@carbon/react';
+import { type Form } from '../types';
 import styles from './forms-table.scss';
 
 interface FormsTableProps {
@@ -27,10 +28,11 @@ interface FormsTableProps {
     formName: string;
     formUuid: string;
     encounterUuid: string;
+    form: Form;
   }>;
   isTablet: boolean;
   handleSearch: (search: string) => void;
-  handleFormOpen: (formUuid: string, encounterUuid: string, formName: string) => void;
+  handleFormOpen: (form: Form, encounterUuid: string) => void;
 }
 
 const FormsTable = ({ tableHeaders, tableRows, isTablet, handleSearch, handleFormOpen }: FormsTableProps) => {
@@ -46,7 +48,7 @@ const FormsTable = ({ tableHeaders, tableRows, isTablet, handleSearch, handleFor
                   <TableToolbarSearch
                     className={styles.search}
                     expanded
-                    onChange={(event: React.ChangeEvent<HTMLFormElement>) => handleSearch(event.target.value)}
+                    onChange={(event: React.ChangeEvent<HTMLInputElement>) => handleSearch(event.target.value)}
                     placeholder={t('searchThisList', 'Search this list')}
                     size="sm"
                   />
@@ -69,7 +71,7 @@ const FormsTable = ({ tableHeaders, tableRows, isTablet, handleSearch, handleFor
                         <Link
                           style={{ cursor: 'pointer' }}
                           onClick={() => {
-                            handleFormOpen(row.id, '', tableRows[i].formName);
+                            handleFormOpen(tableRows[i].form, null);
                           }}
                           role="presentation"
                           className={styles.formName}
@@ -78,7 +80,7 @@ const FormsTable = ({ tableHeaders, tableRows, isTablet, handleSearch, handleFor
                         </Link>
                       </TableCell>
                       <TableCell className={styles.editCell}>
-                        <label>{row.cells[1].value ?? t('never', 'Never')}</label>
+                        <span>{row.cells[1].value ?? t('never', 'Never')}</span>
                       </TableCell>
                     </TableRow>
                   ))}

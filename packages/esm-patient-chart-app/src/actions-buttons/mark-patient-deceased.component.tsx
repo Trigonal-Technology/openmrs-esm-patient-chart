@@ -1,20 +1,30 @@
 import React, { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { OverflowMenuItem } from '@carbon/react';
-import { launchPatientWorkspace } from '@openmrs/esm-patient-common-lib';
-import { usePatientDeceasedStatus } from '../data.resource';
+import { useSWRConfig } from 'swr';
+import { launchWorkspace2 } from '@openmrs/esm-framework';
+import {
+  invalidateCurrentVisit,
+  invalidateVisitAndEncounterData,
+} from '@openmrs/esm-patient-common-lib';
+import { markPatientDeceased } from '../data.resource';
 import styles from './action-button.scss';
 
 interface MarkPatientDeceasedOverflowMenuItemProps {
   patientUuid?: string;
   patient?: fhir.Patient;
+  closeMenu?: () => void;
 }
 
-const MarkPatientDeceasedOverflowMenuItem: React.FC<MarkPatientDeceasedOverflowMenuItemProps> = ({ patient }) => {
+const MarkPatientDeceasedOverflowMenuItem: React.FC<MarkPatientDeceasedOverflowMenuItemProps> = ({
+  patient,
+  closeMenu,
+}) => {
   const { t } = useTranslation();
-  const { isDead } = usePatientDeceasedStatus(patient);
+  const { mutate: globalMutate } = useSWRConfig();
+  const isDead = patient.deceasedBoolean ?? Boolean(patient.deceasedDateTime);
 
-  const handleLaunchModal = useCallback(() => launchPatientWorkspace('mark-patient-deceased-workspace-form'), []);
+  const handleLaunchModal = useCallback(() => launchWorkspace2('mark-patient-deceased-workspace-form'), []);
 
   return (
     patient &&
@@ -23,6 +33,7 @@ const MarkPatientDeceasedOverflowMenuItem: React.FC<MarkPatientDeceasedOverflowM
         className={styles.menuitem}
         itemText={t('markPatientDeceased', 'Mark patient deceased')}
         onClick={handleLaunchModal}
+        closeMenu={closeMenu}
       />
     )
   );

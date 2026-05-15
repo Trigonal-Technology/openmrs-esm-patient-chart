@@ -1,9 +1,16 @@
 @use '@carbon/layout';
+@use '@carbon/colors';
 @use '@openmrs/esm-styleguide/src/vars' as *;
 
 $actionNavOffset: 45px;
 $actionPanelOffset: 256px;
 $actionPanelExpandedOffset: $actionNavOffset + $actionPanelOffset;
+
+.patientInfoSlot {
+  > div:not(:last-child) {
+    border-bottom: 1px solid colors.$gray-20;
+  }
+}
 
 .grid {
   display: grid;
@@ -38,18 +45,10 @@ $actionPanelExpandedOffset: $actionNavOffset + $actionPanelOffset;
   flex-direction: column;
 }
 
-:global(.omrs-breakpoint-gt-small-desktop) .chartContainer {
-  margin-left: var(--omrs-sidenav-width);
-}
-
 .innerChartContainer {
   display: flex;
   width: 100%;
   flex-direction: column;
-}
-
-.closeWorkspace {
-  padding-right: 0;
 }
 
 // Overriding styles for RTL support
@@ -57,11 +56,6 @@ html[dir='rtl'] {
   .chartContainer {
     padding-right: unset;
     padding-left: layout.$spacing-01;
-  }
-
-  :global(.omrs-breakpoint-gt-small-desktop) .chartContainer {
-    margin-right: var(--omrs-sidenav-width);
-    margin-left: unset;
   }
 
   :global(.omrs-breakpoint-lt-desktop) .innerChartContainer {
