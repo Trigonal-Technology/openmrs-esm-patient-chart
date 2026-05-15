@@ -79,6 +79,8 @@
       "name": "patient-chart-order-basket",
       "icon": "ShoppingCartIcon",
       "group": "patient-chart",
+      "width": "extra-wide",
+      "canMaximize": true,
       "order": 1
     },
     {

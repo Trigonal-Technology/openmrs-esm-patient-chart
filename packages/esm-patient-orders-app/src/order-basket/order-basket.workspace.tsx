@@ -28,12 +28,24 @@ const OrderBasketWorkspace: React.FC<PatientWorkspace2DefinitionProps<{}, OrderB
     const launchGeneralOrderForm = (orderTypeUuid: string, order: OrderBasketItem) => {
       launchChildWorkspace('orderable-concept-workspace', { orderTypeUuid, order });
     };
+    const launchImagingOrderForm = (orderTypeUuid: string, order: OrderBasketItem) => {
+      launchChildWorkspace('add-imaging-order-workspace', { orderTypeUuid, order });
+    };
+    const launchProcedureOrderForm = (orderTypeUuid: string, order: OrderBasketItem) => {
+      launchChildWorkspace('add-procedures-order', { orderTypeUuid, order });
+    };
+    const launchMedicalSupplyForm = (orderTypeUuid: string, order: OrderBasketItem) => {
+      launchChildWorkspace('add-medical-supply-order', { orderTypeUuid, order });
+    };
 
     return {
       patient,
       launchDrugOrderForm,
       launchLabOrderForm,
       launchGeneralOrderForm,
+      launchImagingOrderForm,
+      launchProcedureOrderForm,
+      launchMedicalSupplyForm,
     } satisfies OrderBasketExtensionProps;
   }, [launchChildWorkspace, patient]);
 

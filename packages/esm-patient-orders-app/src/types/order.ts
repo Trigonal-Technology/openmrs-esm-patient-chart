@@ -1,4 +1,10 @@
-import { type Order } from '@openmrs/esm-patient-common-lib';
+import { type Order, type TestOrderBasketItem } from '@openmrs/esm-patient-common-lib';
+
+export interface TestType {
+  label: string;
+  conceptUuid: string;
+  synonyms: Array<string>;
+}
 
 export interface PatientMedicationFetchResponse {
   results: Array<Order>;
@@ -81,4 +87,47 @@ export interface OrderStockData {
       };
     };
   }[];
+}
+
+export interface ImagingOrderBasketItem extends TestOrderBasketItem {
+  laterality?: string;
+  bodySite?: string;
+  modality?: string;
+  instructions?: string;
+  scheduleDate?: Date | string;
+  orderer?: string;
+  careSetting?: string;
+  previousOrder?: string;
+  testType: TestType;
+}
+
+export interface ProcedureOrderBasketItem extends TestOrderBasketItem {
+  testType: TestType;
+  orderer?: string;
+  careSetting?: string;
+  frequency?: any;
+  numberOfRepeats?: string;
+  commentsToFulfiller?: string;
+  orderReason?: any;
+  orderReasonNonCoded?: string;
+  bodySite?: any;
+  category?: any;
+  specimenSource?: string;
+  specimenType?: string;
+  urgency?: any;
+  scheduleDate?: Date | string;
+  instructions?: string;
+  previousOrder?: string;
+}
+
+export interface MedicalSupplyOrderBasketItem extends TestOrderBasketItem {
+  testType: TestType;
+  orderer?: string;
+  careSetting?: string;
+  quantity?: number;
+  quantityUnits?: any;
+  brandName?: string;
+  instructions?: string;
+  urgency?: any;
+  previousOrder?: string;
 }
