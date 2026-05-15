@@ -14,7 +14,7 @@ import {
   SkeletonText,
   ButtonSkeleton,
 } from '@carbon/react';
-import { ShoppingCartArrowUp } from '@carbon/react/icons';
+import { ShoppingCartArrowUp, Checkmark } from '@carbon/react/icons';
 import useSWR, { useSWRConfig } from 'swr';
 import useSWRImmutable from 'swr/immutable';
 import {
@@ -46,7 +46,7 @@ import {
   showOrderSuccessToast,
   useMutatePatientOrders,
   useOrderBasket,
-} from '@openmrs/esm-patient-common-lib';
+ priorityOptions, type OrderUrgency, type TestOrderBasketItem } from '@openmrs/esm-patient-common-lib';
 import { type ConfigObject } from '../config-schema';
 import {
   type ImagingOrderBasketItem,
@@ -68,10 +68,6 @@ import { orderBasketStore } from '@openmrs/esm-patient-common-lib/src/orders/sto
 import styles from './order-basket.scss';
 import searchStyles from './general-order-type/add-general-order/search-results.scss';
 import { launchWorkspace2 } from '@openmrs/esm-framework';
-import { priorityOptions, type OrderUrgency, type TestOrderBasketItem } from '@openmrs/esm-patient-common-lib';
-
-
-
 
 interface OrderBasketProps {
   patientUuid: string;
@@ -83,7 +79,6 @@ interface OrderBasketProps {
   showPatientBanner?: boolean;
   onOrderBasketSubmitted?: (encounterUuid: string, postedOrders: Array<Order>) => void;
 }
-
 
 function openmrsFetchMultipleConcepts(urls: Array<string>) {
   return Promise.all(urls.map((url) => openmrsFetch<any>(url)));
@@ -98,26 +93,35 @@ const useUnifiedSearch = (
   labUuid: string,
   radiologyUuid: string,
   procedureUuid: string,
-  medicalSupplyUuid: string
+  medicalSupplyUuid: string,
 ) => {
-  const conceptSets = useMemo(() => [
-    { category: 'Test', uuid: labUuid },
-    { category: 'Radiology/Imaging Procedure', uuid: radiologyUuid },
-    { category: 'Procedure', uuid: procedureUuid },
-    { category: 'Medical supply', uuid: medicalSupplyUuid }
-  ].filter(s => s.uuid), [labUuid, radiologyUuid, procedureUuid, medicalSupplyUuid]);
-
-  const { data: orderSetsData, error: orderSetsError, isLoading: isSearchingOrderSets } = useSWR<any>(
-    searchTerm ? `${restBaseUrl}/nidanOrderSet?q=${searchTerm}&v=full` : null,
-    openmrsFetch
+  const conceptSets = useMemo(
+    () =>
+      [
+        { category: 'Test', uuid: labUuid },
+        { category: 'Radiology/Imaging Procedure', uuid: radiologyUuid },
+        { category: 'Procedure', uuid: procedureUuid },
+        { category: 'Medical supply', uuid: medicalSupplyUuid },
+      ].filter((s) => s.uuid),
+    [labUuid, radiologyUuid, procedureUuid, medicalSupplyUuid],
   );
 
-  const { data: conceptsData, error: conceptsError, isLoading: isConceptsLoading } = useSWRImmutable<any[]>(
+  const {
+    data: orderSetsData,
+    error: orderSetsError,
+    isLoading: isSearchingOrderSets,
+  } = useSWR<any>(searchTerm ? `${restBaseUrl}/nidanOrderSet?q=${searchTerm}&v=full` : null, openmrsFetch);
+
+  const {
+    data: conceptsData,
+    error: conceptsError,
+    isLoading: isConceptsLoading,
+  } = useSWRImmutable<any[]>(
     conceptSets.length > 0
       ? conceptSets.map(
-        (c) =>
-          `${restBaseUrl}/concept/${c.uuid}?v=custom:(display,names:(display),uuid,setMembers:(display,uuid,conceptClass:(display),names:(display),setMembers:(display,uuid,conceptClass:(display),names:(display))))`
-      )
+          (c) =>
+            `${restBaseUrl}/concept/${c.uuid}?v=custom:(display,names:(display),uuid,setMembers:(display,uuid,conceptClass:(display),names:(display),setMembers:(display,uuid,conceptClass:(display),names:(display))))`,
+        )
       : null,
     openmrsFetchMultipleConcepts,
   );
@@ -144,20 +148,20 @@ const useUnifiedSearch = (
         const category = conceptSets[index].category;
         // The response is { data: {...} } from openmrsFetch
         const members = response?.data?.setMembers || [];
-        members.forEach(m => {
+        members.forEach((m) => {
           concepts.push({
             ...m,
             type: 'concept',
-            conceptClass: m.conceptClass || { display: category }
+            conceptClass: m.conceptClass || { display: category },
           });
           if (m.setMembers) {
-            m.setMembers.forEach(child => {
+            m.setMembers.forEach((child) => {
               concepts.push({
                 ...child,
                 type: 'concept',
-                conceptClass: child.conceptClass || { display: category }
-              })
-            })
+                conceptClass: child.conceptClass || { display: category },
+              });
+            });
           }
         });
       });
@@ -165,9 +169,10 @@ const useUnifiedSearch = (
 
     // Filter concepts by search term
     const lowerSearch = searchTerm.toLowerCase();
-    const filteredConcepts = concepts.filter(c =>
-      c.display?.toLowerCase().includes(lowerSearch) ||
-      c.names?.some(n => n.display?.toLowerCase().includes(lowerSearch))
+    const filteredConcepts = concepts.filter(
+      (c) =>
+        c.display?.toLowerCase().includes(lowerSearch) ||
+        c.names?.some((n) => n.display?.toLowerCase().includes(lowerSearch)),
     );
 
     const drugs = drugData?.data?.results?.map((d: any) => ({ ...d, type: 'drug' })) || [];
@@ -182,10 +187,6 @@ const useUnifiedSearch = (
   };
 };
 
-
-
-
-
 interface SearchResultItemProps {
   item: any;
   patient: fhir.Patient;
@@ -197,148 +198,184 @@ interface SearchResultItemProps {
   onOrderAdded: () => void;
 }
 
-const SearchResultItem: React.FC<SearchResultItemProps> = React.memo(({
-  item,
-  patient,
-  visit,
-  defaultOrderTypeUuid,
-  orderTypes,
-  orderBasketExtensionProps,
-  closeWorkspace,
-  onOrderAdded,
-}) => {
-  const { t } = useTranslation();
-  const config = useConfig() as ConfigObject;
-  const session = useSession();
+const SearchResultItem: React.FC<SearchResultItemProps> = React.memo(
+  ({
+    item,
+    patient,
+    visit,
+    defaultOrderTypeUuid,
+    orderTypes,
+    orderBasketExtensionProps,
+    closeWorkspace,
+    onOrderAdded,
+  }) => {
+    const { t } = useTranslation();
+    const config = useConfig() as ConfigObject;
+    const session = useSession();
 
-  const isOrderSet = item.type === 'orderset';
-  const details = useMemo(() => isOrderSet ? null : getOrderItemDetails(item, config), [item, config, isOrderSet]);
-  const { basketKey, prepFn, isDrugItem, isLabItem, isImagingItem, isProcedureItem, isMedicalSupplyItem } = details || {};
+    const isOrderSet = item.type === 'orderset';
+    const details = useMemo(() => (isOrderSet ? null : getOrderItemDetails(item, config)), [item, config, isOrderSet]);
+    const { basketKey, prepFn, isDrugItem, isLabItem, isImagingItem, isProcedureItem, isMedicalSupplyItem } =
+      details || {};
 
-  // SINGLE useOrderBasket call — subscribes only to the relevant basket
-  const { orders, setOrders } = useOrderBasket<any>(patient, basketKey, prepFn);
-  const { setOrders: setAnyOrders } = useOrderBasket<any>(patient);
+    // SINGLE useOrderBasket call — subscribes only to the relevant basket
+    const { orders, setOrders, addedOrderSets, setAddedOrderSets } = useOrderBasket<any>(patient, basketKey, prepFn);
+    const { setOrders: setAnyOrders } = useOrderBasket<any>(patient);
 
-  const itemAlreadyInBasket = useMemo(
-    () => {
-      if (isOrderSet) return false; // For now, don't show "Already in basket" for order sets
+    const itemAlreadyInBasket = useMemo(() => {
+      if (isOrderSet) return addedOrderSets?.includes(item.uuid) ?? false;
       return orders?.some((order) => {
         if (isDrugItem) return (order as any).drug?.uuid === item.uuid;
         return order.concept?.uuid === item.uuid;
       });
-    },
-    [orders, item.uuid, isDrugItem, isOrderSet],
-  );
+    }, [orders, item.uuid, isDrugItem, isOrderSet, addedOrderSets]);
 
-  const createOrderItem = useCallback(() => {
-    if (isOrderSet) return null;
-    return constructOrderItem(item, visit, session.currentProvider?.uuid, details);
-  }, [item, visit, session.currentProvider?.uuid, details, isOrderSet]);
+    const createOrderItem = useCallback(() => {
+      if (isOrderSet) return null;
+      return constructOrderItem(item, visit, session.currentProvider?.uuid, details);
+    }, [item, visit, session.currentProvider?.uuid, details, isOrderSet]);
 
-  const addToBasket = useCallback(() => {
-    if (isOrderSet) {
-      const members = item.members || [];
-      members.forEach((member: any) => {
-        const transformed = transformOrderSetMember(member, visit, session.currentProvider?.uuid, config);
-        if (transformed) {
-          // We need to get the current items for this specific basket to append
-          const currentBasketItems = orderBasketStore.getState().items[patient.id]?.[transformed.basketKey] || [];
-          setAnyOrders(transformed.basketKey, [...currentBasketItems, transformed.order]);
-          console.log('orders', orders);
-        }
-      });
-    } else {
-      const orderItem = createOrderItem();
-      setOrders([...orders, orderItem]);
-    }
-    onOrderAdded();
-    console.log('orders', orders);
-  }, [orders, setOrders, createOrderItem, onOrderAdded, isOrderSet, item.members, visit, session.currentProvider?.uuid, config, patient.id, setAnyOrders]);
+    const addToBasket = useCallback(() => {
+      if (isOrderSet) {
+        const members = item.members || [];
+        members.forEach((member: any) => {
+          const transformed = transformOrderSetMember(member, visit, session.currentProvider?.uuid, config);
+          if (transformed) {
+            // We need to get the current items for this specific basket to append
+            const currentBasketItems = orderBasketStore.getState().items[patient.id]?.[transformed.basketKey] || [];
+            setAnyOrders(transformed.basketKey, [...currentBasketItems, transformed.order]);
+          }
+        });
+        setAddedOrderSets([...addedOrderSets, item.uuid]);
+      } else {
+        const orderItem = createOrderItem();
+        setOrders([...orders, orderItem]);
+      }
+      onOrderAdded();
+    }, [
+      orders,
+      setOrders,
+      createOrderItem,
+      onOrderAdded,
+      isOrderSet,
+      item.members,
+      item.uuid,
+      visit,
+      session.currentProvider?.uuid,
+      config,
+      patient.id,
+      setAnyOrders,
+      addedOrderSets,
+      setAddedOrderSets,
+    ]);
 
-  const removeFromBasket = useCallback(() => {
-    if (isDrugItem) {
-      setOrders(orders.filter((order) => (order as any).drug?.uuid !== item.uuid));
-    } else {
-      setOrders(orders.filter((order) => order.concept?.uuid !== item.uuid));
-    }
-  }, [isDrugItem, setOrders, orders, item.uuid]);
+    const removeFromBasket = useCallback(() => {
+      if (isDrugItem) {
+        setOrders(orders.filter((order) => (order as any).drug?.uuid !== item.uuid));
+      } else {
+        setOrders(orders.filter((order) => order.concept?.uuid !== item.uuid));
+      }
+    }, [isDrugItem, setOrders, orders, item.uuid]);
 
-  const openForm = useCallback(() => {
-    if (isOrderSet) return;
-    const {
-      labOrderTypeUuid,
-      radiologyOrderTypeUuid,
-      procedureOrderTypeUuid,
-      medicalSupplyOrderTypeUuid,
-    } = config;
+    const openForm = useCallback(() => {
+      if (isOrderSet) return;
+      const { labOrderTypeUuid, radiologyOrderTypeUuid, procedureOrderTypeUuid, medicalSupplyOrderTypeUuid } = config;
 
-    if (isDrugItem) {
-      orderBasketExtensionProps.launchDrugOrderForm(createDrugOrder(item, visit) as any);
-    } else if (isLabItem) {
-      const labOrder = createEmptyOrder(item, visit);
-      orderBasketExtensionProps.launchLabOrderForm(labOrderTypeUuid, {
-        ...labOrder, testType: { label: item.display, conceptUuid: item.uuid },
-      } as any);
-    } else if (isImagingItem) {
-      const order = createEmptyOrder(item, visit);
-      orderBasketExtensionProps.launchImagingOrderForm(radiologyOrderTypeUuid, {
-        ...order, testType: { label: item.display, conceptUuid: item.uuid },
-      } as any);
-    } else if (isProcedureItem) {
-      const order = createEmptyOrder(item, visit);
-      orderBasketExtensionProps.launchProcedureOrderForm(procedureOrderTypeUuid, {
-        ...order, testType: { label: item.display, conceptUuid: item.uuid },
-      } as any);
-    } else if (isMedicalSupplyItem) {
-      const order = createEmptyOrder(item, visit);
-      orderBasketExtensionProps.launchMedicalSupplyForm(medicalSupplyOrderTypeUuid, {
-        ...order, testType: { label: item.display, conceptUuid: item.uuid },
-      } as any);
-    } else {
-      orderBasketExtensionProps.launchGeneralOrderForm(basketKey, createEmptyOrder(item, visit));
-    }
-  }, [item, visit, isDrugItem, isLabItem, isImagingItem, isProcedureItem, isMedicalSupplyItem, basketKey, orderBasketExtensionProps, config]);
+      if (isDrugItem) {
+        orderBasketExtensionProps.launchDrugOrderForm(createDrugOrder(item, visit) as any);
+      } else if (isLabItem) {
+        const labOrder = createEmptyOrder(item, visit);
+        orderBasketExtensionProps.launchLabOrderForm(labOrderTypeUuid, {
+          ...labOrder,
+          testType: { label: item.display, conceptUuid: item.uuid },
+        } as any);
+      } else if (isImagingItem) {
+        const order = createEmptyOrder(item, visit);
+        orderBasketExtensionProps.launchImagingOrderForm(radiologyOrderTypeUuid, {
+          ...order,
+          testType: { label: item.display, conceptUuid: item.uuid },
+        } as any);
+      } else if (isProcedureItem) {
+        const order = createEmptyOrder(item, visit);
+        orderBasketExtensionProps.launchProcedureOrderForm(procedureOrderTypeUuid, {
+          ...order,
+          testType: { label: item.display, conceptUuid: item.uuid },
+        } as any);
+      } else if (isMedicalSupplyItem) {
+        const order = createEmptyOrder(item, visit);
+        orderBasketExtensionProps.launchMedicalSupplyForm(medicalSupplyOrderTypeUuid, {
+          ...order,
+          testType: { label: item.display, conceptUuid: item.uuid },
+        } as any);
+      } else {
+        orderBasketExtensionProps.launchGeneralOrderForm(basketKey, createEmptyOrder(item, visit));
+      }
+    }, [
+      item,
+      visit,
+      isDrugItem,
+      isLabItem,
+      isImagingItem,
+      isProcedureItem,
+      isMedicalSupplyItem,
+      basketKey,
+      orderBasketExtensionProps,
+      config,
+    ]);
 
-  return (
-    <Tile className={classNames(searchStyles.searchResultTile)} role="listitem">
-      <div className={classNames(searchStyles.searchResultTileContent, searchStyles.text02)}>
-        <p>
-          <span className={searchStyles.heading}>{item.display || item.name}</span>{' '}
-          {item.type === 'drug' && item.strength && <span>{`(${item.strength})`}</span>}
-        </p>
-        <p>{item.type === 'drug' ? t('drug', 'Drug') : item.type === 'orderset' ? t('orderSet', 'Order Set') : item.conceptClass?.display}</p>
-      </div>
-      <div className={searchStyles.searchResultActions}>
-        {!isOrderSet && itemAlreadyInBasket ? (
-          <Button
-            kind="danger--ghost"
-            renderIcon={(props) => <ShoppingCartArrowUp size={16} {...props} />}
-            onClick={removeFromBasket}
-          >
-            Remove
-          </Button>
-        ) : (
-          <Button
-            kind="ghost"
-            renderIcon={(props: any) => <ShoppingCartArrowDownIcon size={16} {...props} />}
-            onClick={addToBasket}
-          >
-            Add
-          </Button>
-        )}
-        {!isOrderSet && (
-          <Button
-            kind="ghost"
-            renderIcon={(props: any) => <ArrowRightIcon size={16} {...props} />}
-            onClick={openForm}
-          >
-            {t('goToDrugOrderForm', 'Order form')}
-          </Button>
-        )}
-      </div>
-    </Tile>
-  );
-});
+    return (
+      <Tile className={classNames(searchStyles.searchResultTile)} role="listitem">
+        <div className={classNames(searchStyles.searchResultTileContent, searchStyles.text02)}>
+          <p>
+            <span className={searchStyles.heading}>{item.display || item.name}</span>{' '}
+            {item.type === 'drug' && item.strength && <span>{`(${item.strength})`}</span>}
+          </p>
+          <p>
+            {item.type === 'drug'
+              ? t('drug', 'Drug')
+              : item.type === 'orderset'
+                ? t('orderSet', 'Order Set')
+                : item.conceptClass?.display}
+          </p>
+        </div>
+        <div className={searchStyles.searchResultActions}>
+          {itemAlreadyInBasket ? (
+            isOrderSet ? (
+              <Button kind="ghost" renderIcon={(props: any) => <Checkmark size={16} {...props} />} disabled>
+                {t('added', 'Added')}
+              </Button>
+            ) : (
+              <Button
+                kind="danger--ghost"
+                renderIcon={(props: any) => <ShoppingCartArrowUp size={16} {...props} />}
+                onClick={removeFromBasket}
+              >
+                {t('remove', 'Remove')}
+              </Button>
+            )
+          ) : (
+            <Button
+              kind="ghost"
+              renderIcon={(props: any) => <ShoppingCartArrowDownIcon size={16} {...props} />}
+              onClick={addToBasket}
+            >
+              Add
+            </Button>
+          )}
+          {!isOrderSet && (
+            <Button
+              kind="ghost"
+              renderIcon={(props: any) => <ArrowRightIcon size={16} {...props} />}
+              onClick={openForm}
+            >
+              {t('goToDrugOrderForm', 'Order form')}
+            </Button>
+          )}
+        </div>
+      </Tile>
+    );
+  },
+);
 
 const OrderBasket: React.FC<OrderBasketProps> = ({
   patientUuid,
@@ -399,9 +436,6 @@ const OrderBasket: React.FC<OrderBasketProps> = ({
     }
   }, [allowSelectingOrderer, providers, currentProvider]);
 
-
-
-
   const handleSave = useCallback(async () => {
     const abortController = new AbortController();
     setCreatingEncounterError('');
@@ -434,7 +468,7 @@ const OrderBasket: React.FC<OrderBasketProps> = ({
         console.error(e);
         setCreatingEncounterError(
           e.responseBody?.error?.message ||
-          t('tryReopeningTheWorkspaceAgain', 'Please try launching the workspace again'),
+            t('tryReopeningTheWorkspaceAgain', 'Please try launching the workspace again'),
         );
       }
     } else {
@@ -460,7 +494,7 @@ const OrderBasket: React.FC<OrderBasketProps> = ({
         console.error(e);
         setCreatingEncounterError(
           e.responseBody?.error?.message ||
-          t('tryReopeningTheWorkspaceAgain', 'Please try launching the workspace again'),
+            t('tryReopeningTheWorkspaceAgain', 'Please try launching the workspace again'),
         );
       }
     }
@@ -502,12 +536,16 @@ const OrderBasket: React.FC<OrderBasketProps> = ({
     searchInputRef.current?.focus();
   }, []);
 
-  const { results, isLoading: isSearching, error: searchError } = useUnifiedSearch(
+  const {
+    results,
+    isLoading: isSearching,
+    error: searchError,
+  } = useUnifiedSearch(
     debouncedSearchTerm,
     config.labConceptSetUuid,
     config.radiologyConceptSetUuid,
     config.procedureConceptSetUuid,
-    config.medicalSupplyConceptSetUuid
+    config.medicalSupplyConceptSetUuid,
   );
 
   return (
@@ -583,9 +621,9 @@ const OrderBasket: React.FC<OrderBasketProps> = ({
                   {isSearching
                     ? t('searching', 'Searching...')
                     : t('searchResultsMatchesForTerm', '{{count}} results for "{{searchTerm}}"', {
-                      count: results?.length,
-                      searchTerm,
-                    })}
+                        count: results?.length,
+                        searchTerm,
+                      })}
                 </span>
                 <Button kind="ghost" onClick={() => setSearchTerm('')} size={isTablet ? 'md' : 'sm'}>
                   {t('back', 'Back')}
@@ -618,7 +656,7 @@ const OrderBasket: React.FC<OrderBasketProps> = ({
                       orderTypes={orderTypes}
                       orderBasketExtensionProps={orderBasketExtensionProps}
                       closeWorkspace={closeWorkspace}
-                      onOrderAdded={() => { }}
+                      onOrderAdded={() => {}}
                     />
                   ))
                 )}
@@ -635,7 +673,10 @@ const OrderBasket: React.FC<OrderBasketProps> = ({
           )}
           {orderTypes?.length > 0 &&
             orderTypes.map((orderType) => {
-              const { prepFn: prepFunction } = getOrderItemDetails({ conceptClass: { display: orderType.label } } as any, config);
+              const { prepFn: prepFunction } = getOrderItemDetails(
+                { conceptClass: { display: orderType.label } } as any,
+                config,
+              );
 
               return (
                 <div className={styles.orderPanel} key={orderType.orderTypeUuid}>

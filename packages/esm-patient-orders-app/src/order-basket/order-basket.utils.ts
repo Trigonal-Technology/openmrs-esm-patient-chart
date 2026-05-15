@@ -97,7 +97,8 @@ export const getOrderItemDetails = (item: any, config: ConfigObject) => {
   const isLabItem = item.conceptClass?.display === 'Test' || item.conceptClass?.display === 'LabSet';
   const isImagingItem = item.conceptClass?.display === 'Radiology/Imaging Procedure';
   const isProcedureItem = item.conceptClass?.display === 'Procedure';
-  const isMedicalSupplyItem = item.conceptClass?.display === 'Medical supply' || item.conceptClass?.display === 'MedSet';
+  const isMedicalSupplyItem =
+    item.conceptClass?.display === 'Medical supply' || item.conceptClass?.display === 'MedSet';
 
   if (isDrugItem) {
     return {
@@ -180,7 +181,12 @@ export const getOrderItemDetails = (item: any, config: ConfigObject) => {
   };
 };
 
-export const constructOrderItem = (item: any, visit: Visit, providerUuid: string, details: ReturnType<typeof getOrderItemDetails>) => {
+export const constructOrderItem = (
+  item: any,
+  visit: Visit,
+  providerUuid: string,
+  details: ReturnType<typeof getOrderItemDetails>,
+) => {
   if (details.isDrugItem) {
     return { ...createDrugOrder(item, visit), isOrderIncomplete: true };
   }
@@ -194,7 +200,8 @@ export const constructOrderItem = (item: any, visit: Visit, providerUuid: string
     visit,
     orderer: providerUuid,
     concept: { uuid: item.uuid, display: item.display },
-    isOrderIncomplete: !details.isLabItem, // Labs are complete, others are not
+    numberOfRepeats: details.isProcedureItem ? 1 : undefined,
+    // isOrderIncomplete: !details.isLabItem, // Labs are complete, others are not
   };
 };
 export const transformOrderSetMember = (member: any, visit: Visit, providerUuid: string, config: ConfigObject) => {
@@ -223,7 +230,9 @@ export const transformOrderSetMember = (member: any, visit: Visit, providerUuid:
       patientInstructions: instructions,
       pillsDispensed: member.quantity,
       numRefills: 0,
-      quantityUnits: member.quantityUnitsUuid ? { value: member.quantityUnitsDisplay, valueCoded: member.quantityUnitsUuid } : null,
+      quantityUnits: member.quantityUnitsUuid
+        ? { value: member.quantityUnitsDisplay, valueCoded: member.quantityUnitsUuid }
+        : null,
       visit,
       startDate: new Date(),
     };
@@ -270,7 +279,7 @@ export const transformOrderSetMember = (member: any, visit: Visit, providerUuid:
     orderer: providerUuid,
     concept: { uuid: member.conceptUuid, display: member.conceptDisplay || member.display },
     instructions: instructions,
-    numberOfRepeats: member.numberOfRepeats,
+    numberOfRepeats: category === 'Procedure' ? (member.numberOfRepeats || 1) : member.numberOfRepeats,
     quantity: member.quantity,
     quantityUnits: member.quantityUnitsUuid,
   };

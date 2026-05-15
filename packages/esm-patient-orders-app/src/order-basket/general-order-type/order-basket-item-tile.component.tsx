@@ -30,9 +30,7 @@ const OrderBasketItemTile: React.FC<OrderBasketItemTileProps> = ({ orderBasketIt
         <OrderActionLabel orderBasketItem={orderBasketItem} />
         <br />
         <span className={styles.name}>
-          {orderBasketItem.concept?.display ||
-            (orderBasketItem as any).testType?.label ||
-            orderBasketItem.display}
+          {orderBasketItem.concept?.display || (orderBasketItem as any).testType?.label || orderBasketItem.display}
         </span>
         <span className={styles.label01}>
           {!!orderBasketItem.orderError && (

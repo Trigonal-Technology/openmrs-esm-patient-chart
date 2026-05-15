@@ -72,8 +72,10 @@ describe('OrderDetailsTable', () => {
   beforeEach(() => {
     mockUseOrderBasket.mockReturnValue({
       orders: [],
+      addedOrderSets: [],
       setOrders: jest.fn(),
       clearOrders: jest.fn(),
+      setAddedOrderSets: jest.fn(),
     });
   });
 

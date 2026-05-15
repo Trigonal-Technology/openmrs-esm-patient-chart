@@ -45,7 +45,7 @@ const OrderBasketWorkspace: React.FC<PatientWorkspace2DefinitionProps<{}, OrderB
       launchGeneralOrderForm,
       launchImagingOrderForm,
       launchProcedureOrderForm,
-      launchMedicalSupplyForm
+      launchMedicalSupplyForm,
     } satisfies OrderBasketExtensionProps;
   }, [launchChildWorkspace, patient]);
 

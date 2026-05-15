@@ -88,14 +88,14 @@ export const configSchema = {
   labConceptSetUuid: {
     _type: Type.UUID,
     _description: 'Concept set UUID for Lab orders.',
-    _default: '300e7e12-f268-4349-81dc-d40cc7a202a0',
-    // _default: '1748a953-d12e-4be1-914c-f6b096c6cdef',
+    // _default: '300e7e12-f268-4349-81dc-d40cc7a202a0',
+    _default: '1748a953-d12e-4be1-914c-f6b096c6cdef',
   },
   radiologyConceptSetUuid: {
     _type: Type.UUID,
     _description: 'Concept set UUID for Radiology orders.',
-    _default: 'd894a942-5d10-431f-b008-28436a977b4e',
-    // _default: 'cd9f116c-517d-439e-847d-d8d257434083',
+    // _default: 'd894a942-5d10-431f-b008-28436a977b4e',
+    _default: 'cd9f116c-517d-439e-847d-d8d257434083',
   },
   procedureConceptSetUuid: {
     _type: Type.UUID,
@@ -128,7 +128,6 @@ export const configSchema = {
     _description: 'The UUID of the Medical Supply order type.',
     _default: 'dab3ab30-2feb-48ec-b4af-8332a0831b49',
   },
-
 };
 
 export interface OrderTypeDefinition {

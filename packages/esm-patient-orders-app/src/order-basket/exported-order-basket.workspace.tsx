@@ -40,7 +40,7 @@ const ExportedOrderBasketWorkspace: React.FC<Workspace2DefinitionProps<{}, Expor
       launchChildWorkspace('add-imaging-order-workspace', { orderTypeUuid, order });
     };
     const launchProcedureOrderForm = (orderTypeUuid: string, order: OrderBasketItem) => {
-          launchChildWorkspace('add-procedures-order', { orderTypeUuid, order });
+      launchChildWorkspace('add-procedures-order', { orderTypeUuid, order });
     };
     const launchMedicalSupplyForm = (orderTypeUuid: string, order: OrderBasketItem) => {
       launchChildWorkspace('add-medical-supply-order', { orderTypeUuid, order });
@@ -53,7 +53,7 @@ const ExportedOrderBasketWorkspace: React.FC<Workspace2DefinitionProps<{}, Expor
       launchImagingOrderForm,
       launchGeneralOrderForm,
       launchProcedureOrderForm,
-      launchMedicalSupplyForm
+      launchMedicalSupplyForm,
     } satisfies OrderBasketExtensionProps;
   }, [launchChildWorkspace, drugOrderWorkspaceName, labOrderWorkspaceName, generalOrderWorkspaceName, patient]);
 
