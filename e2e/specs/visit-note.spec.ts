@@ -11,7 +11,7 @@ test('Add and delete a visit note', async ({ page, patient }) => {
   });
 
   await test.step('And I click the `Visit note` button on the siderail', async () => {
-    await page.getByRole('button', { name: /note/i }).click();
+    await page.getByRole('button', { name: /visit note/i }).click();
   });
 
   await test.step('Then I should see the visit note form launch in the workspace', async () => {
@@ -82,8 +82,9 @@ test('Add and delete a visit note', async ({ page, patient }) => {
 
   await test.step('And I click the overflow menu in the table row of the newly added visit note', async () => {
     await page
+      .getByRole('row')
+      .filter({ hasText: /visit note/i })
       .getByRole('button', { name: /options/i })
-      .nth(0)
       .click();
   });
 
