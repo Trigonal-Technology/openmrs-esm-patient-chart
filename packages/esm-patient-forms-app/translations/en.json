@@ -1,11 +1,14 @@
 {
   "clinicalForm": "Clinical Form",
   "clinicalForms": "Clinical forms",
+  "formContextTags": "Form context",
   "formName": "Form Name (A-Z)",
   "forms": "Forms",
+  "generalForms": "General forms",
   "homeOverviewCardView": "View",
   "lastCompleted": "Last completed",
   "never": "Never",
+  "noFormsMatchContext": "No forms match the current patient, visit, or location context.",
   "noFormsToDisplay": "There are no forms to display.",
   "off": "Off",
   "offlineForms": "Offline forms",
@@ -18,5 +21,6 @@
   "offlinePatientsTableSearchPlaceholder": "Search this list",
   "offlineToggle": "Offline toggle",
   "on": "On",
+  "recommendedForLocation": "Recommended for this location",
   "searchThisList": "Search this list"
 }
