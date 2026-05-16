@@ -342,7 +342,7 @@ export const defaultOrderSets: OrderSet[] = [
       },
       {
         id: 'd47',
-        drugName: 'Ringer\'s Lactate',
+        drugName: "Ringer's Lactate",
         dose: 1000,
         doseUnit: 'mL',
         route: 'IV',

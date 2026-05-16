@@ -17,11 +17,7 @@ export function getTimesPerDay(freqValue: string, orderConfig: OrderConfigObject
   return 1;
 }
 
-export function getDurationDays(
-  duration: number,
-  durationUnits: string,
-  orderConfig: OrderConfigObject,
-): number {
+export function getDurationDays(duration: number, durationUnits: string, orderConfig: OrderConfigObject): number {
   const u = orderConfig.durationUnits.find((x) => x.valueCoded === durationUnits);
   const v = (u as { value?: string })?.value?.toLowerCase() ?? '';
   if (v.includes('second')) return duration / (24 * 3600);

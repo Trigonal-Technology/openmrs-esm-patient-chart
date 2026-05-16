@@ -118,9 +118,22 @@ describe('OrderDetailsTable', () => {
     mockUseOrderBasket.mockReturnValue({
       orders: [],
       addedOrderSets: [],
-      setOrders: jest.fn(),
-      clearOrders: jest.fn(),
-      setAddedOrderSets: jest.fn(),
+      setOrders: vi.fn(),
+      clearOrders: vi.fn(),
+      setAddedOrderSets: vi.fn(),
+    });
+    mockUseOrderTypes.mockReturnValue({
+      data: [drugOrderType, testOrderType],
+      error: null,
+      isLoading: false,
+      isValidating: false,
+    });
+    mockUsePatientOrders.mockReturnValue({
+      data: mockOrders as unknown as Array<Order>,
+      error: undefined,
+      isLoading: false,
+      isValidating: false,
+      mutate: vi.fn(),
     });
   });
 

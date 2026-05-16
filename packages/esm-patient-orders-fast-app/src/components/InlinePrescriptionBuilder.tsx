@@ -49,13 +49,16 @@ export function InlinePrescriptionBuilder({
 }: InlinePrescriptionBuilderProps) {
   const [templateToParse, setTemplateToParse] = useState<string | null>(null);
 
-  const drugSearchTerm = templateToParse ? templateToParse.split(/\s+/)[0] ?? '' : '';
+  const drugSearchTerm = templateToParse ? (templateToParse.split(/\s+/)[0] ?? '') : '';
   const { drugs: templateDrugs } = useDrugSearch(drugSearchTerm);
 
   const addFromParsed = useCallback(
     (parsed: ParsedPrescription) => {
       const defaultDose = orderConfig.drugDosingUnits[0]?.valueCoded ?? '';
-      const defaultRoute = orderConfig.drugRoutes.find((r) => (r as { value?: string }).value?.toLowerCase() === 'oral')?.valueCoded ?? orderConfig.drugRoutes[0]?.valueCoded ?? '';
+      const defaultRoute =
+        orderConfig.drugRoutes.find((r) => (r as { value?: string }).value?.toLowerCase() === 'oral')?.valueCoded ??
+        orderConfig.drugRoutes[0]?.valueCoded ??
+        '';
       const defaultFreq =
         orderConfig.orderFrequencies[1]?.valueCoded ?? orderConfig.orderFrequencies[0]?.valueCoded ?? '';
       const defaultDur = orderConfig.durationUnits[0]?.valueCoded ?? '';
@@ -87,7 +90,10 @@ export function InlinePrescriptionBuilder({
   useEffect(() => {
     if (templateToParse && templateDrugs.length > 0) {
       const defaultDose = orderConfig.drugDosingUnits[0]?.valueCoded ?? '';
-      const defaultRoute = orderConfig.drugRoutes.find((r) => (r as { value?: string }).value?.toLowerCase() === 'oral')?.valueCoded ?? orderConfig.drugRoutes[0]?.valueCoded ?? '';
+      const defaultRoute =
+        orderConfig.drugRoutes.find((r) => (r as { value?: string }).value?.toLowerCase() === 'oral')?.valueCoded ??
+        orderConfig.drugRoutes[0]?.valueCoded ??
+        '';
 
       const drug = drugSearchResultToFastDrug(templateDrugs[0], defaultDose, defaultRoute);
       if (drug) {

@@ -89,6 +89,8 @@ export function useForms(
     allFormsRes.mutate();
     encountersRes.mutate();
   };
+  // Forms are filtered in order: endpoint list → encounter-type editPrivilege (above) → contextual rules in FormsDashboard.
+  //
   // Note:
   // `pastEncounters` is currently considered as optional (i.e. any errors are ignored) since it's only used for display
   // and doesn't change any functional flows. This makes offline mode much easier to implement since the past encounters

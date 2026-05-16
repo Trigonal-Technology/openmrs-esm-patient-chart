@@ -34,7 +34,7 @@ export function useDrugOrderForm(initialOrderBasketItem: DrugOrderBasketItem) {
     const defaultStartDate =
       typeof initialOrderBasketItem?.startDate === 'string'
         ? parseDate(initialOrderBasketItem?.startDate)
-        : (initialOrderBasketItem?.startDate as Date) ?? new Date();
+        : ((initialOrderBasketItem?.startDate as Date) ?? new Date());
 
     return drugOrderBasketItemToFormValue(initialOrderBasketItem, defaultStartDate);
   }, [initialOrderBasketItem]);

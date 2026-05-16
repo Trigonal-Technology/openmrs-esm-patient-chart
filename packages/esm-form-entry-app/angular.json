@@ -90,7 +90,7 @@
         "serve": {
           "builder": "ngx-build-plus:dev-server",
           "options": {
-            "publicHost": "http://localhost:4200",
+            "publicHost": "http://127.0.0.1:4200",
             "buildTarget": "openmrs-esm-form-entry-app:build",
             "extraWebpackConfig": "webpack.config.js"
           },

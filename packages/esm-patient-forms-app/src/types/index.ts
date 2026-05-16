@@ -25,10 +25,14 @@ export interface Form {
   encounterType?: EncounterType;
   name: string;
   display?: string;
+  /** May contain JSON visibility rules when using extended REST representation. */
+  description?: string;
   version: string;
   published: boolean;
   retired: boolean;
   resources: Array<FormEncounterResource>;
+  /** From nidancore REST extension — parsed JSON object or string when requested in representation. */
+  formRules?: Record<string, unknown> | string;
   formCategory?: string;
 }
 

@@ -131,3 +131,16 @@
   padding-top: 0.188rem;
   border-bottom: 0.375rem solid var(--brand-03);
 }
+
+.formNameCell {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: layout.$spacing-03;
+}
+
+.contextTags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: layout.$spacing-02;
+}

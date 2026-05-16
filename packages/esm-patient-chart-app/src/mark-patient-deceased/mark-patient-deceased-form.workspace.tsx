@@ -7,12 +7,7 @@ import {
   invalidateVisitAndEncounterData,
   EmptyState,
 } from '@openmrs/esm-patient-common-lib';
-import {
-  ExtensionSlot,
-  showSnackbar,
-  Workspace2,
-  useConnectivity,
-} from '@openmrs/esm-framework';
+import { ExtensionSlot, showSnackbar, Workspace2, useConnectivity } from '@openmrs/esm-framework';
 import { useSWRConfig } from 'swr';
 import { markPatientDeceased, useFormByName } from '../data.resource';
 
@@ -44,9 +39,7 @@ const MarkPatientDeceasedForm: React.FC<PatientWorkspace2DefinitionProps<{}, {}>
       },
       handlePostResponse: (encounter) => {
         // Extract Pronounced death date and time (Concept: 086be09f-2360-4907-ad02-caa69c0ddb71)
-        const deathDateObs = encounter.obs.find(
-          (obs) => obs.concept.uuid === '086be09f-2360-4907-ad02-caa69c0ddb71',
-        );
+        const deathDateObs = encounter.obs.find((obs) => obs.concept.uuid === '086be09f-2360-4907-ad02-caa69c0ddb71');
         const deathDate = deathDateObs ? new Date(deathDateObs.value) : new Date();
 
         // Extract Primary cause of death (textarea) (Concept: f5f376d8-3351-487b-b283-63561e03859d)
@@ -90,7 +83,10 @@ const MarkPatientDeceasedForm: React.FC<PatientWorkspace2DefinitionProps<{}, {}>
         </div>
       ) : (
         <EmptyState
-          displayText={t('deathNoteFormNotFound', 'The "Death Note" form could not be found. Please ensure it is configured in the system.')}
+          displayText={t(
+            'deathNoteFormNotFound',
+            'The "Death Note" form could not be found. Please ensure it is configured in the system.',
+          )}
           headerTitle={t('formNotFound', 'Form Not Found')}
         />
       )}

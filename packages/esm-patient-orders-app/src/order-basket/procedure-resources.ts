@@ -163,9 +163,9 @@ export function useOrderReasons(conceptUuids: Array<string>) {
   const ob = data?.data;
   const orderReasons = ob
     ? Object.entries(ob).map(([key, value]) => ({
-      uuid: value.uuid,
-      display: value.display,
-    }))
+        uuid: value.uuid,
+        display: value.display,
+      }))
     : [];
   if (error) {
     showSnackbar({

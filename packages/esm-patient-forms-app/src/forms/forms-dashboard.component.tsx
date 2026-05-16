@@ -4,34 +4,62 @@ import { Tile } from '@carbon/react';
 import { ResponsiveWrapper, useConfig, useConnectivity, type Visit } from '@openmrs/esm-framework';
 import { EmptyDataIllustration, type Form } from '@openmrs/esm-patient-common-lib';
 import type { FormEntryConfigSchema } from '../config-schema';
+import { useFormEvaluationContext } from '../hooks/use-form-evaluation-context';
 import { useForms } from '../hooks/use-forms';
+import { filterFormsByContext, partitionFormsByGroup } from './form-context-filter';
 import FormsList from './forms-list.component';
 import styles from './forms-dashboard.scss';
+
+/*
+ * For automated translations:
+ * t('noFormsMatchContext', 'No forms match the current patient, visit, or location context.')
+ */
 
 interface FormsDashbaordProps {
   handleFormOpen: (form: Form, encounterUuid: string) => void;
   patient: fhir.Patient;
-  visitContext: Visit;
+  visitContext?: Visit | null;
 }
 
 const FormsDashboard: React.FC<FormsDashbaordProps> = ({ handleFormOpen, patient, visitContext }) => {
   const { t } = useTranslation();
   const config = useConfig<FormEntryConfigSchema>();
   const isOnline = useConnectivity();
-  const {
-    data: forms,
-    error,
-    mutateForms,
-  } = useForms(patient.id, visitContext?.uuid, undefined, undefined, !isOnline, config.orderBy);
+  const evaluationContext = useFormEvaluationContext(patient, visitContext);
 
-  const sections = useMemo(() => {
+  const { data: forms, error } = useForms(
+    patient.id,
+    visitContext?.uuid,
+    undefined,
+    undefined,
+    !isOnline,
+    config.orderBy,
+  );
+
+  const visibleForms = useMemo(() => {
+    if (!forms) {
+      return undefined;
+    }
+    return filterFormsByContext(forms, evaluationContext, config);
+  }, [forms, evaluationContext, config]);
+
+  const structuredSections = useMemo(() => {
     return config.formSections?.map((formSection) => ({
       ...formSection,
-      availableForms: forms?.filter((formInfo) =>
+      availableForms: visibleForms?.filter((formInfo) =>
         formSection.forms.some((formConfig) => formInfo.form.uuid === formConfig || formInfo.form.name === formConfig),
       ),
     }));
-  }, [config.formSections, forms]);
+  }, [config.formSections, visibleForms]);
+
+  const { recommended, general } = useMemo(() => {
+    if (!visibleForms) {
+      return { recommended: [], general: [] };
+    }
+    return partitionFormsByGroup(visibleForms, config);
+  }, [visibleForms, config]);
+
+  const showLegacySections = Boolean(config.formSections?.length);
 
   if (forms?.length === 0) {
     return (
@@ -44,12 +72,23 @@ const FormsDashboard: React.FC<FormsDashbaordProps> = ({ handleFormOpen, patient
     );
   }
 
+  if (visibleForms?.length === 0 && forms && forms.length > 0) {
+    return (
+      <ResponsiveWrapper>
+        <Tile className={styles.emptyState}>
+          <EmptyDataIllustration />
+          <p className={styles.emptyStateContent}>
+            {t('noFormsMatchContext', 'No forms match the current patient, visit, or location context.')}
+          </p>
+        </Tile>
+      </ResponsiveWrapper>
+    );
+  }
+
   return (
     <div className={styles.container}>
-      {sections.length === 0 ? (
-        <FormsList forms={forms} error={error} handleFormOpen={handleFormOpen} />
-      ) : (
-        sections.map((section) => {
+      {showLegacySections ? (
+        structuredSections?.map((section) => {
           return (
             <FormsList
               key={`form-section-${section.name}`}
@@ -60,6 +99,27 @@ const FormsDashboard: React.FC<FormsDashbaordProps> = ({ handleFormOpen, patient
             />
           );
         })
+      ) : (
+        <>
+          {recommended.length > 0 && (
+            <FormsList
+              key="recommended-forms"
+              sectionName="recommendedForLocation"
+              forms={recommended}
+              error={error}
+              handleFormOpen={handleFormOpen}
+            />
+          )}
+          {general.length > 0 && (
+            <FormsList
+              key="general-forms"
+              sectionName="generalForms"
+              forms={general}
+              error={error}
+              handleFormOpen={handleFormOpen}
+            />
+          )}
+        </>
       )}
     </div>
   );

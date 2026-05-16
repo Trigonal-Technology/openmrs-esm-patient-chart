@@ -17,6 +17,18 @@ vi.mock('../hooks/use-forms', () => ({
   }),
 }));
 
+vi.mock('../hooks/use-form-evaluation-context', () => ({
+  useFormEvaluationContext: vi.fn(() => ({
+    mlcAttributeLoaded: true,
+    activeDiagnosisCodes: [],
+    diagnosesLoaded: true,
+    locationTagDisplays: [],
+    locationTagsLoaded: true,
+    roleDisplayNamesLower: [],
+    user: { privileges: [], roles: [] },
+  })),
+}));
+
 mockUseConfig.mockReturnValue({ ...getDefaultsFromConfigSchema(configSchema), htmlFormEntryForms: [] });
 
 describe('FormsDashboard', () => {

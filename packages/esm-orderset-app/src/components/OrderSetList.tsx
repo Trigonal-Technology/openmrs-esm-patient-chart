@@ -24,7 +24,7 @@ export default function OrderSetList({
   onEdit,
   onDelete,
   onCreateNew,
-  orderConfig
+  orderConfig,
 }: OrderSetListProps) {
   const { t } = useTranslation();
   const [search, setSearch] = useState('');
@@ -155,4 +155,3 @@ export default function OrderSetList({
     </div>
   );
 }
-

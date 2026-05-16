@@ -84,7 +84,7 @@ const BiometricsBase: React.FC<BiometricsBaseProps> = ({ patientUuid, patient, p
           dateRender: formatDatetime(parseDate(biometricsData.date.toString()), { mode: 'wide' }),
           weightRender: biometricsData.weight ?? '--',
           heightRender: biometricsData.height ?? '--',
-          bmiRender: showBmi ? biometricsData.bmi ?? '--' : '--',
+          bmiRender: showBmi ? (biometricsData.bmi ?? '--') : '--',
           muacRender: biometricsData.muac ?? '--',
         };
       }),

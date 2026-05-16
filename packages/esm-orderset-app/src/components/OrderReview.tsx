@@ -46,17 +46,18 @@ export default function OrderReview({
   const [resolveError, setResolveError] = useState<string | null>(null);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
 
-  const getQuantityForDrug = (d: DrugOrderItem) => {
-    const freqCoded = findValueCodedByDisplay(orderConfig.orderFrequencies, d.frequency);
-    const durUnitCoded = findValueCodedByDisplay(orderConfig.durationUnits, d.durationUnit);
-    const qty = calculateAutoQuantity(d.dose, freqCoded, d.duration, durUnitCoded, orderConfig);
-    return qty ?? Math.ceil(d.duration * 2); // fallback
-  };
+  const getQuantityForDrug = useCallback(
+    (d: DrugOrderItem) => {
+      const freqCoded = findValueCodedByDisplay(orderConfig.orderFrequencies, d.frequency);
+      const durUnitCoded = findValueCodedByDisplay(orderConfig.durationUnits, d.durationUnit);
+      const qty = calculateAutoQuantity(d.dose, freqCoded, d.duration, durUnitCoded, orderConfig);
+      return qty ?? Math.ceil(d.duration * 2); // fallback
+    },
+    [orderConfig],
+  );
 
   const hasZeroDose = drugs.some((d) => d.dose === 0);
-  const duplicates = drugs.filter(
-    (d, i, arr) => arr.findIndex((x) => x.drugName === d.drugName) !== i,
-  );
+  const duplicates = drugs.filter((d, i, arr) => arr.findIndex((x) => x.drugName === d.drugName) !== i);
   const hasIssues = hasZeroDose || duplicates.length > 0;
 
   const getDisplayForRoute = (valueCoded: string) => {
@@ -156,6 +157,7 @@ export default function OrderReview({
   }, [
     drugs,
     hasIssues,
+    getQuantityForDrug,
     orderConfig,
     patientUuid,
     ordererUuid,
@@ -204,8 +206,7 @@ export default function OrderReview({
               {hasZeroDose && <p>{t('someDrugsZeroDose', 'Some drugs have a dose of 0.')}</p>}
               {duplicates.length > 0 && (
                 <p>
-                  {t('duplicateDrugs', 'Duplicate drugs:')}{' '}
-                  {[...new Set(duplicates.map((d) => d.drugName))].join(', ')}
+                  {t('duplicateDrugs', 'Duplicate drugs:')} {[...new Set(duplicates.map((d) => d.drugName))].join(', ')}
                 </p>
               )}
             </div>
@@ -217,10 +218,7 @@ export default function OrderReview({
         {drugs.map((drug, idx) => {
           const routeDisplay = getDisplayForRoute(drug.route);
           return (
-            <div
-              key={drug.id}
-              className={`${styles.drugCard} ${drug.dose === 0 ? styles.drugCardInvalid : ''}`}
-            >
+            <div key={drug.id} className={`${styles.drugCard} ${drug.dose === 0 ? styles.drugCardInvalid : ''}`}>
               <div className={styles.drugHeader}>
                 <div className={styles.drugTitle}>
                   <span className={styles.drugIndex}>{idx + 1}.</span>
@@ -241,11 +239,10 @@ export default function OrderReview({
                   {drug.duration} {getDisplayForDurUnit(drug.durationUnit)}
                 </p>
                 <p className={styles.quantityText}>
-                  <strong>{t('dispense', 'Dispense:')}</strong> {getQuantityForDrug(drug)} {getDisplayForDoseUnit(drug.doseUnit)}
+                  <strong>{t('dispense', 'Dispense:')}</strong> {getQuantityForDrug(drug)}{' '}
+                  {getDisplayForDoseUnit(drug.doseUnit)}
                 </p>
-                {drug.instructions && (
-                  <p className={styles.instructions}>📝 {drug.instructions}</p>
-                )}
+                {drug.instructions && <p className={styles.instructions}>📝 {drug.instructions}</p>}
               </div>
             </div>
           );
@@ -281,7 +278,7 @@ export default function OrderReview({
             {t(
               'confirmSubmissionMessage',
               'You are about to submit {{count}} medication orders to the patient chart. Do you want to continue?',
-              { count: drugs.length }
+              { count: drugs.length },
             )}
           </p>
         </Modal>

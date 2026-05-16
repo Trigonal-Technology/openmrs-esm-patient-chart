@@ -136,6 +136,7 @@ export default function FastOrdersDashboard({ patientUuid, patient }: FastOrders
     orderEncounterType,
     orderLocationUuid,
     visitUuid,
+    handleClearCart,
     mutateOrders,
     mutate,
     t,

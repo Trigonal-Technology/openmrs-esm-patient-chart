@@ -114,11 +114,8 @@ export default function CreateOrderSetForm({ drugs, orderConfig, onSave, onCance
                   <span className={styles.drugIndex}>{i + 1}.</span>{' '}
                   <span className={styles.drugName}>{d.drugName}</span>{' '}
                   <span className={styles.drugMeta}>
-                    {d.dose}{' '}
-                    {orderConfig ? getDisplayForConfig(orderConfig.drugDosingUnits, d.doseUnit) : d.doseUnit}{' '}
-                    ·{' '}
-                    {orderConfig ? getDisplayForConfig(orderConfig.drugRoutes, d.route) : d.route}{' '}
-                    ·{' '}
+                    {d.dose} {orderConfig ? getDisplayForConfig(orderConfig.drugDosingUnits, d.doseUnit) : d.doseUnit} ·{' '}
+                    {orderConfig ? getDisplayForConfig(orderConfig.drugRoutes, d.route) : d.route} ·{' '}
                     {orderConfig ? getDisplayForConfig(orderConfig.orderFrequencies, d.frequency) : d.frequency}
                   </span>
                 </p>

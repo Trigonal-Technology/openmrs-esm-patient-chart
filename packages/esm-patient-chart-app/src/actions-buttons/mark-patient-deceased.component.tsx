@@ -3,10 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { OverflowMenuItem } from '@carbon/react';
 import { useSWRConfig } from 'swr';
 import { launchWorkspace2 } from '@openmrs/esm-framework';
-import {
-  invalidateCurrentVisit,
-  invalidateVisitAndEncounterData,
-} from '@openmrs/esm-patient-common-lib';
+import { invalidateCurrentVisit, invalidateVisitAndEncounterData } from '@openmrs/esm-patient-common-lib';
 import { markPatientDeceased } from '../data.resource';
 import styles from './action-button.scss';
 

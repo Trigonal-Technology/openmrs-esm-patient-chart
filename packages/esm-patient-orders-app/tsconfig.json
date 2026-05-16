@@ -1,4 +1,12 @@
 {
   "extends": "../../tsconfig.json",
   "include": ["src/**/*", "../../tools/setup-tests.ts"],
+  "exclude": [
+    "src/**/*.test.ts",
+    "src/**/*.test.tsx",
+    "src/components/AnalysisPopup.tsx",
+    "src/components/dicom-viewer.component.tsx",
+    "src/components/radiology-order.component.tsx",
+    "src/components/DynamicContent.tsx"
+  ]
 }

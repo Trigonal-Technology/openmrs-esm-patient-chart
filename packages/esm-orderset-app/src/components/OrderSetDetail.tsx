@@ -16,14 +16,7 @@ interface OrderSetDetailProps {
   onDelete: (setId: string) => void;
 }
 
-export default function OrderSetDetail({
-  set,
-  isCustom,
-  orderConfig,
-  onBack,
-  onEdit,
-  onDelete,
-}: OrderSetDetailProps) {
+export default function OrderSetDetail({ set, isCustom, orderConfig, onBack, onEdit, onDelete }: OrderSetDetailProps) {
   const { t } = useTranslation();
 
   return (
@@ -40,7 +33,9 @@ export default function OrderSetDetail({
           <h1 className={styles.title}>{set.name}</h1>
           <p className={styles.description}>{set.description}</p>
           <div className={styles.metadata}>
-            <span className={styles.metaLabel}><strong>Category:</strong> {set.category}</span>
+            <span className={styles.metaLabel}>
+              <strong>Category:</strong> {set.category}
+            </span>
             <span className={styles.metaLabel}>
               <Medication size={16} className={styles.metaIcon} />
               <strong>Drugs:</strong> {set.drugs.length}
@@ -56,7 +51,6 @@ export default function OrderSetDetail({
               {t('delete', 'Delete')}
             </Button>
           </>
-
         </div>
       </div>
 
@@ -73,15 +67,19 @@ export default function OrderSetDetail({
                     <span className={styles.drugName}>{drug.drugName}</span>
                   </div>
                   <div className={styles.drugTags}>
-                    <Tag type="teal" size="sm">{drug.dose} {getDisplayForConfig(orderConfig?.drugDosingUnits ?? [], drug.doseUnit)}</Tag>
+                    <Tag type="teal" size="sm">
+                      {drug.dose} {getDisplayForConfig(orderConfig?.drugDosingUnits ?? [], drug.doseUnit)}
+                    </Tag>
                   </div>
                 </div>
 
                 <div className={styles.drugDetails}>
                   <p>
-                    <strong>{t('dose', 'Dose')}:</strong> {drug.dose} {getDisplayForConfig(orderConfig?.drugDosingUnits ?? [], drug.doseUnit)}
+                    <strong>{t('dose', 'Dose')}:</strong> {drug.dose}{' '}
+                    {getDisplayForConfig(orderConfig?.drugDosingUnits ?? [], drug.doseUnit)}
                     <span className={styles.detailDivider}>|</span>
-                    <strong>{getDisplayForConfig(orderConfig?.orderFrequencies ?? [], drug.frequency)}</strong> - {drug.duration} {getDisplayForConfig(orderConfig?.durationUnits ?? [], drug.durationUnit)}
+                    <strong>{getDisplayForConfig(orderConfig?.orderFrequencies ?? [], drug.frequency)}</strong> -{' '}
+                    {drug.duration} {getDisplayForConfig(orderConfig?.durationUnits ?? [], drug.durationUnit)}
                   </p>
                 </div>
               </Tile>
@@ -102,7 +100,9 @@ export default function OrderSetDetail({
             </div>
             <div className={styles.infoRow}>
               <span className={styles.infoLabel}>{t('createdBy', 'Created By')}:</span>
-              <span className={styles.infoValue}>{isCustom ? t('currentUser', 'Current User') : t('system', 'Super Man')}</span>
+              <span className={styles.infoValue}>
+                {isCustom ? t('currentUser', 'Current User') : t('system', 'Super Man')}
+              </span>
             </div>
             <div className={styles.infoRow}>
               <span className={styles.infoLabel}>{t('createdOn', 'Created On')}:</span>

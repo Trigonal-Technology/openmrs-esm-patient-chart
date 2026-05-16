@@ -47,7 +47,10 @@ import {
   showOrderSuccessToast,
   useMutatePatientOrders,
   useOrderBasket,
- priorityOptions, type OrderUrgency, type TestOrderBasketItem } from '@openmrs/esm-patient-common-lib';
+  priorityOptions,
+  type OrderUrgency,
+  type TestOrderBasketItem,
+} from '@openmrs/esm-patient-common-lib';
 import { type ConfigObject } from '../config-schema';
 import {
   type ImagingOrderBasketItem,
@@ -61,6 +64,7 @@ import GeneralOrderPanel from './general-order-type/general-order-panel.componen
 import { createEmptyOrder } from './general-order-type/resources';
 import {
   createDrugOrder,
+  getEarliestStartDate,
   getOrderItemDetails,
   constructOrderItem,
   transformOrderSetMember,
@@ -219,8 +223,9 @@ const SearchResultItem: React.FC<SearchResultItemProps> = React.memo(
     const { basketKey, prepFn, isDrugItem, isLabItem, isImagingItem, isProcedureItem, isMedicalSupplyItem } =
       details || {};
 
+    const [addedOrderSets, setAddedOrderSets] = useState<string[]>([]);
     // SINGLE useOrderBasket call — subscribes only to the relevant basket
-    const { orders, setOrders, addedOrderSets, setAddedOrderSets } = useOrderBasket<any>(patient, basketKey, prepFn);
+    const { orders, setOrders } = useOrderBasket<any>(patient, basketKey, prepFn);
     const { setOrders: setAnyOrders } = useOrderBasket<any>(patient);
 
     const itemAlreadyInBasket = useMemo(() => {
@@ -314,6 +319,7 @@ const SearchResultItem: React.FC<SearchResultItemProps> = React.memo(
     }, [
       item,
       visit,
+      isOrderSet,
       isDrugItem,
       isLabItem,
       isImagingItem,
@@ -682,23 +688,30 @@ const OrderBasket: React.FC<OrderBasketProps> = ({
             />
           )}
           {orderTypes?.length > 0 &&
-            orderTypes.map((orderType) => {
-              const { prepFn: prepFunction } = getOrderItemDetails(
-                { conceptClass: { display: orderType.label } } as any,
-                config,
-              );
+            orderBasketExtensionProps.launchGeneralOrderForm &&
+            orderTypes
+              .filter(
+                (orderType) =>
+                  !orderBasketExtensionProps.visibleOrderPanels ||
+                  orderBasketExtensionProps.visibleOrderPanels.includes(orderType.orderTypeUuid),
+              )
+              .map((orderType) => {
+                const { prepFn: prepFunction } = getOrderItemDetails(
+                  { conceptClass: { display: orderType.label } } as any,
+                  config,
+                );
 
-              return (
-                <div className={styles.orderPanel} key={orderType.orderTypeUuid}>
-                  <GeneralOrderPanel
-                    {...orderType}
-                    launchGeneralOrderForm={orderBasketExtensionProps.launchGeneralOrderForm}
-                    patient={patient}
-                    prepFunction={prepFunction}
-                  />
-                </div>
-              );
-            })}
+                return (
+                  <div className={styles.orderPanel} key={orderType.orderTypeUuid}>
+                    <GeneralOrderPanel
+                      {...orderType}
+                      launchGeneralOrderForm={orderBasketExtensionProps.launchGeneralOrderForm}
+                      patient={patient}
+                      prepFunction={prepFunction}
+                    />
+                  </div>
+                );
+              })}
         </div>
         <div>
           {(creatingEncounterError || errorFetchingEncounterUuid) && (

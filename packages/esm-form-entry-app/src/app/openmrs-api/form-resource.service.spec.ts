@@ -4,6 +4,7 @@ import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { LocalStorageService } from '../local-storage/local-storage.service';
 import { WindowRef } from '../window-ref';
+import { formMetadataRestVParam } from './form-rest.constants';
 // Load the implementations that should be tested
 
 describe('FormResourceService Unit Tests', () => {
@@ -38,9 +39,14 @@ describe('FormResourceService Unit Tests', () => {
 
     formsResourceService.getFormMetaDataByUuid(uuid).subscribe();
 
-    const req = httpMock.expectOne(winRef.openmrsRestBase.trim() + 'form/' + uuid + '?v=full');
+    const req = httpMock.expectOne(
+      (r) =>
+        r.url.includes(`form/${uuid}`) &&
+        r.params.get('v') === formMetadataRestVParam &&
+        r.params.get('v')?.includes('formRules'),
+    );
     expect(req.request.method).toBe('GET');
-    expect(req.request.urlWithParams).toContain(`/ws/rest/v1/form/form-uuid?v=full`);
+    expect(req.request.urlWithParams).toContain('formRules');
   }));
 
   it('should make API call with correct URL when getFormMetaDataByUuid is invoked with v', fakeAsync(() => {
@@ -66,7 +72,12 @@ describe('FormResourceService Unit Tests', () => {
       done();
     });
 
-    const req = httpMock.expectOne(winRef.openmrsRestBase.trim() + 'form/' + uuid + '?v=full');
+    const req = httpMock.expectOne(
+      (r) =>
+        r.url.includes(`form/${uuid}`) &&
+        r.params.get('v') === formMetadataRestVParam &&
+        r.params.get('v')?.includes('formRules'),
+    );
     expect(req.request.method).toBe('GET');
     req.flush(options);
   });

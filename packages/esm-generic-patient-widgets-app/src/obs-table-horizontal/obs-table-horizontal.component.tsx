@@ -518,7 +518,9 @@ const Cell: React.FC<{
               <SelectItem text={t('noValue', 'No value')} value="" />
               {concepts
                 .find((c) => c.uuid === label.key)
-                ?.answers?.map((answer) => <SelectItem key={answer.uuid} text={answer.display} value={answer.uuid} />)}
+                ?.answers?.map((answer) => (
+                  <SelectItem key={answer.uuid} text={answer.display} value={answer.uuid} />
+                ))}
             </Select>
           )}
           <div className={styles.editButtons}>

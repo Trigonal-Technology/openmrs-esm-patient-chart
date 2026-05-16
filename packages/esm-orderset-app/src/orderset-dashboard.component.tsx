@@ -2,15 +2,8 @@ import React, { useState, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button, InlineLoading } from '@carbon/react';
 import { Add, Save, ArrowRight, ArrowLeft } from '@carbon/react/icons';
-import {
-  useConfig,
-  useSession,
-  showSnackbar,
-} from '@openmrs/esm-framework';
-import {
-  usePatientChartStore,
-  EmptyState,
-} from '@openmrs/esm-patient-common-lib';
+import { useConfig, useSession, showSnackbar } from '@openmrs/esm-framework';
+import { usePatientChartStore, EmptyState } from '@openmrs/esm-patient-common-lib';
 import { useOrderConfig } from './resources/order-config.resource';
 import { useOrdersetCart } from './resources/orderset-cart.resource';
 import { defaultOrderSets } from './resources/orderset-config';
@@ -41,16 +34,8 @@ export default function OrdersetDashboard({ patientUuid, patient }: OrdersetDash
   const visitUuid = visitContext?.uuid;
 
   const { orderConfigObject, isLoading, error } = useOrderConfig();
-  const {
-    selectedSet,
-    drugs,
-    customSets,
-    selectSet,
-    setDrugs,
-    addCustomSet,
-    removeCustomSet,
-    clearSelection,
-  } = useOrdersetCart();
+  const { selectedSet, drugs, customSets, selectSet, setDrugs, addCustomSet, removeCustomSet, clearSelection } =
+    useOrdersetCart();
 
   const [step, setStep] = useState<Step>('list');
   const [isCreatingNew, setIsCreatingNew] = useState(false);
@@ -203,7 +188,7 @@ export default function OrdersetDashboard({ patientUuid, patient }: OrdersetDash
             ) : step === 'detail' && selectedSet ? (
               <OrderSetDetail
                 set={selectedSet}
-                isCustom={customSets.some(s => s.id === selectedSet.id)}
+                isCustom={customSets.some((s) => s.id === selectedSet.id)}
                 orderConfig={orderConfigObject}
                 onEdit={handleEditSet}
                 onDelete={handleDeleteSet}

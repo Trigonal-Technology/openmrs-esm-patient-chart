@@ -5,7 +5,7 @@ import {
   PageHeaderContent,
   ExtensionSlot,
   Assessment1Pictogram,
-  Pharmacy2Pictogram
+  Pharmacy2Pictogram,
 } from '@openmrs/esm-framework';
 
 import styles from './orderset-header.scss';

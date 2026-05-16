@@ -31,8 +31,7 @@ export default function OrderSetSelector({
 
   const filtered = orderSets.filter(
     (s) =>
-      s.name.toLowerCase().includes(search.toLowerCase()) ||
-      s.category.toLowerCase().includes(search.toLowerCase()),
+      s.name.toLowerCase().includes(search.toLowerCase()) || s.category.toLowerCase().includes(search.toLowerCase()),
   );
 
   const categories = [...new Set(filtered.map((s) => s.category))].filter(Boolean);
@@ -68,16 +67,16 @@ export default function OrderSetSelector({
 
       <div className={styles.searchWrapper}>
         <TextInput
-            id="orderset-search"
-            ref={inputRef}
-            size="md"
-            placeholder={t('searchOrderSets', 'Search order sets... (↑↓ Enter)')}
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            onKeyDown={handleKeyDown}
-            labelText=""
-            hideLabel
-          />
+          id="orderset-search"
+          ref={inputRef}
+          size="md"
+          placeholder={t('searchOrderSets', 'Search order sets... (↑↓ Enter)')}
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          onKeyDown={handleKeyDown}
+          labelText=""
+          hideLabel
+        />
       </div>
 
       <div className={styles.list}>
@@ -99,9 +98,7 @@ export default function OrderSetSelector({
                     onClick={() => onSelect(set)}
                   >
                     <div className={styles.setRow}>
-                      <span className={`${styles.setName} ${isActive ? styles.setNameActive : ''}`}>
-                        {set.name}
-                      </span>
+                      <span className={`${styles.setName} ${isActive ? styles.setNameActive : ''}`}>{set.name}</span>
                       <div className={styles.setActions}>
                         {isCustom && (
                           <OverflowMenu
@@ -145,9 +142,7 @@ export default function OrderSetSelector({
           </div>
         ))}
         {filtered.length === 0 && (
-          <p className={styles.emptyMessage}>
-            {t('noOrderSetsMatch', 'No order sets match "{{search}}"', { search })}
-          </p>
+          <p className={styles.emptyMessage}>{t('noOrderSetsMatch', 'No order sets match "{{search}}"', { search })}</p>
         )}
       </div>
     </div>

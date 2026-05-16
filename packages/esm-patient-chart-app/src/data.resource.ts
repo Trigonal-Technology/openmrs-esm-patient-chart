@@ -60,8 +60,8 @@ export function markPatientDeceased(
     ...(nonCodedCauseOfDeath
       ? { causeOfDeathNonCoded: nonCodedCauseOfDeath }
       : {
-        causeOfDeath: selectedCauseOfDeathValue,
-      }),
+          causeOfDeath: selectedCauseOfDeathValue,
+        }),
   };
 
   return changePatientDeathStatus(personUuid, payload);
@@ -117,10 +117,10 @@ export function useCauseOfDeathConcept() {
 }
 
 export function useFormByName(formName: string) {
-  const { data, error, isLoading, isValidating } = useSWR<{ data: { results: Array<{ uuid: string; display: string }> } }, Error>(
-    `${restBaseUrl}/form?q=${encodeURIComponent(formName)}`,
-    openmrsFetch,
-  );
+  const { data, error, isLoading, isValidating } = useSWR<
+    { data: { results: Array<{ uuid: string; display: string }> } },
+    Error
+  >(`${restBaseUrl}/form?q=${encodeURIComponent(formName)}`, openmrsFetch);
 
   return {
     form: data?.data?.results?.[0],

@@ -88,7 +88,9 @@
   background-color: var(--cds-layer-01, #f4f4f4);
   color: #000000;
   cursor: pointer;
-  transition: background-color 0.15s, border-color 0.15s;
+  transition:
+    background-color 0.15s,
+    border-color 0.15s;
 
   &:hover {
     background-color: var(--cds-layer-selected-01, #e0e0e0);
@@ -129,7 +131,7 @@
   justify-content: space-between;
   padding: 0.5rem;
   cursor: pointer;
-  
+
   &:hover {
     background-color: var(--cds-layer-hover-01, #e5e5e5);
   }
@@ -177,7 +179,8 @@
   display: flex;
   flex-direction: column;
 
-  :global(.cds--select), :global(.cds--number) {
+  :global(.cds--select),
+  :global(.cds--number) {
     width: 100%;
   }
 }

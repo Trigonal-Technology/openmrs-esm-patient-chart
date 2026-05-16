@@ -94,7 +94,7 @@ const TaskListView: React.FC<TaskListViewProps> = ({ patientUuid, onTaskClick })
         const isUpdating = pendingUpdates.has(task.uuid);
         const overdue = isOverdue(task);
         const assigneeDisplay = task.assignee
-          ? task.assignee.display ?? task.assignee.uuid
+          ? (task.assignee.display ?? task.assignee.uuid)
           : t('noAssignment', 'No assignment');
 
         return (

@@ -66,7 +66,7 @@ const ConditionsForm: React.FC<PatientWorkspace2DefinitionProps<ConditionFormPro
       isEditing && matchingCondition?.abatementDateTime ? new Date(matchingCondition?.abatementDateTime) : null,
     conditionName: '',
     conditionUuid: '',
-    clinicalStatus: isEditing ? matchingCondition?.clinicalStatus?.toLowerCase() ?? '' : 'active',
+    clinicalStatus: isEditing ? (matchingCondition?.clinicalStatus?.toLowerCase() ?? '') : 'active',
     onsetDateTime: isEditing && matchingCondition?.onsetDateTime ? new Date(matchingCondition?.onsetDateTime) : null,
   };
 

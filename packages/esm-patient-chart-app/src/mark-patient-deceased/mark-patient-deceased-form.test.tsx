@@ -1,28 +1,33 @@
 import React from 'react';
-import { vi, describe, it, expect, beforeEach, afterAll } from 'vitest';
-import userEvent from '@testing-library/user-event';
+import { vi, describe, it, expect, beforeEach, type Mock } from 'vitest';
 import { render, screen } from '@testing-library/react';
-import { getDefaultsFromConfigSchema, showSnackbar, useConfig } from '@openmrs/esm-framework';
-import { esmPatientChartSchema, type ChartConfig } from '../config-schema';
+import { ExtensionSlot, showSnackbar, useConnectivity } from '@openmrs/esm-framework';
 import { mockPatient } from 'tools';
-import { markPatientDeceased, useCausesOfDeath } from '../data.resource';
+import { markPatientDeceased, useFormByName } from '../data.resource';
 import MarkPatientDeceasedForm from './mark-patient-deceased-form.workspace';
 import { type PatientWorkspace2DefinitionProps } from '@openmrs/esm-patient-common-lib/src';
 
 const mockMarkPatientDeceased = vi.mocked(markPatientDeceased);
-const mockUseCausesOfDeath = vi.mocked(useCausesOfDeath);
-const mockUseConfig = vi.mocked(useConfig<ChartConfig>);
+const mockUseFormByName = vi.mocked(useFormByName);
+const mockExtensionSlot = ExtensionSlot as Mock;
 const mockShowSnackbar = vi.mocked(showSnackbar);
+const mockUseConnectivity = vi.mocked(useConnectivity);
 const mockCloseWorkspace = vi.fn();
+
+const deathNoteFormUuid = 'death-note-form-uuid';
 
 vi.mock('../data.resource', () => ({
   markPatientDeceased: vi.fn().mockResolvedValue({}),
-  useCausesOfDeath: vi.fn(),
+  useFormByName: vi.fn(),
+}));
+
+vi.mock('@openmrs/esm-patient-common-lib', async () => ({
+  ...((await vi.importActual('@openmrs/esm-patient-common-lib')) as object),
+  invalidateCurrentVisit: vi.fn(),
+  invalidateVisitAndEncounterData: vi.fn(),
 }));
 
 describe('MarkPatientDeceasedForm', () => {
-  const freeTextFieldConceptUuid = '1234e218-6c8a-4ca3-8edb-9f6d9c8c8c7f';
-
   const defaultProps: PatientWorkspace2DefinitionProps<{}, {}> = {
     closeWorkspace: mockCloseWorkspace,
     workspaceName: null,
@@ -40,164 +45,74 @@ describe('MarkPatientDeceasedForm', () => {
     showActionMenu: true,
   };
 
-  const codedCausesOfDeath = [
-    {
-      display: 'Traumatic injury',
-      uuid: '8b64f45e-1d5f-4894-b77c-4e1d840e2c99',
-      name: 'Traumatic injury',
-    },
-    {
-      display: 'Neoplasm/cancer',
-      uuid: 'c4e8d03c-f09b-48d1-8d93-7d84d463f865',
-      name: 'Neoplasm/cancer',
-    },
-    {
-      display: 'Infectious disease',
-      uuid: 'b7c1c30f-5b9e-4a3d-b943-7f4b3f740e6c',
-      name: 'Infectious disease',
-    },
-    {
-      display: 'Other',
-      uuid: freeTextFieldConceptUuid,
-      name: 'Other',
-    },
-  ];
-
   beforeEach(() => {
-    mockUseCausesOfDeath.mockReturnValue({
-      causesOfDeath: codedCausesOfDeath,
+    vi.clearAllMocks();
+    mockUseConnectivity.mockReturnValue(true);
+    mockExtensionSlot.mockImplementation(({ name }) => <span data-testid={name} />);
+    mockUseFormByName.mockReturnValue({
+      form: { uuid: deathNoteFormUuid, display: 'Death Note' },
       isLoading: false,
+      error: undefined,
+      isValidating: false,
+    });
+  });
+
+  it('shows a loading indicator while the Death Note form is loading', () => {
+    mockUseFormByName.mockReturnValue({
+      form: undefined,
+      isLoading: true,
+      error: undefined,
       isValidating: false,
     });
 
-    mockUseConfig.mockReturnValue({
-      ...getDefaultsFromConfigSchema(esmPatientChartSchema),
-      freeTextFieldConceptUuid,
+    render(<MarkPatientDeceasedForm {...defaultProps} />);
+
+    expect(screen.queryByTestId('form-widget-slot')).not.toBeInTheDocument();
+    expect(screen.queryByText(/form not found/i)).not.toBeInTheDocument();
+  });
+
+  it('shows an empty state when the Death Note form is not configured', () => {
+    mockUseFormByName.mockReturnValue({
+      form: undefined,
+      isLoading: false,
+      error: undefined,
+      isValidating: false,
     });
-  });
 
-  afterAll(() => {
-    vi.restoreAllMocks();
-  });
-
-  it('renders the cause of death form', () => {
     render(<MarkPatientDeceasedForm {...defaultProps} />);
 
-    expect(screen.getByRole('img', { name: /warning/i })).toBeInTheDocument();
-    expect(
-      screen.getByText(/marking the patient as deceased updates this patient's death information/i),
-    ).toBeInTheDocument();
-    const causes = screen.getAllByText(/cause of death/i);
-    expect(causes.length).toBeGreaterThan(0);
-    expect(causes[0]).toBeInTheDocument();
-    expect(screen.getByRole('searchbox')).toBeInTheDocument();
-    expect(screen.getByLabelText(/date/i)).toBeInTheDocument();
+    expect(screen.getByText(/form not found/i)).toBeInTheDocument();
+    expect(screen.getByText(/death note.*could not be found/i)).toBeInTheDocument();
+  });
 
-    codedCausesOfDeath.forEach((codedCauseOfDeath) => {
-      expect(screen.getByRole('radio', { name: codedCauseOfDeath.display })).toBeInTheDocument();
+  it('renders the form widget when the Death Note form is available', () => {
+    render(<MarkPatientDeceasedForm {...defaultProps} />);
+
+    expect(screen.getByTestId('visit-context-header-slot')).toBeInTheDocument();
+    expect(screen.getByTestId('form-widget-slot')).toBeInTheDocument();
+
+    const formWidgetCall = mockExtensionSlot.mock.calls.find((call) => call[0].name === 'form-widget-slot');
+    expect(formWidgetCall?.[0].state.formUuid).toBe(deathNoteFormUuid);
+    expect(formWidgetCall?.[0].state.patientUuid).toBe(mockPatient.id);
+    expect(formWidgetCall?.[0].state.additionalProps).toEqual({ mode: 'enter' });
+  });
+
+  it('marks the patient deceased after the Death Note form is submitted', async () => {
+    render(<MarkPatientDeceasedForm {...defaultProps} />);
+
+    const formWidgetCall = mockExtensionSlot.mock.calls.find((call) => call[0].name === 'form-widget-slot');
+    const handlePostResponse = formWidgetCall?.[0].state.handlePostResponse;
+
+    await handlePostResponse({
+      obs: [
+        { concept: { uuid: '086be09f-2360-4907-ad02-caa69c0ddb71' }, value: '2024-01-03' },
+        { concept: { uuid: 'f5f376d8-3351-487b-b283-63561e03859d' }, value: 'Septicemia' },
+      ],
     });
-    expect(screen.getByRole('button', { name: /discard/i })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /save and close/i })).toBeInTheDocument();
-  });
 
-  it('searches through the list when the user types in the search input', async () => {
-    const user = userEvent.setup();
-
-    render(<MarkPatientDeceasedForm {...defaultProps} />);
-
-    const searchInput = screen.getByRole('searchbox');
-
-    await user.type(searchInput, 'totally random text');
-    expect(screen.getByText(/no matching coded causes of death/i));
-
-    await user.clear(searchInput);
-    await user.type(searchInput, 'traumatic injury');
-
-    expect(screen.getByRole('radio', { name: 'Traumatic injury' })).toBeInTheDocument();
-    expect(screen.getAllByRole('radio')).toHaveLength(1);
-  });
-
-  it('selecting "Other" as the cause of death requires the user to enter a non-coded cause of death', async () => {
-    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
-    const user = userEvent.setup();
-
-    render(<MarkPatientDeceasedForm {...defaultProps} />);
-
-    const submitButton = screen.getByRole('button', { name: /save and close/i });
-
-    await user.click(screen.getByRole('radio', { name: 'Other' }));
-    expect(screen.getByRole('textbox', { name: /non-coded cause of death/i })).toBeInTheDocument();
-
-    await user.click(submitButton);
-
-    expect(screen.getByText(/please enter the non-coded cause of death/i)).toBeInTheDocument();
-
-    await user.type(screen.getByRole('textbox', { name: /non\-coded cause of death/i }), 'Septicemia');
-    await user.click(submitButton);
-
-    expect(markPatientDeceased).toHaveBeenCalledWith(
-      expect.any(Date),
-      '8673ee4f-e2ab-4077-ba55-4980f408773e', // causeOfDeathUuid
-      freeTextFieldConceptUuid, // otherCauseOfDeathConceptUuid
-      'Septicemia', // otherCauseOfDeath
-    );
-    consoleError.mockRestore();
-  });
-
-  it('submits the form with a coded cause of death', async () => {
-    const user = userEvent.setup();
-
-    render(<MarkPatientDeceasedForm {...defaultProps} />);
-
-    const submitButton = screen.getByRole('button', { name: /save and close/i });
-    const traumaticInjuryRadio = screen.getByRole('radio', { name: 'Traumatic injury' });
-
-    await user.click(traumaticInjuryRadio);
-    await user.click(submitButton);
-
-    expect(markPatientDeceased).toHaveBeenCalledWith(
-      expect.any(Date),
-      '8673ee4f-e2ab-4077-ba55-4980f408773e',
-      '8b64f45e-1d5f-4894-b77c-4e1d840e2c99', // causeOfDeathUuid for Traumatic injury,
-      '',
-    );
+    expect(mockMarkPatientDeceased).toHaveBeenCalledWith(expect.any(Date), mockPatient.id, undefined, 'Septicemia');
     expect(mockShowSnackbar).toHaveBeenCalledWith({
       title: 'Patient marked deceased successfully',
     });
-  });
-
-  it('renders an error message when saving the cause of death fails', async () => {
-    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
-    const user = userEvent.setup();
-    const mockError = new Error('API Error');
-
-    mockMarkPatientDeceased.mockRejectedValueOnce(mockError);
-
-    render(<MarkPatientDeceasedForm {...defaultProps} />);
-
-    const submitButton = screen.getByRole('button', { name: /save and close/i });
-    const traumaticInjuryRadio = screen.getByRole('radio', { name: 'Traumatic injury' });
-
-    await user.click(traumaticInjuryRadio);
-    await user.click(submitButton);
-
-    expect(mockShowSnackbar).toHaveBeenCalledWith({
-      isLowContrast: false,
-      kind: 'error',
-      subtitle: mockError.message,
-      title: 'Error marking patient deceased',
-    });
-    consoleError.mockRestore();
-  });
-
-  it('clicking the discard button closes the workspace', async () => {
-    const user = userEvent.setup();
-
-    render(<MarkPatientDeceasedForm {...defaultProps} />);
-
-    const discardButton = screen.getByRole('button', { name: /discard/i });
-    await user.click(discardButton);
-
-    expect(mockCloseWorkspace).toHaveBeenCalledTimes(1);
   });
 });

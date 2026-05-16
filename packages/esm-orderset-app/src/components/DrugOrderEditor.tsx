@@ -1,17 +1,7 @@
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { TrashCan, Add, WarningAlt } from '@carbon/react/icons';
-import {
-  Button,
-  NumberInput,
-  Select,
-  SelectItem,
-  Tooltip,
-  Tile,
-  SkeletonText,
-  IconButton,
-} from '@carbon/react';
-import { ChevronDown, ChevronUp } from '@carbon/react/icons';
+import { TrashCan, Add, WarningAlt, ChevronDown, ChevronUp } from '@carbon/react/icons';
+import { Button, NumberInput, Select, SelectItem, Tooltip, Tile, SkeletonText, IconButton } from '@carbon/react';
 import type { DrugOrderItem } from '../resources/orderset-config';
 import type { OrderConfigObject } from '../resources/order-config.resource';
 import { useDrugSearch } from '../resources/drug-search.resource';
@@ -28,12 +18,7 @@ import { findValueCodedByDisplay, getDisplayForConfig } from '../lib/order-confi
 
 const DUPLICATE_WARNING = 'This drug appears more than once in the order.';
 
-export default function DrugOrderEditor({
-  drugs,
-  onChange,
-  orderConfig,
-  orderSetName,
-}: DrugOrderEditorProps) {
+export default function DrugOrderEditor({ drugs, onChange, orderConfig, orderSetName }: DrugOrderEditorProps) {
   const { t } = useTranslation();
   const [showAddDrug, setShowAddDrug] = useState(false);
   const [addSearch, setAddSearch] = useState('');
@@ -58,9 +43,7 @@ export default function DrugOrderEditor({
   const { drugs: apiDrugResults, isLoading: isSearching } = useDrugSearch(debouncedSearch);
 
   const updateDrug = (id: string, field: keyof DrugOrderItem, value: string | number) => {
-    onChange(
-      drugs.map((d) => (d.id === id ? { ...d, [field]: value } : d)),
-    );
+    onChange(drugs.map((d) => (d.id === id ? { ...d, [field]: value } : d)));
   };
 
   const removeDrug = (id: string) => {
@@ -69,7 +52,8 @@ export default function DrugOrderEditor({
 
   const addDrug = (drugName: string) => {
     const defaultDoseUnitCoded = orderConfig.drugDosingUnits[0]?.valueCoded ?? '';
-    const defaultRoute = orderConfig.drugRoutes.find((r) => r.value?.toLowerCase().includes('oral')) ?? orderConfig.drugRoutes[0];
+    const defaultRoute =
+      orderConfig.drugRoutes.find((r) => r.value?.toLowerCase().includes('oral')) ?? orderConfig.drugRoutes[0];
     const defaultFreq = orderConfig.orderFrequencies[1] ?? orderConfig.orderFrequencies[0];
     const defaultDurationUnit = orderConfig.durationUnits[0];
     const newDrug: DrugOrderItem = {
@@ -88,10 +72,13 @@ export default function DrugOrderEditor({
     setAddSearch('');
   };
 
-  const drugNameCounts = drugs.reduce((acc, d) => {
-    acc[d.drugName] = (acc[d.drugName] || 0) + 1;
-    return acc;
-  }, {} as Record<string, number>);
+  const drugNameCounts = drugs.reduce(
+    (acc, d) => {
+      acc[d.drugName] = (acc[d.drugName] || 0) + 1;
+      return acc;
+    },
+    {} as Record<string, number>,
+  );
 
   const filteredAddDrugs = apiDrugResults
     .map((d) => d.display || d.name)
@@ -134,19 +121,12 @@ export default function DrugOrderEditor({
             ) : (
               <>
                 {filteredAddDrugs.map((d) => (
-                  <button
-                    key={d}
-                    type="button"
-                    className={styles.drugChip}
-                    onClick={() => addDrug(d)}
-                  >
+                  <button key={d} type="button" className={styles.drugChip} onClick={() => addDrug(d)}>
                     {d}
                   </button>
                 ))}
                 {debouncedSearch && filteredAddDrugs.length === 0 && (
-                  <div className={styles.noResults}>
-                    {t('noDrugResults', 'No matching drugs found')}
-                  </div>
+                  <div className={styles.noResults}>{t('noDrugResults', 'No matching drugs found')}</div>
                 )}
               </>
             )}
@@ -166,8 +146,8 @@ export default function DrugOrderEditor({
 
           return (
             <Tile key={drug.id} className={`${styles.card} ${isDuplicate ? styles.cardDuplicate : ''}`}>
-              <div 
-                className={styles.cardHeader} 
+              <div
+                className={styles.cardHeader}
                 onClick={() => toggleCard(drug.id)}
                 role="button"
                 tabIndex={0}
@@ -220,7 +200,9 @@ export default function DrugOrderEditor({
                 <div className={styles.cardBody}>
                   <div className={styles.formGrid}>
                     <div className={styles.formGroup}>
-                      <label className="cds--label" htmlFor={`dose-${drug.id}`}>{t('dose', 'Dose')}</label>
+                      <label className="cds--label" htmlFor={`dose-${drug.id}`}>
+                        {t('dose', 'Dose')}
+                      </label>
                       <NumberInput
                         id={`dose-${drug.id}`}
                         hideLabel
@@ -277,7 +259,9 @@ export default function DrugOrderEditor({
                       </Select>
                     </div>
                     <div className={styles.formGroup}>
-                      <label className="cds--label" htmlFor={`duration-${drug.id}`}>{t('duration', 'Duration')}</label>
+                      <label className="cds--label" htmlFor={`duration-${drug.id}`}>
+                        {t('duration', 'Duration')}
+                      </label>
                       <NumberInput
                         id={`duration-${drug.id}`}
                         hideLabel
@@ -303,7 +287,9 @@ export default function DrugOrderEditor({
                       </Select>
                     </div>
                     <div className={styles.formGroupInstructions}>
-                      <label className="cds--label" htmlFor={`instr-${drug.id}`}>{t('instructions', 'Instructions')}</label>
+                      <label className="cds--label" htmlFor={`instr-${drug.id}`}>
+                        {t('instructions', 'Instructions')}
+                      </label>
                       <input
                         id={`instr-${drug.id}`}
                         className="cds--text-input cds--text-input--md"

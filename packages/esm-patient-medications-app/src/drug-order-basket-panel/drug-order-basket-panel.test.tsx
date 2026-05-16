@@ -20,6 +20,9 @@ const testProps: OrderBasketExtensionProps = {
   launchDrugOrderForm: vi.fn(),
   launchLabOrderForm: vi.fn(),
   launchGeneralOrderForm: vi.fn(),
+  launchImagingOrderForm: vi.fn(),
+  launchProcedureOrderForm: vi.fn(),
+  launchMedicalSupplyForm: vi.fn(),
 };
 
 describe('OrderBasketPanel', () => {

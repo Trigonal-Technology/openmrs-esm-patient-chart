@@ -113,7 +113,7 @@ const TaskDetailsView: React.FC<TaskDetailsViewProps> = ({ patientUuid, taskUuid
   }, [task, t]);
 
   const assigneeDisplay = task?.assignee
-    ? task.assignee.display ?? task.assignee.uuid
+    ? (task.assignee.display ?? task.assignee.uuid)
     : t('noAssignment', 'No assignment');
 
   if (isLoading) {

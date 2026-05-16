@@ -149,7 +149,7 @@ export function InlineOrderRow({ row, onChange, onRemove, orderConfig }: InlineO
 
         <div className={styles.field}>
           <span className={styles.label}>QTY</span>
-          <div className={styles.qtyValue}>{row.quantity ? `${row.quantity}` : (autoQty ? `${autoQty}` : '—')}</div>
+          <div className={styles.qtyValue}>{row.quantity ? `${row.quantity}` : autoQty ? `${autoQty}` : '—'}</div>
         </div>
       </div>
     </div>

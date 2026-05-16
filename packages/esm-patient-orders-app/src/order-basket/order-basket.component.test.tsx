@@ -45,6 +45,9 @@ const mockOrderBasketExtensionProps = {
   launchDrugOrderForm: vi.fn(),
   launchLabOrderForm: vi.fn(),
   launchGeneralOrderForm: vi.fn(),
+  launchImagingOrderForm: vi.fn(),
+  launchProcedureOrderForm: vi.fn(),
+  launchMedicalSupplyForm: vi.fn(),
 };
 
 const defaultMockConfig = {

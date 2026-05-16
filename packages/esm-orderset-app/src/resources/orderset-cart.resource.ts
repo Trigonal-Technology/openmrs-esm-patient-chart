@@ -48,9 +48,7 @@ export function useOrdersetCart() {
   const updateDrug = useCallback((id: string, updates: Partial<DrugOrderItem>) => {
     cartSubject.next({
       ...cartSubject.value,
-      drugs: cartSubject.value.drugs.map((d) =>
-        d.id === id ? { ...d, ...updates } : d,
-      ),
+      drugs: cartSubject.value.drugs.map((d) => (d.id === id ? { ...d, ...updates } : d)),
     });
   }, []);
 
@@ -83,8 +81,7 @@ export function useOrdersetCart() {
     cartSubject.next({
       ...cartSubject.value,
       customSets: cartSubject.value.customSets.filter((s) => s.id !== setId),
-      selectedSet:
-        cartSubject.value.selectedSet?.id === setId ? null : cartSubject.value.selectedSet,
+      selectedSet: cartSubject.value.selectedSet?.id === setId ? null : cartSubject.value.selectedSet,
       drugs: cartSubject.value.selectedSet?.id === setId ? [] : cartSubject.value.drugs,
     });
   }, []);

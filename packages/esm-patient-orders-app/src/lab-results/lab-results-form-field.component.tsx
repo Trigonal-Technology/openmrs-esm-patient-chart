@@ -117,7 +117,9 @@ const ResultFormField: React.FC<ResultFormFieldProps> = ({ concept, control, def
             ) : isCodedField ? (
               <Select
                 {...field}
-                defaultValue={getSavedMemberValue(concept.uuid, concept.datatype.hl7Abbreviation)}
+                defaultValue={
+                  getSavedMemberValue(concept.uuid, concept.datatype.hl7Abbreviation) as string | number | undefined
+                }
                 id={`select-${concept.uuid}`}
                 key={concept.uuid}
                 labelText={labelText}

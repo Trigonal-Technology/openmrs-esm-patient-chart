@@ -1,11 +1,81 @@
+import { type Workspace2DefinitionProps, type Visit, toOmrsIsoString } from '@openmrs/esm-framework';
 import { QuantityUnit } from './../../../esm-patient-common-lib/src/orders/types/order';
-import { type Visit, toOmrsIsoString } from '@openmrs/esm-framework';
 import {
   priorityOptions,
   type OrderUrgency,
   type OrderBasketItem,
+  type OrderBasketExtensionProps,
   type OrderPost,
 } from '@openmrs/esm-patient-common-lib';
+
+/**
+ * Returns the earliest startDate among basket items (drug orders), or `now`
+ * when no item has a startDate set.
+ */
+export function getEarliestStartDate(orders: ReadonlyArray<OrderBasketItem>, now: Date = new Date()): Date {
+  return orders.reduce<Date>((earliest, order) => {
+    const startDateValue = (order as { startDate?: Date | string }).startDate;
+    if (!startDateValue) {
+      return earliest;
+    }
+    const startDate = startDateValue instanceof Date ? startDateValue : new Date(startDateValue);
+    return startDate < earliest ? startDate : earliest;
+  }, now);
+}
+
+export interface CreateOrderBasketExtensionPropsArguments {
+  patient: fhir.Patient;
+  drugOrderWorkspaceName?: string;
+  labOrderWorkspaceName?: string;
+  generalOrderWorkspaceName?: string;
+  launchChildWorkspace?: Workspace2DefinitionProps['launchChildWorkspace'];
+  visibleOrderPanels?: Array<string>;
+}
+
+export function createOrderBasketExtensionProps({
+  patient,
+  drugOrderWorkspaceName,
+  labOrderWorkspaceName,
+  generalOrderWorkspaceName,
+  launchChildWorkspace,
+  visibleOrderPanels,
+}: CreateOrderBasketExtensionPropsArguments): OrderBasketExtensionProps {
+  const result: OrderBasketExtensionProps = {
+    patient,
+    launchDrugOrderForm: () => undefined,
+    launchLabOrderForm: () => undefined,
+    launchGeneralOrderForm: () => undefined,
+    launchImagingOrderForm: () => undefined,
+    launchProcedureOrderForm: () => undefined,
+    launchMedicalSupplyForm: () => undefined,
+  };
+
+  if (launchChildWorkspace) {
+    if (drugOrderWorkspaceName) {
+      result.launchDrugOrderForm = (order: OrderBasketItem) => {
+        launchChildWorkspace(drugOrderWorkspaceName, { order });
+      };
+    }
+
+    if (labOrderWorkspaceName) {
+      result.launchLabOrderForm = (orderTypeUuid: string, order: OrderBasketItem) => {
+        launchChildWorkspace(labOrderWorkspaceName, { orderTypeUuid, order });
+      };
+    }
+
+    if (generalOrderWorkspaceName) {
+      result.launchGeneralOrderForm = (orderTypeUuid: string, order: OrderBasketItem) => {
+        launchChildWorkspace(generalOrderWorkspaceName, { orderTypeUuid, order });
+      };
+    }
+  }
+
+  if (visibleOrderPanels) {
+    result.visibleOrderPanels = visibleOrderPanels;
+  }
+
+  return result;
+}
 import { type ConfigObject } from '../config-schema';
 import { prepOrderPostData, createEmptyOrder } from './general-order-type/resources';
 import { prepImagingOrderPostData } from './imaging-resources';
@@ -59,15 +129,15 @@ export const createDrugOrder = (drugItem: any, visit: Visit) => {
     route: null,
     unit: sanitizedDrug.dosageForm
       ? {
-        value: drugItem.dosageForm?.display,
-        valueCoded: drugItem.dosageForm?.uuid,
-      }
+          value: drugItem.dosageForm?.display,
+          valueCoded: drugItem.dosageForm?.uuid,
+        }
       : null,
     quantityUnits: sanitizedDrug.dosageForm
       ? {
-        value: drugItem.dosageForm?.display,
-        valueCoded: drugItem.dosageForm?.uuid,
-      }
+          value: drugItem.dosageForm?.display,
+          valueCoded: drugItem.dosageForm?.uuid,
+        }
       : null,
     asNeeded: false,
     asNeededCondition: '',
@@ -236,7 +306,6 @@ export const transformOrderSetMember = (member: any, visit: Visit, providerUuid:
       visit,
       startDate: new Date(),
     };
-    console.log(drugOrder);
     return {
       basketKey: 'medications',
       prepFn: ((order, patientUuid, encounterUuid, orderingProviderUuid) =>
@@ -279,7 +348,7 @@ export const transformOrderSetMember = (member: any, visit: Visit, providerUuid:
     orderer: providerUuid,
     concept: { uuid: member.conceptUuid, display: member.conceptDisplay || member.display },
     instructions: instructions,
-    numberOfRepeats: category === 'Procedure' ? (member.numberOfRepeats || 1) : member.numberOfRepeats,
+    numberOfRepeats: category === 'Procedure' ? member.numberOfRepeats || 1 : member.numberOfRepeats,
     quantity: member.quantity,
     quantityUnits: member.quantityUnitsUuid,
   };

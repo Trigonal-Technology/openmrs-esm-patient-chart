@@ -94,7 +94,7 @@ export function OrdersTable({ patientUuid, orderConfig, drugOrderTypeUuid }: Ord
   const { results: paginatedOrders, goTo, currentPage } = usePagination(tableRows, defaultPageSize);
 
   if (isLoading) {
-    return <DataTableSkeleton role="progressbar" zebra compact />;
+    return <DataTableSkeleton role="progressbar" zebra />;
   }
 
   if (error || !orders || orders.length === 0) {
@@ -125,7 +125,15 @@ export function OrdersTable({ patientUuid, orderConfig, drugOrderTypeUuid }: Ord
       </div>
 
       <DataTable headers={tableHeaders} rows={paginatedOrders} useZebraStyles size="sm">
-        {({ getTableContainerProps, getTableProps, getHeaderProps, getRowProps, getExpandedRowProps, headers, rows }) => (
+        {({
+          getTableContainerProps,
+          getTableProps,
+          getHeaderProps,
+          getRowProps,
+          getExpandedRowProps,
+          headers,
+          rows,
+        }) => (
           <TableContainer {...getTableContainerProps()}>
             <Table className={styles.table} {...getTableProps()}>
               <TableHead>
