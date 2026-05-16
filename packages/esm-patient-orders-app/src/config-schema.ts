@@ -143,6 +143,16 @@ export const configSchema = {
     _description: 'The UUID of the Medical Supply order type.',
     _default: 'dab3ab30-2feb-48ec-b4af-8332a0831b49',
   },
+  enableDrugOrderFavorites: {
+    _type: Type.Boolean,
+    _description: 'Whether to enable pinning drugs as order favorites.',
+    _default: false,
+  },
+  maxPinnedDrugOrders: {
+    _type: Type.Number,
+    _description: 'Maximum number of pinned drug order favorites.',
+    _default: 10,
+  },
 };
 
 export interface OrderTypeDefinition {
@@ -170,4 +180,6 @@ export interface ConfigObject {
   radiologyOrderTypeUuid: string;
   procedureOrderTypeUuid: string;
   medicalSupplyOrderTypeUuid: string;
+  enableDrugOrderFavorites: boolean;
+  maxPinnedDrugOrders: number;
 }

@@ -64,6 +64,7 @@ import GeneralOrderPanel from './general-order-type/general-order-panel.componen
 import { createEmptyOrder } from './general-order-type/resources';
 import {
   createDrugOrder,
+  getEarliestStartDate,
   getOrderItemDetails,
   constructOrderItem,
   transformOrderSetMember,
@@ -222,8 +223,9 @@ const SearchResultItem: React.FC<SearchResultItemProps> = React.memo(
     const { basketKey, prepFn, isDrugItem, isLabItem, isImagingItem, isProcedureItem, isMedicalSupplyItem } =
       details || {};
 
+    const [addedOrderSets, setAddedOrderSets] = useState<string[]>([]);
     // SINGLE useOrderBasket call — subscribes only to the relevant basket
-    const { orders, setOrders, addedOrderSets, setAddedOrderSets } = useOrderBasket<any>(patient, basketKey, prepFn);
+    const { orders, setOrders } = useOrderBasket<any>(patient, basketKey, prepFn);
     const { setOrders: setAnyOrders } = useOrderBasket<any>(patient);
 
     const itemAlreadyInBasket = useMemo(() => {

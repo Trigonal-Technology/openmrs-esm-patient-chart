@@ -1,9 +1,11 @@
 import React, { useMemo } from 'react';
 import { type Workspace2DefinitionProps } from '@openmrs/esm-framework';
-import { type ExportedOrderBasketWindowProps } from '@openmrs/esm-patient-common-lib';
+import {
+  type ExportedOrderBasketWindowProps,
+  type OrderBasketExtensionProps,
+  type OrderBasketItem,
+} from '@openmrs/esm-patient-common-lib';
 import OrderBasket from './order-basket.component';
-import { createOrderBasketExtensionProps } from './order-basket.utils';
-
 /**
  * This workspace renders the main order basket, which contains the buttons to add a drug order and to add a lab order.
  *

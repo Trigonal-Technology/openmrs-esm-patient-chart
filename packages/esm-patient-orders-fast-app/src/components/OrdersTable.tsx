@@ -94,7 +94,7 @@ export function OrdersTable({ patientUuid, orderConfig, drugOrderTypeUuid }: Ord
   const { results: paginatedOrders, goTo, currentPage } = usePagination(tableRows, defaultPageSize);
 
   if (isLoading) {
-    return <DataTableSkeleton role="progressbar" zebra compact />;
+    return <DataTableSkeleton role="progressbar" zebra />;
   }
 
   if (error || !orders || orders.length === 0) {
