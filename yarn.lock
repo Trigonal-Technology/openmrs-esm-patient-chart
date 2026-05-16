@@ -5229,6 +5229,8 @@ __metadata:
     "@carbon/react": "npm:^1.83.0"
     "@openmrs/esm-patient-common-lib": "workspace:*"
     lodash-es: "npm:^4.17.23"
+    openmrs: "npm:next"
+    vitest: "npm:^4.1.2"
     webpack: "npm:^5.99.9"
   peerDependencies:
     "@openmrs/esm-framework": 9.x
@@ -5606,6 +5608,8 @@ __metadata:
     "@carbon/react": "npm:^1.83.0"
     "@openmrs/esm-patient-common-lib": "workspace:*"
     lodash-es: "npm:^4.17.23"
+    openmrs: "npm:next"
+    vitest: "npm:^4.1.2"
     webpack: "npm:^5.99.9"
   peerDependencies:
     "@openmrs/esm-framework": 9.x
