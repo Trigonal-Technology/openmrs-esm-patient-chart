@@ -17,8 +17,8 @@ vi.mock('../hooks/use-forms', () => ({
   }),
 }));
 
-jest.mock('../hooks/use-form-evaluation-context', () => ({
-  useFormEvaluationContext: jest.fn(() => ({
+vi.mock('../hooks/use-form-evaluation-context', () => ({
+  useFormEvaluationContext: vi.fn(() => ({
     mlcAttributeLoaded: true,
     activeDiagnosisCodes: [],
     diagnosesLoaded: true,

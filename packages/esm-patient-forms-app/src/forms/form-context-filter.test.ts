@@ -1,3 +1,4 @@
+import { vi } from 'vitest';
 import { userHasAccess } from '@openmrs/esm-framework';
 import type { FormEntryConfigSchema } from '../config-schema';
 import type { CompletedFormInfo, Form } from '../types';
@@ -12,11 +13,11 @@ import {
 } from './form-context-filter';
 import { getVisibilityRules, normalizeFormVisibilityRule } from './form-visibility.schema';
 
-jest.mock('@openmrs/esm-framework', () => ({
-  userHasAccess: jest.fn(),
+vi.mock('@openmrs/esm-framework', () => ({
+  userHasAccess: vi.fn(),
 }));
 
-const mockUserHasAccess = userHasAccess as jest.Mock;
+const mockUserHasAccess = vi.mocked(userHasAccess);
 
 const baseConfig: FormEntryConfigSchema = {
   htmlFormEntryForms: [],
