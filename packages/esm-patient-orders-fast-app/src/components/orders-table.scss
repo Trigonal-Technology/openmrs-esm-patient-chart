@@ -1,0 +1,99 @@
+.container {
+  border: 1px solid var(--cds-border-subtle);
+  background: var(--cds-layer-01);
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid var(--cds-border-subtle);
+}
+
+.title {
+  font-size: 0.875rem;
+  font-weight: 600;
+  margin: 0;
+}
+
+.subtitle {
+  font-size: 0.75rem;
+  color: var(--cds-text-secondary);
+  margin: 0.25rem 0 0 0;
+}
+
+.search {
+  position: relative;
+}
+
+.searchIcon {
+  position: absolute;
+  left: 0.75rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--cds-text-secondary);
+}
+
+.searchInput {
+  width: 12rem;
+}
+
+.paginationContainer {
+  border-top: 1px solid var(--cds-border-subtle);
+  background: var(--cds-layer-01);
+}
+
+.table {
+  width: 100%;
+}
+
+.mono {
+  font-family: var(--cds-font-mono);
+  font-size: 0.75rem;
+}
+
+.drugName {
+  font-weight: 500;
+}
+
+.expandedRow {
+  background: var(--cds-layer-02);
+}
+
+.expandedCell {
+  padding: 1rem 2rem;
+  padding-left: 3.5rem; // Offset for expand button column
+}
+
+.detail {
+  font-size: 0.875rem;
+
+  p {
+    margin: 0.25rem 0;
+  }
+}
+
+.detailLabel {
+  font-size: 0.625rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--cds-text-secondary);
+}
+
+.sep {
+  color: var(--cds-text-secondary);
+}
+
+.qty {
+  font-size: 0.75rem;
+  color: var(--cds-text-secondary);
+}
+
+.empty {
+  padding: 2rem;
+  text-align: center;
+  font-size: 0.875rem;
+  color: var(--cds-text-secondary);
+}

@@ -13,6 +13,7 @@ interface GeneralOrderTypeProps extends OrderTypeDefinition {
   patient: fhir.Patient;
   orderTypeUuid: string;
   launchGeneralOrderForm(orderTypeUuid: string, order?: OrderBasketItem): void;
+  prepFunction?: any;
 }
 
 /**
@@ -26,13 +27,19 @@ const GeneralOrderPanel: React.FC<GeneralOrderTypeProps> = ({
   orderTypeUuid,
   label,
   icon,
+  accentColor = 'purple',
   launchGeneralOrderForm,
+  prepFunction,
 }) => {
   const { t } = useTranslation();
   const isTablet = useLayoutType() === 'tablet';
   const { orderType, isLoadingOrderType } = useOrderType(orderTypeUuid);
 
-  const { orders, setOrders } = useOrderBasket<OrderBasketItem>(patient, orderTypeUuid, prepOrderPostData);
+  const { orders, setOrders } = useOrderBasket<OrderBasketItem>(
+    patient,
+    orderTypeUuid,
+    prepFunction || prepOrderPostData,
+  );
   const [isExpanded, setIsExpanded] = useState(orders.length > 0);
   const {
     incompleteOrderBasketItems,
@@ -89,11 +96,14 @@ const GeneralOrderPanel: React.FC<GeneralOrderTypeProps> = ({
 
   return (
     <Tile
+      data-accent-color={accentColor}
       className={classNames(isTablet ? styles.tabletTile : styles.desktopTile, { [styles.collapsedTile]: !isExpanded })}
     >
       <div className={styles.container}>
         <div className={styles.iconAndLabel}>
-          <MaybeIcon icon={icon ? icon : 'omrs-icon-generic-order-type'} size={isTablet ? 40 : 24} />
+          <div className={styles.iconBackdrop}>
+            <MaybeIcon icon={icon ? icon : 'omrs-icon-generic-order-type'} size={isTablet ? 24 : 16} />
+          </div>
           <h4 className={styles.heading}>{`${label ? t(label) : orderType?.display} (${orders.length})`}</h4>
         </div>
         <div className={styles.buttonContainer}>
@@ -107,6 +117,7 @@ const GeneralOrderPanel: React.FC<GeneralOrderTypeProps> = ({
             {t('add', 'Add')}
           </Button>
           <Button
+            className={styles.chevron}
             hasIconOnly
             kind="ghost"
             renderIcon={(props: ComponentProps<typeof ChevronUpIcon>) =>
@@ -115,6 +126,7 @@ const GeneralOrderPanel: React.FC<GeneralOrderTypeProps> = ({
             iconDescription={t('view', 'View')}
             disabled={orders.length === 0}
             onClick={() => setIsExpanded(!isExpanded)}
+            size={isTablet ? 'md' : 'sm'}
           >
             {t('add', 'Add')}
           </Button>

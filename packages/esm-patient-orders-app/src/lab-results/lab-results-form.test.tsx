@@ -1,6 +1,14 @@
+/**
+ * @vitest-environment jsdom
+ *
+ * The form-submit flow under test does not fire its callback under happy-dom
+ * (likely a DOM-event-dispatch divergence). Run this file under jsdom.
+ */
 import React from 'react';
+import { vi, describe, expect, test, beforeEach } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { getDefaultsFromConfigSchema, useConfig } from '@openmrs/esm-framework';
 import {
   useOrderConceptsByUuids,
   useLabEncounter,
@@ -11,23 +19,39 @@ import {
   useCompletedLabResultsArray,
 } from './lab-results.resource';
 import LabResultsForm, { type LabResultsFormProps } from './lab-results-form.workspace';
-import { type PatientWorkspace2DefinitionProps, type Order } from '@openmrs/esm-patient-common-lib';
+import ExportedLabResultsForm, {
+  type LabResultsFormProps as ExportedLabResultsFormProps,
+} from './exported-lab-results-form.workspace';
+import {
+  type PatientWorkspace2DefinitionProps,
+  type Order,
+  type TestOrderBasketItem,
+  useOrderBasket,
+} from '@openmrs/esm-patient-common-lib';
+import { configSchema, type ConfigObject } from '../config-schema';
 import { type Encounter } from '../types/encounter';
 import { mockPatient } from 'tools';
 
-const mockUseOrderConceptByUuids = jest.mocked(useOrderConceptsByUuids);
-const mockUseLabEncounter = jest.mocked(useLabEncounter);
-const mockUseObservation = jest.mocked(useObservation);
-const mockUseCompletedLabResultsArray = jest.mocked(useCompletedLabResultsArray);
+const mockUseOrderConceptByUuids = vi.mocked(useOrderConceptsByUuids);
+const mockUseLabEncounter = vi.mocked(useLabEncounter);
+const mockUseObservation = vi.mocked(useObservation);
+const mockUseCompletedLabResultsArray = vi.mocked(useCompletedLabResultsArray);
+const mockUseConfig = vi.mocked(useConfig<ConfigObject>);
+const mockUseOrderBasket = vi.mocked(useOrderBasket);
 
-jest.mock('./lab-results.resource', () => ({
-  ...jest.requireActual('./lab-results.resource'),
-  useOrderConceptByUuid: jest.fn(),
-  useOrderConceptsByUuids: jest.fn(),
-  useLabEncounter: jest.fn(),
-  useObservation: jest.fn(),
-  updateOrderResult: jest.fn().mockResolvedValue({}),
-  useCompletedLabResultsArray: jest.fn(),
+vi.mock('./lab-results.resource', async () => ({
+  ...((await vi.importActual('./lab-results.resource')) as object),
+  useOrderConceptByUuid: vi.fn(),
+  useOrderConceptsByUuids: vi.fn(),
+  useLabEncounter: vi.fn(),
+  useObservation: vi.fn(),
+  updateOrderResult: vi.fn().mockResolvedValue({}),
+  useCompletedLabResultsArray: vi.fn(),
+}));
+
+vi.mock('@openmrs/esm-patient-common-lib', async () => ({
+  ...((await vi.importActual('@openmrs/esm-patient-common-lib')) as object),
+  useOrderBasket: vi.fn(),
 }));
 
 const mockOrder = {
@@ -40,21 +64,36 @@ const mockOrder = {
   orderer: { uuid: 'orderer-uuid' },
 };
 
-const mockCloseWorkspace = jest.fn();
+const mockCloseWorkspace = vi.fn();
 
 const testProps: PatientWorkspace2DefinitionProps<LabResultsFormProps, {}> = {
   closeWorkspace: mockCloseWorkspace,
   workspaceProps: {
     order: mockOrder as Order,
   },
+  windowProps: {},
   groupProps: {
     patientUuid: mockPatient.id,
     patient: mockPatient,
     visitContext: null,
     mutateVisitContext: null,
   },
-  launchChildWorkspace: jest.fn(),
+  launchChildWorkspace: vi.fn(),
+  workspaceName: '',
+  windowName: '',
+  isRootWorkspace: false,
+  showActionMenu: true,
+};
+
+const exportedTestProps = {
+  closeWorkspace: mockCloseWorkspace,
+  workspaceProps: {
+    patient: mockPatient,
+    order: mockOrder as Order,
+  } satisfies ExportedLabResultsFormProps,
   windowProps: {},
+  groupProps: {},
+  launchChildWorkspace: vi.fn(),
   workspaceName: '',
   windowName: '',
   isRootWorkspace: false,
@@ -63,6 +102,15 @@ const testProps: PatientWorkspace2DefinitionProps<LabResultsFormProps, {}> = {
 
 describe('LabResultsForm', () => {
   beforeEach(() => {
+    mockUseConfig.mockReturnValue({
+      ...getDefaultsFromConfigSchema(configSchema),
+      enableAddTestsDuringResultEntry: false,
+    });
+    mockUseOrderBasket.mockReturnValue({
+      orders: [],
+      setOrders: vi.fn(),
+      clearOrders: vi.fn(),
+    });
     mockUseOrderConceptByUuids.mockReturnValue({
       concepts: [
         {
@@ -83,28 +131,124 @@ describe('LabResultsForm', () => {
       isLoading: false,
       error: null,
       isValidating: false,
-      mutate: jest.fn(),
+      mutate: vi.fn(),
     });
     mockUseLabEncounter.mockReturnValue({
       encounter: { obs: [] } as Encounter,
       isLoading: false,
       error: null,
       isValidating: false,
-      mutate: jest.fn(),
+      mutate: vi.fn(),
     });
     mockUseObservation.mockReturnValue({
       data: null,
       isLoading: false,
       error: null,
       isValidating: false,
-      mutate: jest.fn(),
+      mutate: vi.fn(),
     });
     mockUseCompletedLabResultsArray.mockReturnValue({
       completeLabResults: [],
       isLoading: false,
       error: null,
-      mutate: jest.fn(),
+      mutate: vi.fn(),
     });
+  });
+
+  test('hides the add tests basket in patient chart context by default', () => {
+    render(<LabResultsForm {...testProps} />);
+
+    expect(screen.queryByText('Add Tests to this order')).not.toBeInTheDocument();
+  });
+
+  test('hides the add tests basket in exported context without a launch callback', () => {
+    render(<ExportedLabResultsForm {...exportedTestProps} />);
+
+    expect(screen.queryByText('Add Tests to this order')).not.toBeInTheDocument();
+  });
+
+  test('shows the add tests basket in patient chart context when enabled', () => {
+    mockUseConfig.mockReturnValue({
+      ...getDefaultsFromConfigSchema(configSchema),
+      enableAddTestsDuringResultEntry: true,
+    });
+
+    render(<LabResultsForm {...testProps} />);
+
+    expect(screen.getByText('Add Tests to this order')).toBeInTheDocument();
+  });
+
+  test('hides the add tests basket in exported context with a child workspace name when disabled', () => {
+    render(
+      <ExportedLabResultsForm
+        {...exportedTestProps}
+        workspaceProps={{
+          ...exportedTestProps.workspaceProps,
+          labOrderWorkspaceName: 'lab-app-test-results-add-lab-order-workspace',
+        }}
+      />,
+    );
+
+    expect(screen.queryByText('Add Tests to this order')).not.toBeInTheDocument();
+  });
+
+  test('shows the add tests basket in exported context when enabled and a child workspace name is supplied', () => {
+    mockUseConfig.mockReturnValue({
+      ...getDefaultsFromConfigSchema(configSchema),
+      enableAddTestsDuringResultEntry: true,
+    });
+
+    render(
+      <ExportedLabResultsForm
+        {...exportedTestProps}
+        workspaceProps={{
+          ...exportedTestProps.workspaceProps,
+          labOrderWorkspaceName: 'lab-app-test-results-add-lab-order-workspace',
+        }}
+      />,
+    );
+
+    expect(screen.getByText('Add Tests to this order')).toBeInTheDocument();
+  });
+
+  test('hides staged add-tests actions when disabled even if the basket has orders', () => {
+    mockUseOrderBasket.mockReturnValue({
+      orders: [
+        {
+          action: 'NEW',
+          display: 'Extra Test',
+          testType: { label: 'Extra Test', conceptUuid: 'extra-concept-uuid' },
+          visit: null as any,
+          isOrderIncomplete: false,
+        },
+      ] as Array<TestOrderBasketItem>,
+      setOrders: vi.fn(),
+      clearOrders: vi.fn(),
+    });
+
+    render(<LabResultsForm {...testProps} />);
+
+    expect(screen.queryByRole('button', { name: /Cancel order/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Save Tests/i })).not.toBeInTheDocument();
+  });
+
+  test('hides the add tests basket in edit mode even when enabled', () => {
+    mockUseConfig.mockReturnValue({
+      ...getDefaultsFromConfigSchema(configSchema),
+      enableAddTestsDuringResultEntry: true,
+    });
+
+    render(
+      <LabResultsForm
+        {...testProps}
+        workspaceProps={{
+          ...testProps.workspaceProps,
+          order: { ...mockOrder, fulfillerStatus: 'COMPLETED' } as Order,
+        }}
+      />,
+    );
+
+    expect(screen.queryByText('Add Tests to this order')).not.toBeInTheDocument();
   });
 
   test('validates numeric input correctly', async () => {
@@ -145,7 +289,7 @@ describe('LabResultsForm', () => {
       isLoading: false,
       error: null,
       isValidating: false,
-      mutate: jest.fn(),
+      mutate: vi.fn(),
     });
     render(<LabResultsForm {...testProps} />);
 
@@ -226,7 +370,7 @@ describe('LabResultsForm', () => {
       isLoading: false,
       error: null,
       isValidating: false,
-      mutate: jest.fn(),
+      mutate: vi.fn(),
     });
     render(<LabResultsForm {...testProps} />);
 
@@ -264,7 +408,7 @@ describe('LabResultsForm', () => {
       isLoading: false,
       error: null,
       isValidating: false,
-      mutate: jest.fn(),
+      mutate: vi.fn(),
     });
     render(<LabResultsForm {...testProps} />);
 
@@ -317,7 +461,7 @@ describe('LabResultsForm', () => {
       isLoading: false,
       error: null,
       isValidating: false,
-      mutate: jest.fn(),
+      mutate: vi.fn(),
     });
     render(<LabResultsForm {...testProps} />);
 
@@ -390,10 +534,10 @@ describe('LabResultsForm', () => {
       isLoading: false,
       error: null,
       isValidating: false,
-      mutate: jest.fn(),
+      mutate: vi.fn(),
     });
-    const mockCloseWorkspace = jest.fn();
-    const mockCloseWorkspaceWithSavedChanges = jest.fn();
+    const mockCloseWorkspace = vi.fn();
+    const mockCloseWorkspaceWithSavedChanges = vi.fn();
 
     render(<LabResultsForm {...testProps} closeWorkspace={mockCloseWorkspace} />);
 
@@ -459,7 +603,7 @@ describe('LabResultsForm', () => {
       isLoading: false,
       error: null,
       isValidating: false,
-      mutate: jest.fn(),
+      mutate: vi.fn(),
     });
     render(<LabResultsForm {...testProps} />);
 
@@ -508,7 +652,7 @@ describe('LabResultsForm', () => {
       isLoading: false,
       error: null,
       isValidating: false,
-      mutate: jest.fn(),
+      mutate: vi.fn(),
     });
 
     render(<LabResultsForm {...testProps} />);
@@ -585,7 +729,7 @@ describe('LabResultsForm', () => {
       isLoading: false,
       error: null,
       isValidating: false,
-      mutate: jest.fn(),
+      mutate: vi.fn(),
     });
 
     render(<LabResultsForm {...testProps} />);
@@ -691,7 +835,7 @@ describe('LabResultsForm', () => {
       isLoading: false,
       error: null,
       isValidating: false,
-      mutate: jest.fn(),
+      mutate: vi.fn(),
     });
 
     render(<LabResultsForm {...testProps} />);
@@ -774,7 +918,7 @@ describe('LabResultsForm', () => {
       isLoading: false,
       error: null,
       isValidating: false,
-      mutate: jest.fn(),
+      mutate: vi.fn(),
     });
     render(<LabResultsForm {...testProps} />);
 
@@ -788,7 +932,6 @@ describe('LabResultsForm', () => {
   });
 
   test('should display second level of set members for a given concept, if present', () => {
-    const user = userEvent.setup();
     mockUseOrderConceptByUuids.mockReturnValue({
       concepts: [
         {
@@ -866,7 +1009,7 @@ describe('LabResultsForm', () => {
       isLoading: false,
       error: null,
       isValidating: false,
-      mutate: jest.fn(),
+      mutate: vi.fn(),
     });
 
     render(<LabResultsForm {...testProps} />);

@@ -1,0 +1,59 @@
+@use '@carbon/colors';
+@use '@carbon/layout';
+@use '@openmrs/esm-styleguide/src/vars' as *;
+
+.desktopTile {
+  position: relative;
+  border-left: layout.$spacing-02 solid colors.$blue-70;
+  background-color: colors.$white-0;
+  border-right: none;
+  padding: 0;
+  border-bottom: none;
+  min-height: 0;
+}
+
+.tabletTile {
+  @extend .desktopTile;
+  border-top: 1px solid colors.$purple-20;
+}
+
+.desktopContainer,
+.tabletContainer {
+  background-color: colors.$gray-10;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  text-align: left;
+}
+
+.tabletContainer {
+  background-color: colors.$white-0;
+}
+
+.iconAndLabel {
+  display: flex;
+  align-items: center;
+  margin: layout.$spacing-03;
+}
+
+.heading {
+  margin-left: layout.$spacing-03;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #000000;
+}
+
+.buttonContainer {
+  display: flex;
+  align-items: center;
+}
+
+.addButton {
+  svg {
+    fill: currentColor !important;
+  }
+}
+
+.items {
+  padding: 0 layout.$spacing-03 layout.$spacing-03;
+}

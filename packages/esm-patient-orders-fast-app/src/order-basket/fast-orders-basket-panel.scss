@@ -1,0 +1,73 @@
+@use '@carbon/colors';
+@use '@carbon/layout';
+@use '@carbon/type';
+@use '@openmrs/esm-styleguide/src/vars' as *;
+
+.desktopContainer {
+  background-color: colors.$gray-10;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  text-align: left;
+}
+
+.tabletContainer {
+  @extend .desktopContainer;
+  background-color: colors.$white-0;
+}
+
+.tile:not(:first-child) {
+  margin-top: 2rem;
+}
+
+.desktopTile {
+  position: relative;
+  border-left: layout.$spacing-02 solid colors.$blue-70;
+  background-color: colors.$white-0;
+  border-right: none;
+  padding: 0;
+  border-bottom: none;
+  min-height: 0;
+}
+
+.tabletTile {
+  @extend .desktopTile;
+  border-top: 1px solid colors.$purple-20;
+}
+
+.desktopTile .container {
+  h4 {
+    @include type.type-style('heading-compact-02');
+    color: $text-02;
+  }
+}
+
+.tabletTile .container {
+  padding: layout.$spacing-03;
+
+  h4 {
+    @include type.type-style('heading-03');
+    color: $ui-05;
+  }
+}
+
+.heading {
+  margin-left: layout.$spacing-03;
+}
+
+.iconAndLabel {
+  display: flex;
+  align-items: center;
+  margin: layout.$spacing-03;
+}
+
+.buttonContainer {
+  display: flex;
+  align-items: center;
+}
+
+.addButton {
+  svg {
+    fill: currentColor !important;
+  }
+}

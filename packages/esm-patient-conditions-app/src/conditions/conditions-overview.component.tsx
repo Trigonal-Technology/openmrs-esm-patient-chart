@@ -58,7 +58,7 @@ const ConditionsOverview: React.FC<ConditionsOverviewProps> = ({ patientUuid }) 
   const displayText = t('conditions_lower', 'conditions');
   const headerTitle = t('conditions', 'Conditions');
   const urlLabel = t('seeAll', 'See all');
-  const pageUrl = `\${openmrsSpaBase}/patient/${patientUuid}/chart/Conditions`;
+  const pageUrl = `\${openmrsSpaBase}/patient/${patientUuid}/chart/conditions`;
   const layout = useLayoutType();
   const isDesktop = isDesktopLayout(layout);
   const isTablet = !isDesktop;
@@ -212,7 +212,7 @@ const ConditionsOverview: React.FC<ConditionsOverviewProps> = ({ patientUuid }) 
                         <TableRow key={row.id}>
                           {row.cells.map((cell) => (
                             <TableCell key={cell.id}>
-                              {cell.value?.content ?? cell.info.header === 'status'
+                              {(cell.value?.content ?? cell.info.header === 'status')
                                 ? t(cell.value.toLowerCase(), cell.value)
                                 : cell.value}
                             </TableCell>

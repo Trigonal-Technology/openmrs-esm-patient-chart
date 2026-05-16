@@ -1,0 +1,44 @@
+@use '@carbon/colors';
+
+.container {
+  padding: 0.75rem 1rem;
+  background: var(--cds-ui-background, #ffffff);
+  border: 1px solid var(--cds-border-subtle);
+}
+
+.label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--cds-text-secondary);
+  margin: 0 0 0.5rem 0;
+}
+
+.templates {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.templateBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.25rem 0.75rem 0.25rem 0.25rem;
+  font-size: 0.75rem;
+  border: 1px solid var(--cds-border-subtle);
+  border-radius: 2rem;
+  background: var(--cds-layer-01);
+  color: var(--cds-text-primary);
+  cursor: pointer;
+  transition: all 0.11s;
+
+  &:hover {
+    background: var(--cds-layer-hover);
+    border-color: var(--cds-border-strong);
+  }
+
+  :global(.cds--tag) {
+    margin: 0;
+    border-radius: 1rem;
+  }
+}

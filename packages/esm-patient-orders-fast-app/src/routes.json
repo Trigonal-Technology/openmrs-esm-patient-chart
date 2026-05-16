@@ -1,0 +1,33 @@
+{
+  "$schema": "https://json.openmrs.org/routes.schema.json",
+  "backendDependencies": {
+    "webservices.rest": ">=2.2.0"
+  },
+  "extensions": [
+    {
+      "name": "patient-orders-fast-summary-dashboard",
+      "component": "fastOrdersDashboardLink",
+      "slot": "patient-chart-dashboard-slot",
+      "meta": {
+        "slot": "patient-chart-orders-fast-dashboard-slot",
+        "path": "Orders (Fast)",
+        "hideDashboardTitle": true
+      },
+      "order": 5
+    },
+    {
+      "name": "patient-orders-fast-dashboard",
+      "component": "fastOrdersDashboard",
+      "slot": "patient-chart-orders-fast-dashboard-slot",
+      "meta": {
+        "fullWidth": true
+      }
+    },
+    {
+      "name": "fast-orders-basket-panel",
+      "component": "fastOrdersBasketPanel",
+      "slot": "order-basket-slot",
+      "order": 2
+    }
+  ]
+}

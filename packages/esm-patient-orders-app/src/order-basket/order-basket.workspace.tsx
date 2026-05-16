@@ -1,11 +1,7 @@
 import React, { useMemo } from 'react';
-import {
-  type OrderBasketExtensionProps,
-  type OrderBasketWindowProps,
-  type OrderBasketItem,
-  type PatientWorkspace2DefinitionProps,
-} from '@openmrs/esm-patient-common-lib';
+import { type OrderBasketWindowProps, type PatientWorkspace2DefinitionProps } from '@openmrs/esm-patient-common-lib';
 import OrderBasket from './order-basket.component';
+import { createOrderBasketExtensionProps } from './order-basket.utils';
 
 /**
  * This workspace renders the main order basket, which contains the buttons to add a drug order and to add a lab order.
@@ -28,12 +24,24 @@ const OrderBasketWorkspace: React.FC<PatientWorkspace2DefinitionProps<{}, OrderB
     const launchGeneralOrderForm = (orderTypeUuid: string, order: OrderBasketItem) => {
       launchChildWorkspace('orderable-concept-workspace', { orderTypeUuid, order });
     };
+    const launchImagingOrderForm = (orderTypeUuid: string, order: OrderBasketItem) => {
+      launchChildWorkspace('add-imaging-order-workspace', { orderTypeUuid, order });
+    };
+    const launchProcedureOrderForm = (orderTypeUuid: string, order: OrderBasketItem) => {
+      launchChildWorkspace('add-procedures-order', { orderTypeUuid, order });
+    };
+    const launchMedicalSupplyForm = (orderTypeUuid: string, order: OrderBasketItem) => {
+      launchChildWorkspace('add-medical-supply-order', { orderTypeUuid, order });
+    };
 
     return {
       patient,
       launchDrugOrderForm,
       launchLabOrderForm,
       launchGeneralOrderForm,
+      launchImagingOrderForm,
+      launchProcedureOrderForm,
+      launchMedicalSupplyForm,
     } satisfies OrderBasketExtensionProps;
   }, [launchChildWorkspace, patient]);
 

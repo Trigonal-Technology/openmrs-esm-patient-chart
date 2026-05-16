@@ -1,4 +1,5 @@
 import React from 'react';
+import { vi, describe, it, expect, test, beforeEach } from 'vitest';
 import dayjs from 'dayjs';
 import { fireEvent, render, renderHook, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
@@ -11,6 +12,7 @@ import {
   useConfig,
   useEmrConfiguration,
   useLocations,
+  useVisit,
   useVisitTypes,
   type Visit,
 } from '@openmrs/esm-framework';
@@ -19,11 +21,13 @@ import { mockPatient } from 'tools';
 import { type ChartConfig, esmPatientChartSchema } from '../../config-schema';
 import { useVisitAttributeType } from '../hooks/useVisitAttributeType';
 import {
+  computeEarliestAllowedStartDate,
   convertToDateTimeFields,
   createVisitAttribute,
   deleteVisitAttribute,
-  type VisitFormData,
   updateVisitAttribute,
+  useAllowOverlappingVisits,
+  useEarliestAllowedVisitStartDate,
   useVisitFormCallbacks,
   useVisitFormSchemaAndDefaultValues,
 } from './visit-form.resource';
@@ -54,8 +58,8 @@ const visitAttributes = {
   },
 };
 
-const mockCloseWorkspace = jest.fn();
-const mockMutateVisitContext = jest.fn();
+const mockCloseWorkspace = vi.fn();
+const mockMutateVisitContext = vi.fn();
 const defaultProps: PatientWorkspace2DefinitionProps<VisitFormProps, {}> = {
   closeWorkspace: mockCloseWorkspace,
   workspaceProps: {
@@ -69,7 +73,7 @@ const defaultProps: PatientWorkspace2DefinitionProps<VisitFormProps, {}> = {
     mutateVisitContext: mockMutateVisitContext,
   },
   workspaceName: '',
-  launchChildWorkspace: jest.fn(),
+  launchChildWorkspace: vi.fn(),
   windowName: '',
   isRootWorkspace: false,
   showActionMenu: true,
@@ -79,36 +83,37 @@ const defaultVisitLocation = {
   display: 'Outpatient Clinic',
   uuid: 'location-a',
 };
-const mockUseDefaultVisitLocation = jest.fn().mockReturnValue(defaultVisitLocation);
+const mockUseDefaultVisitLocation = vi.fn().mockReturnValue(defaultVisitLocation);
 
-const mockSaveVisit = jest.mocked(saveVisit);
-const mockUpdateVisit = jest.mocked(updateVisit);
-const mockUseConfig = jest.mocked(useConfig<ChartConfig>);
-const mockUseVisitAttributeType = jest.mocked(useVisitAttributeType);
-const mockUseVisitTypes = jest.mocked(useVisitTypes);
-const mockUseLocations = jest.mocked(useLocations);
-const mockUseEmrConfiguration = jest.mocked(useEmrConfiguration);
+const mockSaveVisit = vi.mocked(saveVisit);
+const mockUpdateVisit = vi.mocked(updateVisit);
+const mockUseConfig = vi.mocked(useConfig<ChartConfig>);
+const mockUseVisitAttributeType = vi.mocked(useVisitAttributeType);
+const mockUseVisit = vi.mocked(useVisit);
+const mockUseVisitTypes = vi.mocked(useVisitTypes);
+const mockUseLocations = vi.mocked(useLocations);
+const mockUseEmrConfiguration = vi.mocked(useEmrConfiguration);
 
 // from ./visit-form.resource
-const mockOnVisitCreatedOrUpdatedCallback = jest.fn();
-jest.mocked(useVisitFormCallbacks).mockReturnValue([
+const mockOnVisitCreatedOrUpdatedCallback = vi.fn();
+vi.mocked(useVisitFormCallbacks).mockReturnValue([
   new Map([['test-extension-id', { onVisitCreatedOrUpdated: mockOnVisitCreatedOrUpdatedCallback }]]), // visitFormCallbacks
-  jest.fn(), // setVisitFormCallbacks
+  vi.fn(), // setVisitFormCallbacks
 ]);
-const mockCreateVisitAttribute = jest.mocked(createVisitAttribute).mockResolvedValue({} as unknown as FetchResponse);
-const mockUpdateVisitAttribute = jest.mocked(updateVisitAttribute).mockResolvedValue({} as unknown as FetchResponse);
-const mockDeleteVisitAttribute = jest.mocked(deleteVisitAttribute).mockResolvedValue({} as unknown as FetchResponse);
+const mockCreateVisitAttribute = vi.mocked(createVisitAttribute).mockResolvedValue({} as unknown as FetchResponse);
+const mockUpdateVisitAttribute = vi.mocked(updateVisitAttribute).mockResolvedValue({} as unknown as FetchResponse);
+const mockDeleteVisitAttribute = vi.mocked(deleteVisitAttribute).mockResolvedValue({} as unknown as FetchResponse);
 
-jest.mock('@openmrs/esm-patient-common-lib', () => ({
-  ...jest.requireActual('@openmrs/esm-patient-common-lib'),
-  useActivePatientEnrollment: jest.fn().mockReturnValue({
+vi.mock('@openmrs/esm-patient-common-lib', async () => ({
+  ...((await vi.importActual('@openmrs/esm-patient-common-lib')) as object),
+  useActivePatientEnrollment: vi.fn().mockReturnValue({
     activePatientEnrollment: [],
     isLoading: false,
   }),
 }));
 
-jest.mock('../hooks/useVisitAttributeType', () => ({
-  useVisitAttributeType: jest.fn((attributeUuid) => {
+vi.mock('../hooks/useVisitAttributeType', () => ({
+  useVisitAttributeType: vi.fn((attributeUuid) => {
     if (attributeUuid === visitAttributes.punctuality.uuid) {
       return {
         isLoading: false,
@@ -124,12 +129,12 @@ jest.mock('../hooks/useVisitAttributeType', () => ({
       };
     }
   }),
-  useVisitAttributeTypes: jest.fn(() => ({
+  useVisitAttributeTypes: vi.fn(() => ({
     isLoading: false,
     error: null,
     visitAttributeTypes: [visitAttributes.punctuality, visitAttributes.insurancePolicyNumber],
   })),
-  useConceptAnswersForVisitAttributeType: jest.fn(() => ({
+  useConceptAnswersForVisitAttributeType: vi.fn(() => ({
     isLoading: false,
     error: null,
     answers: [
@@ -159,12 +164,12 @@ jest.mock('../hooks/useVisitAttributeType', () => ({
   })),
 }));
 
-jest.mock('../hooks/useDefaultFacilityLocation', () => {
-  const requireActual = jest.requireActual('../hooks/useDefaultFacilityLocation');
+vi.mock('../hooks/useDefaultFacilityLocation', async () => {
+  const requireActual = (await vi.importActual('../hooks/useDefaultFacilityLocation')) as object;
 
   return {
     ...requireActual,
-    useDefaultFacilityLocation: jest.fn(() => ({
+    useDefaultFacilityLocation: vi.fn(() => ({
       defaultFacility: null,
       isLoading: false,
       error: null,
@@ -172,25 +177,33 @@ jest.mock('../hooks/useDefaultFacilityLocation', () => {
   };
 });
 
-jest.mock('../hooks/useDefaultVisitLocation', () => {
-  const requireActual = jest.requireActual('../hooks/useDefaultVisitLocation');
+vi.mock('../hooks/useDefaultVisitLocation', async () => {
+  const requireActual = (await vi.importActual('../hooks/useDefaultVisitLocation')) as object;
 
   return {
     ...requireActual,
-    useDefaultVisitLocation: jest.fn((...args) => mockUseDefaultVisitLocation(...args)),
+    useDefaultVisitLocation: vi.fn((...args) => mockUseDefaultVisitLocation(...args)),
   };
 });
 
-jest.mock('./visit-form.resource', () => {
-  const requireActual = jest.requireActual('./visit-form.resource');
+vi.mock('./visit-form.resource', async () => {
+  const requireActual = (await vi.importActual('./visit-form.resource')) as object;
   return {
     ...requireActual,
-    useVisitFormCallbacks: jest.fn(),
-    createVisitAttribute: jest.fn(),
-    updateVisitAttribute: jest.fn(),
-    deleteVisitAttribute: jest.fn(),
+    useAllowOverlappingVisits: vi.fn(),
+    useVisitFormCallbacks: vi.fn(),
+    useEarliestAllowedVisitStartDate: vi.fn(),
+    createVisitAttribute: vi.fn(),
+    updateVisitAttribute: vi.fn(),
+    deleteVisitAttribute: vi.fn(),
   };
 });
+
+const mockUseEarliestAllowedVisitStartDate = vi.mocked(useEarliestAllowedVisitStartDate);
+mockUseEarliestAllowedVisitStartDate.mockReturnValue({ earliestAllowedStartDate: null, isLoading: false });
+
+const mockUseAllowOverlappingVisits = vi.mocked(useAllowOverlappingVisits);
+mockUseAllowOverlappingVisits.mockReturnValue({ allowOverlappingVisits: true, isLoading: false });
 
 mockSaveVisit.mockResolvedValue({
   status: 201,
@@ -396,7 +409,7 @@ describe('Visit form', () => {
   });
 
   // FIXME: Make the date input work
-  xit('allows to enter start date in the past when visit status is ongoing', async () => {
+  it.skip('allows to enter start date in the past when visit status is ongoing', async () => {
     const user = userEvent.setup();
 
     renderVisitForm();
@@ -483,6 +496,16 @@ describe('Visit form', () => {
     expect(mockSaveVisit).toHaveBeenCalledTimes(1);
     expect(mockSaveVisit).toHaveBeenCalledWith(
       {
+        attributes: [
+          {
+            attributeType: visitAttributes.punctuality.uuid,
+            value: '66cdc0a1-aa19-4676-af51-80f66d78d9eb',
+          },
+          {
+            attributeType: visitAttributes.insurancePolicyNumber.uuid,
+            value: '183299',
+          },
+        ],
         location: mockLocations[1].uuid,
         patient: mockPatient.id,
         visitType: 'some-uuid1',
@@ -492,33 +515,19 @@ describe('Visit form', () => {
       expect.any(Object),
     );
 
-    expect(mockCreateVisitAttribute).toHaveBeenCalledTimes(2);
-    expect(mockCreateVisitAttribute).toHaveBeenCalledWith(
-      visitUuid,
-      visitAttributes.punctuality.uuid,
-      '66cdc0a1-aa19-4676-af51-80f66d78d9eb',
-    );
-    expect(mockCreateVisitAttribute).toHaveBeenCalledWith(
-      visitUuid,
-      visitAttributes.insurancePolicyNumber.uuid,
-      '183299',
-    );
+    // Attributes should be included in the visit payload, not created separately
+    expect(mockCreateVisitAttribute).not.toHaveBeenCalled();
 
     expect(mockOnVisitCreatedOrUpdatedCallback).toHaveBeenCalled();
 
     expect(mockCloseWorkspace).toHaveBeenCalled();
 
-    expect(showSnackbar).toHaveBeenCalledTimes(2);
+    expect(showSnackbar).toHaveBeenCalledTimes(1);
     expect(showSnackbar).toHaveBeenCalledWith({
       isLowContrast: true,
       subtitle: expect.stringContaining('started successfully'),
       kind: 'success',
       title: 'Visit started',
-    });
-    expect(showSnackbar).toHaveBeenCalledWith({
-      isLowContrast: true,
-      title: expect.stringContaining('Additional visit information updated successfully'),
-      kind: 'success',
     });
   });
 
@@ -564,6 +573,10 @@ describe('Visit form', () => {
       }),
       expect.any(Object),
     );
+    // Inline attributes must not be included in the update payload because the
+    // backend rejects them with a maxOccurs violation. Attributes are managed
+    // separately via individual create/update/delete calls for existing visits.
+    expect(mockUpdateVisit.mock.calls[0][1]).not.toHaveProperty('attributes');
 
     expect(mockUpdateVisitAttribute).toHaveBeenCalledTimes(2);
     expect(mockUpdateVisitAttribute).toHaveBeenCalledWith(
@@ -666,10 +679,8 @@ describe('Visit form', () => {
     expect(mockCloseWorkspace).not.toHaveBeenCalled();
   });
 
-  it('renders an error message if there was a problem updating visit attributes after starting a new visit', async () => {
+  it('does not create visit attributes separately when starting a new visit with attributes', async () => {
     const user = userEvent.setup();
-
-    mockCreateVisitAttribute.mockRejectedValue({ status: 500, statusText: 'Internal server error' });
 
     renderVisitForm();
 
@@ -689,27 +700,56 @@ describe('Visit form', () => {
 
     await user.click(saveButton);
 
-    expect(showSnackbar).toHaveBeenCalledTimes(3);
-    expect(showSnackbar).toHaveBeenCalledWith({
-      isLowContrast: true,
-      subtitle: expect.stringContaining('started successfully'),
-      kind: 'success',
-      title: 'Visit started',
-    });
-    expect(showSnackbar).toHaveBeenCalledWith({
-      isLowContrast: false,
-      subtitle: undefined,
-      kind: 'error',
-      title: 'Error creating the Punctuality visit attribute',
-    });
-    expect(showSnackbar).toHaveBeenCalledWith({
-      isLowContrast: false,
-      subtitle: undefined,
-      kind: 'error',
-      title: 'Error creating the Insurance Policy Number visit attribute',
-    });
+    // Attributes should be included in the saveVisit payload, not created via separate API calls
+    expect(mockSaveVisit).toHaveBeenCalledWith(
+      expect.objectContaining({
+        attributes: expect.arrayContaining([
+          { attributeType: visitAttributes.punctuality.uuid, value: '66cdc0a1-aa19-4676-af51-80f66d78d9eb' },
+          { attributeType: visitAttributes.insurancePolicyNumber.uuid, value: '183299' },
+        ]),
+      }),
+      expect.any(Object),
+    );
+    expect(mockCreateVisitAttribute).not.toHaveBeenCalled();
+  });
 
-    expect(mockOnVisitCreatedOrUpdatedCallback).toHaveBeenCalled();
+  it('does not create an orphaned visit when the server rejects a new visit with attributes', async () => {
+    const user = userEvent.setup();
+
+    mockSaveVisit.mockRejectedValueOnce({ status: 400, statusText: 'Bad Request' });
+
+    renderVisitForm();
+
+    await user.click(screen.getByLabelText(/Outpatient visit/i));
+
+    const saveButton = screen.getByRole('button', { name: /Start Visit/i });
+    const locationPicker = screen.getByRole('combobox', { name: /Select a location/i });
+    await user.click(locationPicker);
+    await user.click(screen.getByText(/Inpatient Ward/i));
+
+    const punctualityPicker = screen.getByRole('combobox', { name: 'Punctuality (optional)' });
+    await user.selectOptions(punctualityPicker, 'On time');
+
+    const insuranceNumberInput = screen.getByRole('textbox', { name: 'Insurance Policy Number (optional)' });
+    await user.clear(insuranceNumberInput);
+    await user.type(insuranceNumberInput, '183299');
+
+    await user.click(saveButton);
+
+    // Attributes are included in the saveVisit payload, so when the visit creation
+    // is rejected (e.g. due to overlapping visits), no orphaned visit is created
+    // and no separate attribute creation calls are made
+    expect(mockSaveVisit).toHaveBeenCalledWith(
+      expect.objectContaining({
+        attributes: expect.arrayContaining([
+          { attributeType: visitAttributes.punctuality.uuid, value: '66cdc0a1-aa19-4676-af51-80f66d78d9eb' },
+          { attributeType: visitAttributes.insurancePolicyNumber.uuid, value: '183299' },
+        ]),
+      }),
+      expect.any(Object),
+    );
+    expect(mockCreateVisitAttribute).not.toHaveBeenCalled();
+    expect(mockOnVisitCreatedOrUpdatedCallback).not.toHaveBeenCalled();
     expect(mockCloseWorkspace).not.toHaveBeenCalled();
   });
 
@@ -794,6 +834,101 @@ describe('Visit form', () => {
     expect(screen.getByText(/Part of the form did not load/i)).toBeInTheDocument();
     expect(screen.getByText(/Please refresh to try again/i)).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Start visit/i })).toBeDisabled();
+  });
+
+  it('shows an active visit warning, hides form fields, and disables submit when overlapping visits are disallowed and an active visit exists', () => {
+    mockUseVisit.mockReturnValue({
+      activeVisit: { uuid: 'some-active-visit-uuid' } as Visit,
+    } as ReturnType<typeof useVisit>);
+    mockUseAllowOverlappingVisits.mockReturnValue({ allowOverlappingVisits: false, isLoading: false });
+
+    renderVisitForm();
+
+    expect(screen.getByText(/This patient already has an active visit/i)).toBeInTheDocument();
+    expect(screen.getByText(/You must end the current visit before starting a new one/i)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Start visit/i })).toBeDisabled();
+
+    // Form fields should be hidden
+    expect(screen.queryByRole('combobox', { name: /Select a location/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('radio', { name: /Outpatient Visit/i })).not.toBeInTheDocument();
+  });
+
+  it('does not show an active visit warning when overlapping visits are allowed', () => {
+    mockUseVisit.mockReturnValue({
+      activeVisit: { uuid: 'some-active-visit-uuid' } as Visit,
+    } as ReturnType<typeof useVisit>);
+    mockUseAllowOverlappingVisits.mockReturnValue({ allowOverlappingVisits: true, isLoading: false });
+
+    renderVisitForm();
+
+    expect(screen.queryByText(/This patient already has an active visit/i)).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Start visit/i })).toBeEnabled();
+  });
+
+  it('shows active visit warning on the ongoing tab when overlapping visits are disallowed', async () => {
+    const user = userEvent.setup();
+    mockUseVisit.mockReturnValue({
+      activeVisit: { uuid: 'some-active-visit-uuid' } as Visit,
+    } as ReturnType<typeof useVisit>);
+    mockUseAllowOverlappingVisits.mockReturnValue({ allowOverlappingVisits: false, isLoading: false });
+
+    renderVisitForm();
+
+    await user.click(screen.getByRole('tab', { name: /ongoing/i }));
+
+    expect(screen.getByText(/This patient already has an active visit/i)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Start visit/i })).toBeDisabled();
+  });
+
+  it('does not show active visit warning on the past tab when overlapping visits are disallowed', async () => {
+    const user = userEvent.setup();
+    mockUseVisit.mockReturnValue({
+      activeVisit: { uuid: 'some-active-visit-uuid' } as Visit,
+    } as ReturnType<typeof useVisit>);
+    mockUseAllowOverlappingVisits.mockReturnValue({ allowOverlappingVisits: false, isLoading: false });
+
+    renderVisitForm();
+
+    await user.click(screen.getByRole('tab', { name: /in the past/i }));
+
+    expect(screen.queryByText(/This patient already has an active visit/i)).not.toBeInTheDocument();
+    expect(screen.getByRole('combobox', { name: /Select a location/i })).toBeInTheDocument();
+  });
+
+  it('disables submit while the active visit lookup is loading', () => {
+    mockUseVisit.mockReturnValue({
+      activeVisit: null,
+      isLoading: true,
+    } as ReturnType<typeof useVisit>);
+    mockUseAllowOverlappingVisits.mockReturnValue({ allowOverlappingVisits: false, isLoading: false });
+
+    renderVisitForm();
+
+    expect(screen.getByRole('button', { name: /Start visit/i })).toBeDisabled();
+  });
+
+  it('does not show an active visit warning when there is no active visit', () => {
+    mockUseVisit.mockReturnValue({
+      activeVisit: null,
+    } as ReturnType<typeof useVisit>);
+    mockUseAllowOverlappingVisits.mockReturnValue({ allowOverlappingVisits: false, isLoading: false });
+
+    renderVisitForm();
+
+    expect(screen.queryByText(/This patient already has an active visit/i)).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Start visit/i })).toBeEnabled();
+  });
+
+  it('does not show an active visit warning when editing an existing visit', () => {
+    mockUseVisit.mockReturnValue({
+      activeVisit: { uuid: 'some-active-visit-uuid' } as Visit,
+    } as ReturnType<typeof useVisit>);
+    mockUseAllowOverlappingVisits.mockReturnValue({ allowOverlappingVisits: false, isLoading: false });
+
+    renderVisitForm(mockPastVisitWithEncounters);
+
+    expect(screen.queryByText(/This patient already has an active visit/i)).not.toBeInTheDocument();
+    expect(screen.getByRole('combobox', { name: /Select a location/i })).toBeInTheDocument();
   });
 });
 
@@ -912,6 +1047,147 @@ describe('useVisitFormSchemaAndDefaultValues', () => {
         message: 'End time must be on or after ' + lastEncounterDatetime.toDate().toLocaleString(),
       }),
     );
+  });
+});
+
+describe('computeEarliestAllowedStartDate', () => {
+  it('returns null when birthdate is null', () => {
+    expect(computeEarliestAllowedStartDate(null, false, null)).toBeNull();
+  });
+
+  it('returns birthdate at local midnight for non-estimated birthdates', () => {
+    const result = computeEarliestAllowedStartDate('1990-06-15', false, 35);
+    expect(result).toEqual(new Date(1990, 5, 15));
+  });
+
+  it('handles ISO datetime strings as returned by the REST API', () => {
+    const result = computeEarliestAllowedStartDate('1979-12-08T00:00:00.000+0530', false, 46);
+    expect(result).toEqual(new Date(1979, 11, 8));
+  });
+
+  it('applies grace period for estimated birthdate with age 10 (shifts 5 years back)', () => {
+    // floor(10 * 0.5) = 5, max(1, 5) = 5
+    const result = computeEarliestAllowedStartDate('2015-03-01', true, 10);
+    expect(result).toEqual(new Date(2010, 2, 1));
+  });
+
+  it('applies minimum 1-year grace period for estimated birthdate with age 1', () => {
+    // floor(1 * 0.5) = 0, max(1, 0) = 1
+    const result = computeEarliestAllowedStartDate('2024-07-20', true, 1);
+    expect(result).toEqual(new Date(2023, 6, 20));
+  });
+
+  it('does not apply grace period when birthdateEstimated is false', () => {
+    const result = computeEarliestAllowedStartDate('2000-01-01', false, 25);
+    expect(result).toEqual(new Date(2000, 0, 1));
+  });
+});
+
+describe('useVisitFormSchemaAndDefaultValues birthdate validation', () => {
+  beforeEach(() => {
+    mockUseConfig.mockReturnValue({
+      ...getDefaultsFromConfigSchema(esmPatientChartSchema),
+      visitAttributeTypes: [],
+    });
+  });
+
+  it('rejects a start date before the patient birthdate for ongoing visits', () => {
+    const earliestAllowed = new Date(1990, 0, 1);
+    const {
+      result: {
+        current: { visitFormSchema, defaultValues },
+      },
+    } = renderHook(() => useVisitFormSchemaAndDefaultValues(null, earliestAllowed));
+
+    const beforeBirthdate = dayjs(new Date(1989, 11, 31, 10, 0));
+    const fields = convertToDateTimeFields(beforeBirthdate);
+
+    const { error } = visitFormSchema.safeParse({
+      ...defaultValues,
+      visitStatus: 'ongoing',
+      visitType: 'some-visit-type-uuid',
+      visitStartDate: fields.date,
+      visitStartTime: fields.time,
+      visitStartTimeFormat: fields.timeFormat,
+    });
+
+    expect(error.issues).toContainEqual(
+      expect.objectContaining({
+        message: "Start date cannot be before the patient's birth date",
+      }),
+    );
+  });
+
+  it('accepts a start date equal to the patient birthdate', () => {
+    const earliestAllowed = new Date(1990, 0, 1);
+    const {
+      result: {
+        current: { visitFormSchema, defaultValues },
+      },
+    } = renderHook(() => useVisitFormSchemaAndDefaultValues(null, earliestAllowed));
+
+    const onBirthdate = dayjs(new Date(1990, 0, 1, 8, 0));
+    const fields = convertToDateTimeFields(onBirthdate);
+
+    const { error } = visitFormSchema.safeParse({
+      ...defaultValues,
+      visitStatus: 'ongoing',
+      visitType: 'some-visit-type-uuid',
+      visitStartDate: fields.date,
+      visitStartTime: fields.time,
+      visitStartTimeFormat: fields.timeFormat,
+    });
+
+    const birthdateIssues = (error?.issues ?? []).filter((i) => i.message.includes('birth date'));
+    expect(birthdateIssues).toHaveLength(0);
+  });
+
+  it('accepts a start date within the grace period for estimated birthdates', () => {
+    // Patient born 2015-03-01 estimated, age 10 → grace = 5 → earliest = 2010-03-01
+    const earliestAllowed = computeEarliestAllowedStartDate('2015-03-01', true, 10);
+    const {
+      result: {
+        current: { visitFormSchema, defaultValues },
+      },
+    } = renderHook(() => useVisitFormSchemaAndDefaultValues(null, earliestAllowed));
+
+    const withinGrace = dayjs(new Date(2011, 0, 1, 9, 0));
+    const fields = convertToDateTimeFields(withinGrace);
+
+    const { error } = visitFormSchema.safeParse({
+      ...defaultValues,
+      visitStatus: 'ongoing',
+      visitType: 'some-visit-type-uuid',
+      visitStartDate: fields.date,
+      visitStartTime: fields.time,
+      visitStartTimeFormat: fields.timeFormat,
+    });
+
+    const birthdateIssues = (error?.issues ?? []).filter((i) => i.message.includes('birth date'));
+    expect(birthdateIssues).toHaveLength(0);
+  });
+
+  it('does not validate birthdate when earliestAllowedStartDate is null', () => {
+    const {
+      result: {
+        current: { visitFormSchema, defaultValues },
+      },
+    } = renderHook(() => useVisitFormSchemaAndDefaultValues(null, null));
+
+    const veryOldDate = dayjs(new Date(1800, 0, 1, 8, 0));
+    const fields = convertToDateTimeFields(veryOldDate);
+
+    const { error } = visitFormSchema.safeParse({
+      ...defaultValues,
+      visitStatus: 'ongoing',
+      visitType: 'some-visit-type-uuid',
+      visitStartDate: fields.date,
+      visitStartTime: fields.time,
+      visitStartTimeFormat: fields.timeFormat,
+    });
+
+    const birthdateIssues = (error?.issues ?? []).filter((i) => i.message.includes('birth date'));
+    expect(birthdateIssues).toHaveLength(0);
   });
 });
 

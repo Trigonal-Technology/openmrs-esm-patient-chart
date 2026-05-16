@@ -1,0 +1,86 @@
+@use '@carbon/colors';
+@use '@openmrs/esm-styleguide/src/vars' as *;
+
+.wrapper {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  background-color: $ui-background;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.5rem 1rem;
+  border-bottom: 1px solid $ui-03;
+  background-color: $ui-01;
+  flex-shrink: 0;
+}
+
+.headerLeft {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.headerRight {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.headerTitle {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #000000;
+}
+
+.backButton {
+  display: flex;
+  align-items: center;
+  margin-right: 0.25rem;
+}
+
+.backIcon {
+  margin-right: 0.5rem;
+}
+
+.main {
+  flex: 1;
+  overflow: hidden;
+  min-height: 0;
+}
+
+.content {
+  flex: 1;
+  width: 100%;
+  overflow: hidden;
+  min-width: 0;
+}
+
+.emptyState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: $text-02;
+  gap: 0.5rem;
+  padding: 2rem;
+}
+
+.emptyStateIcon {
+  opacity: 0.3;
+}
+
+.loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+
+  p {
+    color: $text-02;
+  }
+}

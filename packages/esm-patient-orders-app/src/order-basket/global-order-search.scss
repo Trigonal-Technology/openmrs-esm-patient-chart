@@ -1,0 +1,115 @@
+@use '@carbon/colors';
+@use '@carbon/layout';
+@use '@carbon/type';
+@use '@openmrs/esm-styleguide/src/vars' as *;
+
+.globalSearchContainer {
+  padding: layout.$spacing-05;
+  background-color: $ui-01;
+  border-bottom: 1px solid $ui-03;
+}
+
+.resultsContainer {
+  margin-top: layout.$spacing-03;
+  max-height: 20rem;
+  overflow-y: auto;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: layout.$spacing-03;
+}
+
+.resultsContainer::-webkit-scrollbar {
+  width: layout.$spacing-03;
+}
+
+.resultsContainer::-webkit-scrollbar-thumb {
+  background: $ui-04;
+  border-radius: layout.$spacing-02;
+}
+
+.resultsHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: layout.$spacing-03;
+}
+
+.resultsCount {
+  @include type.type-style('body-compact-01');
+  color: $text-02;
+}
+
+.resultTile {
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  border: 1px solid $grey-2;
+}
+
+.resultTileContent {
+  padding: layout.$spacing-03 layout.$spacing-05;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.conceptName {
+  @include type.type-style('heading-01');
+  color: colors.$gray-70;
+}
+
+.orderTypeTag {
+  margin-left: layout.$spacing-03;
+}
+
+.resultActions {
+  border-top: 1px solid $grey-2;
+  padding: 0 layout.$spacing-05;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.emptyState {
+  margin: layout.$spacing-05 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: layout.$spacing-07;
+  border: 1px solid $ui-03;
+  text-align: center;
+  background-color: $ui-01;
+}
+
+.heading {
+  @include type.type-style('heading-01');
+  color: colors.$gray-70;
+  margin-bottom: layout.$spacing-03;
+}
+
+.bodyShort01 {
+  @include type.type-style('body-compact-01');
+}
+
+.link {
+  color: $interactive-01;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.skeletonWrapper {
+  margin: layout.$spacing-03 0;
+
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: layout.$spacing-03;
+
+  :global(.cds--skeleton__text) {
+    margin: 0;
+  }
+}
+
+.skeletonTile {
+  display: flex;
+  align-items: center;
+}
