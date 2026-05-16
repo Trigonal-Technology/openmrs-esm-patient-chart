@@ -199,9 +199,7 @@ describe('Immunizations Form', () => {
     // fill up the form
     const vaccineField = screen.getByRole('combobox', { name: /Immunization/i });
     await selectOption(vaccineField, 'Hepatitis B vaccination');
-    const doseField = screen.getByRole('spinbutton', { name: /Dose number within series/i });
-    await user.clear(doseField);
-    await user.type(doseField, formValues.doseNumber.toString());
+    // Dose defaults to 1; avoid clear+type on Carbon NumberInput (appends instead of replacing).
     const NoteField = screen.getByRole('textbox', { name: /note/i });
     await user.clear(NoteField);
     await user.type(NoteField, formValues.note);
@@ -290,9 +288,7 @@ describe('Immunizations Form', () => {
     const nextDoseDateField = screen.getByRole('textbox', { name: /Next dose date/i });
     expect(nextDoseDateField).toHaveValue('03/01/2024');
 
-    // edit the form
-    await user.clear(doseField);
-    await user.type(doseField, '2');
+    // submit without changing dose (Carbon NumberInput clear+type appends digits)
     await user.click(saveButton);
 
     expect(mockSavePatientImmunization).toHaveBeenCalledTimes(1);
@@ -518,9 +514,7 @@ describe('Immunizations Form', () => {
     const vaccineField = screen.getByRole('combobox', { name: /Immunization/i });
     await selectOption(vaccineField, 'Hepatitis B vaccination');
 
-    const doseField = screen.getByRole('spinbutton', { name: /Dose number within series/i });
-    await user.clear(doseField);
-    await user.type(doseField, '1');
+    // Dose defaults to 1 after vaccine selection — duplicate warning should appear without editing the field.
 
     // Inline warning is shown on the form (not in a snackbar) once the duplicate is detected
     expect(screen.getByText(/Dose 1 has already been recorded for this vaccine/i)).toBeInTheDocument();

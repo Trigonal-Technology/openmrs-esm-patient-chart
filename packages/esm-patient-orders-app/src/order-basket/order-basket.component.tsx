@@ -688,23 +688,30 @@ const OrderBasket: React.FC<OrderBasketProps> = ({
             />
           )}
           {orderTypes?.length > 0 &&
-            orderTypes.map((orderType) => {
-              const { prepFn: prepFunction } = getOrderItemDetails(
-                { conceptClass: { display: orderType.label } } as any,
-                config,
-              );
+            orderBasketExtensionProps.launchGeneralOrderForm &&
+            orderTypes
+              .filter(
+                (orderType) =>
+                  !orderBasketExtensionProps.visibleOrderPanels ||
+                  orderBasketExtensionProps.visibleOrderPanels.includes(orderType.orderTypeUuid),
+              )
+              .map((orderType) => {
+                const { prepFn: prepFunction } = getOrderItemDetails(
+                  { conceptClass: { display: orderType.label } } as any,
+                  config,
+                );
 
-              return (
-                <div className={styles.orderPanel} key={orderType.orderTypeUuid}>
-                  <GeneralOrderPanel
-                    {...orderType}
-                    launchGeneralOrderForm={orderBasketExtensionProps.launchGeneralOrderForm}
-                    patient={patient}
-                    prepFunction={prepFunction}
-                  />
-                </div>
-              );
-            })}
+                return (
+                  <div className={styles.orderPanel} key={orderType.orderTypeUuid}>
+                    <GeneralOrderPanel
+                      {...orderType}
+                      launchGeneralOrderForm={orderBasketExtensionProps.launchGeneralOrderForm}
+                      patient={patient}
+                      prepFunction={prepFunction}
+                    />
+                  </div>
+                );
+              })}
         </div>
         <div>
           {(creatingEncounterError || errorFetchingEncounterUuid) && (

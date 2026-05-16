@@ -228,6 +228,10 @@ export interface OrderBasketExtensionProps {
   launchImagingOrderForm(orderTypeUuid: string, order?: any): void;
   launchProcedureOrderForm(orderTypeUuid: string, order?: any): void;
   launchMedicalSupplyForm(orderTypeUuid: string, order?: any): void;
+  /**
+   * Optional list of general-order panel type UUIDs to show. Omit to show all; use [] to hide all.
+   */
+  visibleOrderPanels?: Array<string>;
 }
 
 export interface DrugOrderBasketItem extends OrderBasketItem {

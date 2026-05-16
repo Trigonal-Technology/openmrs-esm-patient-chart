@@ -1,4 +1,4 @@
-import { type Workspace2DefinitionProps , type Visit, toOmrsIsoString } from '@openmrs/esm-framework';
+import { type Workspace2DefinitionProps, type Visit, toOmrsIsoString } from '@openmrs/esm-framework';
 import { QuantityUnit } from './../../../esm-patient-common-lib/src/orders/types/order';
 import {
   priorityOptions,
@@ -68,6 +68,10 @@ export function createOrderBasketExtensionProps({
         launchChildWorkspace(generalOrderWorkspaceName, { orderTypeUuid, order });
       };
     }
+  }
+
+  if (visibleOrderPanels) {
+    result.visibleOrderPanels = visibleOrderPanels;
   }
 
   return result;
