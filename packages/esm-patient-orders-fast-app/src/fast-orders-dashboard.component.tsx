@@ -180,10 +180,21 @@ export default function FastOrdersDashboard({ patientUuid, patient }: FastOrders
       <div className={styles.main}>
         <Tabs selectedIndex={activeTabIndex} onChange={(e) => setActiveTabIndex(e.selectedIndex)}>
           <TabList aria-label={t('orderEntryTabs', 'Order entry tabs')} className={styles.tabList}>
-            <Tab className={styles.tab}>{t('orderBasket', 'Order Basket')}</Tab>
             <Tab className={styles.tab}>{t('singleOrderForm', 'Single Order Form')}</Tab>
+            <Tab className={styles.tab}>{t('orderBasket', 'Order Basket')}</Tab>
           </TabList>
           <TabPanels>
+            <TabPanel>
+              <PrescriptionBuilder
+                {...commonProps}
+                cart={cart}
+                addToCart={addToCart}
+                updateCartItem={updateCartItem}
+                editingCartId={editingCartId}
+                onClearEditing={() => setEditingCartId(null)}
+                onEditCartItem={handleEditCartItem}
+              />
+            </TabPanel>
             <TabPanel>
               <InlinePrescriptionBuilder
                 {...commonProps}
@@ -195,17 +206,6 @@ export default function FastOrdersDashboard({ patientUuid, patient }: FastOrders
                 nextId={nextId}
                 onSubmitAll={handleSubmitAll}
                 isSubmittingCart={isSubmittingCart}
-              />
-            </TabPanel>
-            <TabPanel>
-              <PrescriptionBuilder
-                {...commonProps}
-                cart={cart}
-                addToCart={addToCart}
-                updateCartItem={updateCartItem}
-                editingCartId={editingCartId}
-                onClearEditing={() => setEditingCartId(null)}
-                onEditCartItem={handleEditCartItem}
               />
             </TabPanel>
           </TabPanels>

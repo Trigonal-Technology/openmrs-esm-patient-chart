@@ -2,6 +2,9 @@ import type { OrderConfigObject } from '../resources/order-config.resource';
 
 export function getTimesPerDay(freqValue: string, orderConfig: OrderConfigObject): number {
   const f = orderConfig.orderFrequencies.find((x) => x.valueCoded === freqValue);
+  if (f && typeof f.frequencyPerDay === 'number') {
+    return f.frequencyPerDay;
+  }
   const v = (f as { value?: string })?.value?.toLowerCase() ?? '';
   if (v.includes('once daily') || v.includes('od')) return 1;
   if (v.includes('twice daily') || v.includes('bid')) return 2;
@@ -36,8 +39,10 @@ export function calculateAutoQuantity(
   durationUnits: string,
   orderConfig: OrderConfigObject,
 ): number | null {
-  if (!dose || !duration) return null;
+  if (dose == null || dose <= 0 || duration == null || duration <= 0) return null;
   const timesPerDay = getTimesPerDay(frequency, orderConfig);
   const days = getDurationDays(duration, durationUnits, orderConfig);
-  return Math.ceil(timesPerDay * days);
+  if (timesPerDay == null || timesPerDay <= 0 || days == null || days <= 0) return null;
+  const result = Math.ceil(dose * timesPerDay * days);
+  return result > 0 && isFinite(result) ? result : null;
 }
