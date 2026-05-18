@@ -59,11 +59,11 @@ export function drugOrderBasketItemToFormValue(item: DrugOrderBasketItem, startD
     patientInstructions: item?.patientInstructions ?? '',
     asNeeded: item?.asNeeded ?? false,
     asNeededCondition: item?.asNeededCondition ?? '',
-    duration: item?.duration,
+    duration: item?.duration ?? 1,
     durationUnit: item?.durationUnit,
     pillsDispensed: item?.pillsDispensed ?? null,
     quantityUnits: item?.quantityUnits,
-    numRefills: item?.numRefills ?? null,
+    numRefills: item?.numRefills ?? 0,
     indication: item?.indication,
     frequency: item?.frequency,
     startDate,
@@ -134,12 +134,16 @@ function useCreateMedicationOrderFormSchema() {
       patientInstructions: z.string().nullable(),
       asNeeded: z.boolean(),
       asNeededCondition: z.string().nullable(),
-      duration: z.number().nullable(),
+      duration: z
+        .number({
+          invalid_type_error: t('durationRequiredErrorMessage', 'Duration is required'),
+        })
+        .gt(0, { message: t('durationGreaterThanZeroErrorMessage', 'Duration must be greater than 0') }),
       durationUnit: z.object({ ...comboSchema }).nullable(),
       indication: requireIndication
         ? z.string().refine((value) => value !== '', {
-            message: t('indicationErrorMessage', 'Indication is required'),
-          })
+          message: t('indicationErrorMessage', 'Indication is required'),
+        })
         : z.string().nullish(),
       startDate: z.date().refine((value) => value <= new Date(), {
         message: t('startDateCannotBeInFuture', 'Start date cannot be in the future'),
@@ -181,20 +185,7 @@ function useCreateMedicationOrderFormSchema() {
             message: t('selectQuantityUnitsErrorMessage', 'Quantity unit is required'),
           },
         ),
-      numRefills: z
-        .number()
-        .nullable()
-        .refine(
-          (value) => {
-            if (requireOutpatientQuantity && (typeof value !== 'number' || value < 0)) {
-              return false;
-            }
-            return true;
-          },
-          {
-            message: t('numRefillsErrorMessage', 'Number of refills is required'),
-          },
-        ),
+      numRefills: z.number().nullable().optional(),
     };
 
     const nonFreeTextDosageSchema = z.object({
