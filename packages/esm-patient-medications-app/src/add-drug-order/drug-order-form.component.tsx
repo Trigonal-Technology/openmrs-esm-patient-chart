@@ -570,7 +570,7 @@ export function DrugOrderForm({
                       <Grid className={styles.gridRow}>
                         <Column lg={6} md={8} sm={4}>
                           <InputWrapper>
-                            <FormGroup legendText={t('prn', 'P.R.N.')}>
+                            <FormGroup legendText={t('prn', 'SOS')}>
                               <ControlledFieldInput
                                 control={control}
                                 name="asNeeded"
@@ -588,7 +588,7 @@ export function DrugOrderForm({
                               control={control}
                               name="asNeededCondition"
                               type="textArea"
-                              labelText={t('prnReason', 'P.R.N. reason')}
+                              labelText={t('prnReason', 'SOS reason')}
                               placeholder={t('prnReasonPlaceholder', 'Reason to take medicine')}
                               rows={3}
                               maxLength={255}
@@ -669,7 +669,7 @@ export function DrugOrderForm({
             <section className={styles.formSection}>
               <h3 className={styles.sectionHeader}>{t('dispensingInformation', 'Dispensing instructions')}</h3>
               <Grid className={classNames(styles.gridRow, styles.topAlignedGridRow)}>
-                <Column lg={8} md={3} sm={4}>
+                <Column lg={8} md={4} sm={4}>
                   <InputWrapper>
                     <ControlledFieldInput
                       control={control}
@@ -699,7 +699,7 @@ export function DrugOrderForm({
                           ))}
                   </InputWrapper>
                 </Column>
-                <Column lg={8} md={3} sm={4}>
+                <Column lg={8} md={4} sm={4}>
                   <InputWrapper>
                     <ControlledFieldInput
                       control={control}
@@ -714,7 +714,9 @@ export function DrugOrderForm({
                     />
                   </InputWrapper>
                 </Column>
-                <Column lg={8} md={3} sm={4}>
+              </Grid>
+              <Grid className={styles.gridRow}>
+                <Column lg={8} md={4} sm={4}>
                   <InputWrapper>
                     {!isTablet ? (
                       <ControlledFieldInput
@@ -738,9 +740,7 @@ export function DrugOrderForm({
                     )}
                   </InputWrapper>
                 </Column>
-              </Grid>
-              <Grid className={styles.gridRow}>
-                <Column lg={16} md={6} sm={4}>
+                <Column lg={8} md={4} sm={4}>
                   <InputWrapper>
                     <ControlledFieldInput
                       control={control}

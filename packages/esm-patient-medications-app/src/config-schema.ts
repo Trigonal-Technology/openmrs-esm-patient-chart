@@ -26,7 +26,7 @@ export const configSchema = {
   },
   showPrintButton: {
     _type: Type.Boolean,
-    _default: false,
+    _default: true,
     _description:
       'Determines whether or not to display the Print button in both the active and past medications datatable headers. If set to true, a Print button gets shown in both the active and past medications table headers. When clicked, this button enables the user to print out the contents of the table',
   },
@@ -40,7 +40,7 @@ export const configSchema = {
   requireIndication: {
     _type: Type.Boolean,
     _description: 'Whether to require an indication when placing a medication order',
-    _default: true,
+    _default: false,
   },
   durationUnitsDaysMap: {
     _type: Type.Object,

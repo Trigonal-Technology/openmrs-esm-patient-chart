@@ -114,7 +114,7 @@ export function drugSearchResultToFastDrug(
     display: d.display || d.name,
     concept: d.concept?.uuid ?? '',
     commonDoses: doses.length > 0 ? doses : [500],
-    defaultDoseUnit,
+    defaultDoseUnit: d.dosageForm?.uuid || defaultDoseUnit,
     defaultRoute,
   };
 }

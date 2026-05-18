@@ -45,7 +45,15 @@ export function usePrescription(orderConfig: OrderConfigObject) {
   });
 
   const update = useCallback(<K extends keyof PrescriptionState>(key: K, value: PrescriptionState[K]) => {
-    setState((prev) => ({ ...prev, [key]: value }));
+    setState((prev) => {
+      const next = { ...prev, [key]: value };
+      if (key === 'doseUnits') {
+        if (prev.quantityUnits === prev.doseUnits || !prev.quantityUnits) {
+          next.quantityUnits = value as string;
+        }
+      }
+      return next;
+    });
   }, []);
 
   const selectDrug = useCallback((drug: FastDrug) => {
@@ -53,10 +61,11 @@ export function usePrescription(orderConfig: OrderConfigObject) {
       ...prev,
       drug,
       dose: drug.commonDoses[0] ?? null,
-      doseUnits: drug.defaultDoseUnit,
-      route: drug.defaultRoute,
+      doseUnits: drug.defaultDoseUnit || defaultDoseUnit,
+      route: drug.defaultRoute || defaultRoute,
+      quantityUnits: drug.defaultDoseUnit || defaultDoseUnit,
     }));
-  }, []);
+  }, [defaultDoseUnit, defaultRoute]);
 
   const autoQuantity = useMemo(() => {
     return calculateAutoQuantity(state.dose, state.frequency, state.duration, state.durationUnits, orderConfig);
